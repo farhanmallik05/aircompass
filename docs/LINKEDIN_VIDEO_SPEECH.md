@@ -70,14 +70,14 @@
 > *After* adding filtration, N95, indoor exercise, and metro commute: ~2.4 (52.9 µg/m³, down 55%).
 > That's not AI guessing. That's ODE integration."
 
-*[Show test run or terminal output — 143 tests, 91% mutation]*
+*[Show test run or terminal output — 158 tests, 91.20% mutation]*
 
 > "Under the hood:
-> - **143 automated tests** — unit, integration, golden, property-based
+> - **158 automated tests** — unit, integration, golden, property-based (96.74% coverage)
 > - **91.2% mutation score** — Stryker verified every assertion
 > - **WCAG 2.2 AA** accessible — zero Axe violations
 > - **Nonce CSP** security — Playwright e2e tested in production build
-> - **2.65 MB repo** — well under the 10 MB limit, runs fast"
+> - **2.70 MB repo** — well under the 10 MB limit, runs fast"
 
 ---
 

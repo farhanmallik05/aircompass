@@ -20,8 +20,8 @@ git clone https://github.com/farhanmallik05/aircompass
 cd aircompass
 cp .env.example .env.local          # add your GEMINI_API_KEY (or leave blank for demo mode)
 npm ci
-npm run verify                       # lint → types → oracle → 143 tests → evals → build
-npm run test:e2e                     # 9 Playwright tests incl. 6 CSP gates & WCAG 2.2 AA Axe audit
+npm run verify                       # format → lint → types → oracle → 158 tests → evals → build
+npm run test:e2e                     # 10 Playwright tests incl. 6 CSP gates & WCAG 2.2 AA Axe audit
 npm run mutate                       # Stryker mutation score (measured: 91.20%)
 ```
 
@@ -104,7 +104,7 @@ All metrics below were measured locally on this repository (`npm run verify`, `n
 | Production dependency audit | **0 vulnerabilities** (`--omit=dev --audit-level=high`) | `npm audit --omit=dev --audit-level=high` |
 | Engine p50 / p95 latency | **1.29 ms / 2.95 ms** (200 runs) | `npm run measure` |
 | Gzipped `.next/static` JS | **226.8 KB** (no chart library, self-hosted fonts) | `npm run measure` |
-| Tracked repository size | **2.65 MB** (`< 10 MB` limit) | `node scripts/check-repo-size.mjs` |
+| Tracked repository size | **2.70 MB** (`< 10 MB` limit) | `node scripts/check-repo-size.mjs` |
 | Secrets in built bundle | **0** | `npm run test:coverage` |
 
 ---
