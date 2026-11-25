@@ -3,7 +3,7 @@
 > **GenAI-powered urban air-quality planner for Indian families** — Hack2skill PromptWars Virtual Challenge 06
 
 [![CI](https://img.shields.io/badge/CI-passing-brightgreen)](#verification-evidence)
-[![Tests](https://img.shields.io/badge/tests-103%20passing-brightgreen)](#verification-evidence)
+[![Tests](https://img.shields.io/badge/tests-135%20passing-brightgreen)](#verification-evidence)
 [![Coverage](https://img.shields.io/badge/branches-87.6%25-green)](#verification-evidence)
 [![Mutation](https://img.shields.io/badge/mutation-%E2%89%8585%25-blue)](#verification-evidence)
 [![WCAG](https://img.shields.io/badge/WCAG-2.2AA-blue)](#accessibility)
@@ -90,7 +90,7 @@ Browser ──► Next.js App Router (src/app/)
 
 | Metric | Measured value | Command |
 |---|---|---|
-| Unit + integration tests | **103 / 103 pass** (9 files) | `npm run test:coverage` |
+| Unit + integration tests | **135 / 135 pass** (10 files) | `npm run test:coverage` |
 | Statement coverage | 84.73 % | `npm run test:coverage` |
 | Branch coverage | 87.62 % | `npm run test:coverage` |
 | Function coverage | 91.61 % | `npm run test:coverage` |
@@ -169,7 +169,8 @@ npm run oracle:check    # verify golden vectors haven't been hand-edited
 | File | Tests | What it covers |
 |---|---|---|
 | `tests/unit/engine-coverage.test.ts` | 7 | Table-driven behavioural tests for all 26 actions + engine edge cases |
-| `tests/unit/mutation-killers.test.ts` | 61 | Targeted Stryker survivor kills: guard, select, schedule, exposure, window, impact, catalog |
+| `tests/unit/mutation-killers.test.ts` | 61 | Targeted Stryker survivor kills wave 1: guard, select, schedule, exposure, window, impact, catalog |
+| `tests/unit/mutation-killers-2.test.ts` | 32 | Targeted Stryker survivor kills wave 2: select.ts (scoring, pick logic, tradeoff), schedule.ts (commute boundary conditions, purifier hours) |
 | `tests/unit/i18n-parity.test.ts` | 2 | EN/HI string key parity |
 | `tests/security/guard.test.ts` | 8 | Output guard: digit, number-word, unit, markup, Hindi, canary |
 | `tests/security/api-security.test.ts` | 3 | API route validation, rate-limit, sanitization |
