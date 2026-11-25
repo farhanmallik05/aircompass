@@ -26,12 +26,9 @@ export async function POST(request: Request): Promise<Response> {
 
   const client = createGeminiClientFromEnv();
   const quotaAllowed = client ? tryConsumeDailyLlmQuota() : true;
-  const result = await generatePlanWithFallback(
-    parsed.data.profile,
-    parsed.data.context,
-    client,
-    { quotaAllowed },
-  );
+  const result = await generatePlanWithFallback(parsed.data.profile, parsed.data.context, client, {
+    quotaAllowed,
+  });
 
   return Response.json(result, {
     headers: { "Cache-Control": "no-store" },

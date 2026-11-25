@@ -3,7 +3,13 @@ import { POST as planPost } from "@/app/api/plan/route";
 import { POST as chatPost } from "@/app/api/chat/route";
 import { GET as contextGet } from "@/app/api/context/route";
 import { getDemoContext, SAMPLE_FAMILY_PROFILE } from "@/lib/providers/demo";
-import { resetRateLimitsForTest, tryConsumeDailyLlmQuota } from "@/lib/security/rateLimit";
+import {
+  clientIpFromHeaders,
+  getBucketCountForTest,
+  resetRateLimitsForTest,
+  takeIpToken,
+  tryConsumeDailyLlmQuota,
+} from "@/lib/security/rateLimit";
 import { wrapUntrustedNote } from "@/lib/security/sanitize";
 import { PROMPT_CANARY } from "@/lib/llm/guard";
 
@@ -82,5 +88,32 @@ describe("API security controls (strict validation, size cap, rate limit, inject
     expect(wrapped).not.toContain(PROMPT_CANARY);
     expect(wrapped).not.toContain("\u0007");
     expect(wrapped?.match(/<\/user_note>/g)).toHaveLength(1);
+  });
+
+  it("caps rate-limit bucket growth under spoofed X-Forwarded-For floods and handles daily rollover", () => {
+    resetRateLimitsForTest();
+    for (let i = 0; i < 8; i++) {
+      expect(takeIpToken("plan", `198.51.100.${i}`, 1000, 4)).toBe(true);
+    }
+    expect(getBucketCountForTest()).toBeLessThanOrEqual(4);
+
+    // Expired entries are evicted cleanly before inserting fresh IPs
+    expect(takeIpToken("plan", "203.0.113.99", 20 * 60 * 1000, 4)).toBe(true);
+    expect(getBucketCountForTest()).toBeLessThanOrEqual(4);
+
+    // Header normalization trims lists and caps length
+    const h = new Headers({ "x-forwarded-for": ` 192.0.2.10, 10.0.0.1 ` });
+    expect(clientIpFromHeaders(h)).toBe("192.0.2.10");
+    const longHdr = new Headers({ "x-real-ip": "a".repeat(120) });
+    expect(clientIpFromHeaders(longHdr)).toHaveLength(64);
+
+    // Daily quota resets cleanly across UTC midnight and rejects invalid DAILY_LLM_CAP cleanly
+    const oldCap = process.env.DAILY_LLM_CAP;
+    process.env.DAILY_LLM_CAP = "1";
+    resetRateLimitsForTest();
+    expect(tryConsumeDailyLlmQuota(new Date("2026-11-25T23:59:00Z"))).toBe(true);
+    expect(tryConsumeDailyLlmQuota(new Date("2026-11-25T23:59:30Z"))).toBe(false);
+    expect(tryConsumeDailyLlmQuota(new Date("2026-11-26T00:00:05Z"))).toBe(true);
+    process.env.DAILY_LLM_CAP = oldCap;
   });
 });

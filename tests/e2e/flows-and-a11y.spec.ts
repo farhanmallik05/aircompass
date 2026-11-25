@@ -13,13 +13,22 @@ test.describe("AirCompass user flows & WCAG 2.2 AA accessibility", () => {
     await expect(page.getByRole("heading", { name: "Your Tailored Air Plan" })).toBeVisible();
     await expect(page.getByTestId("plan-outcome-badge")).toBeVisible();
 
-    // Filter tabs work
+    // Filter tabs work (click + WAI-ARIA ArrowRight keyboard pattern)
+    const allTab = page.getByRole("tab", { name: "All actions" });
+    await allTab.focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByRole("tab", { name: "Routine" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
     await page.getByRole("tab", { name: "Indoors" }).click();
-    await page.getByRole("tab", { name: "All actions" }).click();
+    await allTab.click();
 
     // Client-side what-if controls update exposure immediately
     await page.getByRole("link", { name: "Impact" }).click();
-    await expect(page.getByRole("heading", { name: "Exposure & Community Impact Simulator" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Exposure & Community Impact Simulator" }),
+    ).toBeVisible();
     const beforeText = await page.getByTestId("impact-after-ugm3").textContent();
     await page.locator("#sim-purifier").selectOption("hepa");
     const afterText = await page.getByTestId("impact-after-ugm3").textContent();
@@ -51,6 +60,19 @@ test.describe("AirCompass user flows & WCAG 2.2 AA accessibility", () => {
     await page.keyboard.press("Tab");
     const skipText = await page.evaluate(() => document.activeElement?.textContent ?? "");
     expect(skipText).toContain("Skip to main content");
+  });
+
+  test("setup form exposes accessible aria-invalid errors and alert focus on invalid submission", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.getByTestId("toggle-setup-btn").click();
+    await page.locator("#room-area").fill("2");
+    await page.getByRole("button", { name: "Build my household plan" }).click();
+    await expect(
+      page.getByRole("alert").filter({ hasText: "Please check the highlighted fields" }),
+    ).toBeFocused();
+    await expect(page.locator("#room-area")).toHaveAttribute("aria-invalid", "true");
   });
 
   test("axe-core WCAG 2.2 AA audit across routes x languages x color schemes", async ({ page }) => {

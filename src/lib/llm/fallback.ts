@@ -47,10 +47,7 @@ export function buildFallbackPlan(facts: PlanFacts): Plan {
 
   const memberNotes = facts.members.slice(0, 5).map((group) => ({
     group,
-    note:
-      group === "adult"
-        ? levelInfo.everyone
-        : `${dict.groups[group]}: ${levelInfo.sensitive}`,
+    note: group === "adult" ? levelInfo.everyone : `${dict.groups[group]}: ${levelInfo.sensitive}`,
   }));
 
   const headline =

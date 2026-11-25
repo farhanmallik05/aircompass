@@ -16,12 +16,15 @@ const HOME = { P: 0.8, k: 0.3 };
 
 describe("golden vectors", () => {
   it("EPA AQI from PM2.5 matches the oracle at every breakpoint edge", () => {
-    for (const { pm25, aqi } of golden.epa_aqi_pm25) expect(aqiFromPm25(pm25), `pm25=${pm25}`).toBe(aqi);
+    for (const { pm25, aqi } of golden.epa_aqi_pm25)
+      expect(aqiFromPm25(pm25), `pm25=${pm25}`).toBe(aqi);
   });
 
   it("NAQI PM2.5 / PM10 sub-indices match the oracle (CPCB table; Severe anchors are assumptions)", () => {
-    for (const { pm25, index } of golden.naqi_pm25) expect(naqiPm25(pm25), `pm25=${pm25}`).toBe(index);
-    for (const { pm10, index } of golden.naqi_pm10) expect(naqiPm10(pm10), `pm10=${pm10}`).toBe(index);
+    for (const { pm25, index } of golden.naqi_pm25)
+      expect(naqiPm25(pm25), `pm25=${pm25}`).toBe(index);
+    for (const { pm10, index } of golden.naqi_pm10)
+      expect(naqiPm10(pm10), `pm10=${pm10}`).toBe(index);
     const w = golden.naqi_cpcb_worked_example;
     expect(Math.abs(naqiPm25(w.pm25) - w.cpcb_published_approx)).toBeLessThanOrEqual(w.tolerance);
   });
@@ -33,7 +36,8 @@ describe("golden vectors", () => {
         category: g.category,
         dominant: g.dominant,
       });
-    for (const e of golden.naqi_category_edges) expect(naqiCategory(e.index), `index=${e.index}`).toBe(e.category);
+    for (const e of golden.naqi_category_edges)
+      expect(naqiCategory(e.index), `index=${e.index}`).toBe(e.category);
   });
 
   it("indoor hourly step matches the oracle (tolerance 1e-3)", () => {
@@ -53,12 +57,14 @@ describe("golden vectors", () => {
   it("steady state equals the exposure identity (windows shut, constant outdoor air)", () => {
     const e = golden.exposure_identity;
     expect(steadyState(e.cOut, e.a, { ...HOME, q: 0 })).toBeCloseTo(e.expected, 3);
-    expect(steadyState(e.cOut, e.a, { ...HOME, q: purifierQ(250, 15) })).toBeCloseTo(e.with_hepa, 3);
-    const cooking = golden.indoor_step[3];
-    expect(steadyState(cooking.cOut, cooking.a, { ...HOME, q: cooking.q, S: cooking.S })).toBeCloseTo(
-      cooking.cSS,
+    expect(steadyState(e.cOut, e.a, { ...HOME, q: purifierQ(250, 15) })).toBeCloseTo(
+      e.with_hepa,
       3,
     );
+    const cooking = golden.indoor_step[3];
+    expect(
+      steadyState(cooking.cOut, cooking.a, { ...HOME, q: cooking.q, S: cooking.S }),
+    ).toBeCloseTo(cooking.cSS, 3);
   });
 
   it("level boundaries agree with AQI categories", () => {
@@ -128,7 +134,12 @@ describe("golden vectors", () => {
   it("T06: emissions reproduce golden.co2e_kg_per_year (777.6 / 576 / 979.2)", () => {
     for (const row of golden.co2e_kg_per_year) {
       expect(
-        co2eSavedKgPerYear(row.kmOneWay, row.daysPerWeek, row.from as CommuteMode, row.to as CommuteMode),
+        co2eSavedKgPerYear(
+          row.kmOneWay,
+          row.daysPerWeek,
+          row.from as CommuteMode,
+          row.to as CommuteMode,
+        ),
         `${row.from}->${row.to}`,
       ).toBeCloseTo(row.kg, 4);
     }

@@ -5,43 +5,88 @@ export function LevelIcon({ level, className = "h-6 w-6" }: { level: Level; clas
   switch (level) {
     case 0:
       return (
-        <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          className={className}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <circle cx="12" cy="12" r="9" />
           <path d="M8.5 12.5l2.5 2.5 4.5-5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       );
     case 1:
       return (
-        <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          className={className}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <circle cx="12" cy="12" r="5" />
           <path d="M12 2v3M12 19v3M2 12h3M19 12h3" strokeLinecap="round" />
         </svg>
       );
     case 2:
       return (
-        <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          className={className}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <path d="M12 3L21 20H3L12 3z" strokeLinejoin="round" />
           <path d="M12 10v4M12 17h.01" strokeLinecap="round" />
         </svg>
       );
     case 3:
       return (
-        <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          className={className}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <path d="M12 2l8 4v6c0 5-3.4 9-8 10-4.6-1-8-5-8-10V6l8-4z" strokeLinejoin="round" />
           <path d="M12 8v5M12 16h.01" strokeLinecap="round" />
         </svg>
       );
     case 4:
       return (
-        <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          className={className}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <polygon points="12,2 21,7 21,17 12,22 3,17 3,7" strokeLinejoin="round" />
           <path d="M12 8v5M12 16h.01" strokeLinecap="round" />
         </svg>
       );
     case 5:
       return (
-        <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="none" stroke="currentColor" strokeWidth="2">
-          <polygon points="7.5,2 16.5,2 22,7.5 22,16.5 16.5,22 7.5,22 2,16.5 2,7.5" strokeLinejoin="round" />
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          className={className}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <polygon
+            points="7.5,2 16.5,2 22,7.5 22,16.5 16.5,22 7.5,22 2,16.5 2,7.5"
+            strokeLinejoin="round"
+          />
           <path d="M9 9l6 6M15 9l-6 6" strokeLinecap="round" />
         </svg>
       );

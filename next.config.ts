@@ -11,12 +11,23 @@ const staticSecurityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "geolocation=(self), camera=(), microphone=()" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+];
+
+const apiSecurityHeaders = [
+  { key: "X-Robots-Tag", value: "noindex, nofollow" },
+  { key: "Content-Security-Policy", value: "default-src 'none'; frame-ancestors 'none'" },
 ];
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   async headers() {
-    return [{ source: "/:path*", headers: staticSecurityHeaders }];
+    return [
+      { source: "/:path*", headers: staticSecurityHeaders },
+      { source: "/api/:path*", headers: apiSecurityHeaders },
+    ];
   },
   turbopack: {
     rules: {

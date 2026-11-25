@@ -66,7 +66,14 @@ export function AppShell({
               href="/"
               className="inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-lg font-bold tracking-tight text-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 dark:text-teal-300"
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <circle cx="12" cy="12" r="9" />
                 <path d="M12 7v5l3 3" strokeLinecap="round" />
               </svg>
@@ -74,7 +81,11 @@ export function AppShell({
             </Link>
 
             <div className="flex flex-wrap items-center gap-2">
-              <div role="group" aria-label={dict.app.langLabel} className="inline-flex rounded-lg border border-slate-300 p-0.5 dark:border-slate-700">
+              <div
+                role="group"
+                aria-label={dict.app.langLabel}
+                className="inline-flex rounded-lg border border-slate-300 p-0.5 dark:border-slate-700"
+              >
                 <button
                   type="button"
                   onClick={() => onLangChange("en")}
@@ -125,8 +136,14 @@ export function AppShell({
         </div>
 
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 border-t border-slate-200 px-4 py-2 text-sm dark:border-slate-800">
-          <div role="group" aria-label={dict.app.modeLabel} className="flex flex-wrap items-center gap-2">
-            <span className="font-medium text-slate-700 dark:text-slate-300">{dict.app.modeLabel}:</span>
+          <div
+            role="group"
+            aria-label={dict.app.modeLabel}
+            className="flex flex-wrap items-center gap-2"
+          >
+            <span className="font-medium text-slate-700 dark:text-slate-300">
+              {dict.app.modeLabel}:
+            </span>
             <button
               type="button"
               onClick={() => onModeChange("demo")}
@@ -163,13 +180,22 @@ export function AppShell({
         </div>
 
         {deletedMsg ? (
-          <div role="status" aria-live="polite" className="mx-auto max-w-5xl px-4 pb-2 text-sm font-medium text-teal-800 dark:text-teal-300">
+          <div
+            role="status"
+            aria-live="polite"
+            className="mx-auto max-w-5xl px-4 pb-2 text-sm font-medium text-teal-800 dark:text-teal-300"
+          >
             {deletedMsg}
           </div>
         ) : null}
       </header>
 
-      <main id="main-content" ref={mainRef} className="mx-auto max-w-5xl px-4 py-6">
+      <main
+        id="main-content"
+        ref={mainRef}
+        tabIndex={-1}
+        className="mx-auto max-w-5xl px-4 py-6 focus:outline-none"
+      >
         {children}
       </main>
 

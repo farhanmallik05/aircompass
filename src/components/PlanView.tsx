@@ -1,16 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useAirCompass } from "./AirCompassProvider";
 import { ChatDrawer } from "./ChatDrawer";
 import { fmt, getDict } from "@/lib/client/i18n";
 import { MYTHS } from "@/lib/engine/myths";
 import type { ActionSection } from "@/lib/types";
 
+const TAB_KEYS = ["all", "routine", "indoor", "swap"] as const;
+type TabKey = (typeof TAB_KEYS)[number];
+
 export function PlanView() {
-  const { lang, activeProfile, context, planResponse, loadingPlan } = useAirCompass();
+  const { lang, activeProfile, context, planResponse, loadingPlan, planError } = useAirCompass();
   const dict = getDict(lang);
-  const [tab, setTab] = useState<"all" | ActionSection>("all");
+  const [tab, setTab] = useState<TabKey>("all");
+  const tabRefs = useRef<Partial<Record<TabKey, HTMLButtonElement | null>>>({});
+
+  function handleTabKeyDown(e: React.KeyboardEvent, idx: number) {
+    let nextIdx: number | null = null;
+    if (e.key === "ArrowRight") nextIdx = (idx + 1) % TAB_KEYS.length;
+    else if (e.key === "ArrowLeft") nextIdx = (idx - 1 + TAB_KEYS.length) % TAB_KEYS.length;
+    else if (e.key === "Home") nextIdx = 0;
+    else if (e.key === "End") nextIdx = TAB_KEYS.length - 1;
+    if (nextIdx === null) return;
+    e.preventDefault();
+    const nextKey = TAB_KEYS[nextIdx];
+    if (!nextKey) return;
+    setTab(nextKey);
+    tabRefs.current[nextKey]?.focus();
+  }
 
   const plan = planResponse?.plan;
   const outcome = planResponse?.outcome ?? "fallback";
@@ -21,7 +39,9 @@ export function PlanView() {
         ? dict.plan.badgeRepaired
         : dict.plan.badgeFallback;
 
-  const cards = (plan?.cards ?? []).filter((c) => tab === "all" || c.section === tab);
+  const cards = (plan?.cards ?? []).filter(
+    (c) => tab === "all" || c.section === (tab as ActionSection),
+  );
 
   return (
     <div className="space-y-6">
@@ -37,7 +57,9 @@ export function PlanView() {
         </div>
 
         <div role="status" aria-live="polite" className="sr-only">
-          {plan ? fmt(dict.plan.liveAnnouncement, { count: plan.cards.length }) : dict.plan.loadingPlan}
+          {plan
+            ? fmt(dict.plan.liveAnnouncement, { count: plan.cards.length })
+            : dict.plan.loadingPlan}
         </div>
 
         {loadingPlan && !plan ? (
@@ -46,23 +68,41 @@ export function PlanView() {
           </p>
         ) : null}
 
+        {planError ? (
+          <p
+            role="alert"
+            className="mt-3 rounded-lg border border-amber-700/40 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-950 dark:border-amber-400/40 dark:bg-amber-950/50 dark:text-amber-100"
+          >
+            {planError}
+          </p>
+        ) : null}
+
         {plan ? (
           <div className="mt-3 space-y-2">
-            <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">{plan.headline}</p>
+            <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              {plan.headline}
+            </p>
             <p className="text-sm text-slate-700 dark:text-slate-300">{plan.summary}</p>
           </div>
         ) : null}
 
-        {/* Filter tabs */}
+        {/* WAI-ARIA Filter tabs */}
         <div role="tablist" aria-label={dict.plan.title} className="mt-4 flex flex-wrap gap-2">
-          {(["all", "routine", "indoor", "swap"] as const).map((key) => (
+          {TAB_KEYS.map((key, idx) => (
             <button
               key={key}
+              id={`plan-tab-${key}`}
+              ref={(el) => {
+                tabRefs.current[key] = el;
+              }}
               type="button"
               role="tab"
               aria-selected={tab === key}
+              aria-controls="plan-tabpanel"
+              tabIndex={tab === key ? 0 : -1}
               onClick={() => setTab(key)}
-              className={`min-h-11 rounded-xl border px-4 py-2 text-sm font-semibold ${
+              onKeyDown={(e) => handleTabKeyDown(e, idx)}
+              className={`min-h-11 rounded-xl border px-4 py-2 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 ${
                 tab === key
                   ? "border-teal-800 bg-teal-800 text-white dark:border-teal-300 dark:bg-teal-300 dark:text-slate-950"
                   : "border-slate-300 text-slate-800 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
@@ -75,7 +115,12 @@ export function PlanView() {
       </section>
 
       {/* Action cards */}
-      <section aria-label={dict.plan.tabs[tab]} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <section
+        id="plan-tabpanel"
+        role="tabpanel"
+        aria-labelledby={`plan-tab-${tab}`}
+        className="grid grid-cols-1 gap-4 md:grid-cols-2"
+      >
         {cards.map((card) => {
           const imp = card.impact;
           const isQuant = imp.kind === "quantified";
@@ -189,7 +234,10 @@ export function PlanView() {
               <h2 className="text-base font-bold">{dict.plan.memberNotesHeading}</h2>
               <ul className="mt-2 space-y-2 text-sm">
                 {plan.memberNotes.map((mn, i) => (
-                  <li key={`${mn.group}-${i}`} className="rounded-lg bg-slate-50 p-2.5 dark:bg-slate-800">
+                  <li
+                    key={`${mn.group}-${i}`}
+                    className="rounded-lg bg-slate-50 p-2.5 dark:bg-slate-800"
+                  >
                     <span className="font-semibold">{dict.groups[mn.group]}: </span>
                     {mn.note}
                   </li>
@@ -217,15 +265,23 @@ export function PlanView() {
       <ChatDrawer profile={activeProfile} context={context} dict={dict} />
 
       {/* Four Myth Cards */}
-      <section aria-labelledby="myths-heading" className="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+      <section
+        aria-labelledby="myths-heading"
+        className="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+      >
         <h2 id="myths-heading" className="text-lg font-bold">
           {dict.plan.mythsHeading}
         </h2>
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {MYTHS.map((m) => (
-            <article key={m.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-950">
+            <article
+              key={m.id}
+              className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-950"
+            >
               <h3 className="text-sm font-bold">{dict.myths[m.id].title}</h3>
-              <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{dict.myths[m.id].fact}</p>
+              <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                {dict.myths[m.id].fact}
+              </p>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{m.source}</p>
             </article>
           ))}

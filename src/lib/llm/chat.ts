@@ -132,8 +132,7 @@ export async function runGroundedChat(args: {
     const normText = trimmed.normalize("NFKC").replace(/\p{Cf}/gu, "");
     const allowedNumbers = collectAllowedChatNumbers(facts, res.toolNumbers);
     const badNums = unfaithfulNumbers(normText, allowedNumbers);
-    const hasLeak =
-      trimmed.includes(PROMPT_CANARY) || normText.includes(PROMPT_CANARY);
+    const hasLeak = trimmed.includes(PROMPT_CANARY) || normText.includes(PROMPT_CANARY);
     const hasBadContent =
       MARKUP_OR_MEDICAL.test(normText) || HI_MEDICAL.some((w) => normText.includes(w));
 

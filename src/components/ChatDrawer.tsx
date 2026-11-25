@@ -29,7 +29,11 @@ export function ChatDrawer({
     if (!trimmed || sending) return;
 
     const history = messages.slice(-6).map((m) => ({ role: m.role, text: m.text }));
-    setMessages((prev) => [...prev, { role: "user", text: trimmed }, { role: "assistant", text: "" }]);
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", text: trimmed },
+      { role: "assistant", text: "" },
+    ]);
     setInput("");
     setSending(true);
 
@@ -128,7 +132,9 @@ export function ChatDrawer({
                   : "mr-6 border border-teal-700/30 bg-teal-50/70 text-slate-950 dark:border-teal-400/30 dark:bg-teal-950/40 dark:text-slate-100"
               }`}
             >
-              <p className="whitespace-pre-wrap">{m.text || (sending ? dict.plan.chatSending : "")}</p>
+              <p className="whitespace-pre-wrap">
+                {m.text || (sending ? dict.plan.chatSending : "")}
+              </p>
               {m.toolUsed ? (
                 <p className="mt-1.5 text-xs font-medium text-teal-900 dark:text-teal-200">
                   {dict.plan.chatToolNote}

@@ -69,7 +69,8 @@ export function trailingNaqi(hours: readonly HourPoint[], nowIndex: number): Naq
   }
   const mean25 = valid25.reduce((s, v) => s + v, 0) / valid25.length;
   const valid10 = slice.map((h) => h.pm10).filter((v) => Number.isFinite(v) && v >= 0);
-  const mean10 = valid10.length >= 16 ? valid10.reduce((s, v) => s + v, 0) / valid10.length : undefined;
+  const mean10 =
+    valid10.length >= 16 ? valid10.reduce((s, v) => s + v, 0) / valid10.length : undefined;
   const result = naqi(mean25, mean10);
   const assumptionUsed =
     Math.round(mean25) > 250 || (mean10 !== undefined && Math.round(mean10) > 430);

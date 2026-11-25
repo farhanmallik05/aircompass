@@ -32,7 +32,14 @@ const SAMPLE_CAR_PROFILE: Profile = {
   lang: "en",
   place: { name: "Greater Noida", lat: 28.47, lon: 77.5, country: "IN" },
   household: { adults: 2, children: 1, seniors: 1, conditions: ["respiratory"] },
-  home: { type: "apartment", windows: "normal", ac: false, purifier: "none", cooking: "lpg", roomAreaM2: 15 },
+  home: {
+    type: "apartment",
+    windows: "normal",
+    ac: false,
+    purifier: "none",
+    cooking: "lpg",
+    roomAreaM2: 15,
+  },
   commute: { mode: "car", km: 12, daysPerWeek: 5 },
   habits: { morningOutdoorExercise: true, schoolRun: true },
   budget: "medium",
@@ -59,8 +66,15 @@ describe("engine properties and ordering invariants", () => {
             cooking: "induction" as const,
             cookVent: false,
           };
-          const withoutN95 = computeExposure(pm25Series, base, { roomAreaM2, commuteKm }).exposureUgM3;
-          const withN95 = computeExposure(pm25Series, { ...base, n95Outdoors: true }, { roomAreaM2, commuteKm }).exposureUgM3;
+          const withoutN95 = computeExposure(pm25Series, base, {
+            roomAreaM2,
+            commuteKm,
+          }).exposureUgM3;
+          const withN95 = computeExposure(
+            pm25Series,
+            { ...base, n95Outdoors: true },
+            { roomAreaM2, commuteKm },
+          ).exposureUgM3;
           const maxOut = Math.max(...pm25Series);
           expect(withN95).toBeLessThanOrEqual(withoutN95 + 1e-9);
           expect(withoutN95).toBeLessThanOrEqual(maxOut + 1e-6);
@@ -100,12 +114,48 @@ describe("engine properties and ordering invariants", () => {
       commute: { mode: "bus", km: 12, daysPerWeek: 5 },
     };
     const busBase = baselineScenario(busProfile);
-    const hepa = evaluateActionImpact(ACTION_BY_ID.buy_hepa_purifier, busProfile, ctx, busBase, windows);
-    const diy = evaluateActionImpact(ACTION_BY_ID.diy_box_fan_filter, busProfile, ctx, busBase, windows);
-    const n95 = evaluateActionImpact(ACTION_BY_ID.n95_for_open_transport, busProfile, ctx, busBase, windows);
-    const exIn = evaluateActionImpact(ACTION_BY_ID.exercise_indoors_when_poor, busProfile, ctx, busBase, windows);
-    const winAir = evaluateActionImpact(ACTION_BY_ID.air_house_in_best_window, busProfile, ctx, busBase, windows);
-    const exShift = evaluateActionImpact(ACTION_BY_ID.shift_exercise_to_best_window, busProfile, ctx, busBase, windows);
+    const hepa = evaluateActionImpact(
+      ACTION_BY_ID.buy_hepa_purifier,
+      busProfile,
+      ctx,
+      busBase,
+      windows,
+    );
+    const diy = evaluateActionImpact(
+      ACTION_BY_ID.diy_box_fan_filter,
+      busProfile,
+      ctx,
+      busBase,
+      windows,
+    );
+    const n95 = evaluateActionImpact(
+      ACTION_BY_ID.n95_for_open_transport,
+      busProfile,
+      ctx,
+      busBase,
+      windows,
+    );
+    const exIn = evaluateActionImpact(
+      ACTION_BY_ID.exercise_indoors_when_poor,
+      busProfile,
+      ctx,
+      busBase,
+      windows,
+    );
+    const winAir = evaluateActionImpact(
+      ACTION_BY_ID.air_house_in_best_window,
+      busProfile,
+      ctx,
+      busBase,
+      windows,
+    );
+    const exShift = evaluateActionImpact(
+      ACTION_BY_ID.shift_exercise_to_best_window,
+      busProfile,
+      ctx,
+      busBase,
+      windows,
+    );
 
     expect(hepa.exposureDeltaUgM3).toBeGreaterThan(diy.exposureDeltaUgM3);
     expect(diy.exposureDeltaUgM3).toBeGreaterThan(n95.exposureDeltaUgM3);

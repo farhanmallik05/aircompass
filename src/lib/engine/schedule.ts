@@ -64,7 +64,11 @@ function commuteLocation(mode: Exclude<CommuteMode, "wfh">): {
     case "two_wheeler":
     case "auto":
     case "bus":
-      return { location: "outdoor_open_transit", v: BREATHING_FACTORS.transitSeated, n95Eligible: true };
+      return {
+        location: "outdoor_open_transit",
+        v: BREATHING_FACTORS.transitSeated,
+        n95Eligible: true,
+      };
   }
 }
 
@@ -141,7 +145,10 @@ export function isHomeHour(h: number, isCommuteDay: boolean, hasCommute: boolean
 }
 
 /** Default all-home-hours purifier schedule for a household profile. */
-export function allHomePurifierHours(commuteMode: CommuteMode, commuteDaysPerWeek: number): number[] {
+export function allHomePurifierHours(
+  commuteMode: CommuteMode,
+  commuteDaysPerWeek: number,
+): number[] {
   const hasCommute = commuteMode !== "wfh" && commuteDaysPerWeek > 0;
   const hours: number[] = [];
   for (let h = 0; h < 24; h++) {

@@ -25,7 +25,12 @@ export function co2eSavedKgPerYear(
   if (!Number.isFinite(daysPerWeek) || daysPerWeek < 0 || daysPerWeek > 7) {
     throw new RangeError(`daysPerWeek must be in [0, 7], got ${daysPerWeek}`);
   }
-  const saved = kmOneWay * 2 * daysPerWeek * WEEKS_PER_YEAR * (emissionFactor(fromMode) - emissionFactor(toMode));
+  const saved =
+    kmOneWay *
+    2 *
+    daysPerWeek *
+    WEEKS_PER_YEAR *
+    (emissionFactor(fromMode) - emissionFactor(toMode));
   return Math.round(saved * 1e6) / 1e6;
 }
 

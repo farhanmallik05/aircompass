@@ -10,13 +10,13 @@
    - `/api/chat` has no tools other than `simulate_scenario` and validates finished replies against `unfaithfulNumbers()` before finalizing.
 4. **Nonce Content Security Policy & Security Headers:**
    - `src/proxy.ts` emits a per-request cryptographic nonce CSP (`script-src 'self' 'nonce-...' 'strict-dynamic'`, `style-src 'self' 'nonce-...'`, `object-src 'none'`, `base-uri 'self'`, `frame-ancestors 'none'`).
-   - `next.config.ts` disables `cacheComponents` and `partialPrefetching` (ADR 0005), disables `poweredByHeader`, and applies `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: geolocation=(self), camera=(), microphone=()`, and `Cross-Origin-Opener-Policy: same-origin` across all routes including `/api/*`.
+   - `next.config.ts` disables `cacheComponents` and `partialPrefetching` (ADR 0005), disables `poweredByHeader`, and applies `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Strict-Transport-Security`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: geolocation=(self), camera=(), microphone=()`, `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Resource-Policy: same-origin`, and strict `/api/*` headers (`X-Robots-Tag: noindex, nofollow`, `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'`).
 5. **Rate Limiting & Cost Caps (Serverless Disclosure):**
-   - `src/lib/security/rateLimit.ts` enforces a SHA-256 hashed-IP token bucket and `DAILY_LLM_CAP` (`default: 200`), degrading cleanly to the deterministic engine plan when exceeded.
+   - `src/lib/security/rateLimit.ts` enforces a SHA-256 hashed-IP token bucket bounded at `MAX_BUCKETS = 10_000` (with stale/oldest eviction against header-spoofing memory exhaustion) and `DAILY_LLM_CAP` (`default: 200`), degrading cleanly to the deterministic engine plan when exceeded.
    - **Plain limitation:** In-memory rate limits and daily counters run **per serverless instance (best-effort)** rather than across globally shared Redis state.
 6. **SSRF & Privacy:**
    - Upstream HTTP calls allow only fixed Open-Meteo origins (`air-quality-api.open-meteo.com`, `api.open-meteo.com`, `geocoding-api.open-meteo.com`) with 5s timeouts.
-   - Zero server-side profile storage or cookies; household profiles stay in browser `localStorage` with a one-click `"Delete my data"` action.
+   - Zero server-side profile storage or cookies; household profiles stay in browser `localStorage` validated at runtime (`src/lib/client/storage.ts`) with a one-click `"Delete my data"` action.
 
 ## STRIDE-Lite Threat Table
 

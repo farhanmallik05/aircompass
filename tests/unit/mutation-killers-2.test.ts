@@ -45,7 +45,13 @@ const WIN: WindowSummary = {
 
 const baseProfile: Profile = {
   ...SAMPLE_FAMILY_PROFILE,
-  home: { ...SAMPLE_FAMILY_PROFILE.home, purifier: "none", cooking: "lpg", windows: "normal", roomAreaM2: 25 },
+  home: {
+    ...SAMPLE_FAMILY_PROFILE.home,
+    purifier: "none",
+    cooking: "lpg",
+    windows: "normal",
+    roomAreaM2: 25,
+  },
   commute: { mode: "car", km: 10, daysPerWeek: 5 },
   budget: "medium",
   household: { adults: 2, children: 1, seniors: 0, conditions: [] },
@@ -81,14 +87,22 @@ describe("select.ts budgetAllows (lines 18-19)", () => {
   });
 
   it("budget='medium' allows cost=2 (buy_hepa_purifier)", () => {
-    const p: Profile = { ...baseProfile, budget: "medium", home: { ...baseProfile.home, purifier: "none" } };
+    const p: Profile = {
+      ...baseProfile,
+      budget: "medium",
+      home: { ...baseProfile.home, purifier: "none" },
+    };
     const ctx = makeCtx(150);
     const cands = selectCandidates(p, ctx, 3 as Level, baselineScenario(p), WIN);
     expect(cands.some((c) => c.id === "buy_hepa_purifier")).toBe(true);
   });
 
   it("budget='low' allows cost=1 but not cost=2 (string equality, not !== 'low')", () => {
-    const p: Profile = { ...baseProfile, budget: "low", home: { ...baseProfile.home, purifier: "none" } };
+    const p: Profile = {
+      ...baseProfile,
+      budget: "low",
+      home: { ...baseProfile.home, purifier: "none" },
+    };
     const ctx = makeCtx(150);
     const cands = selectCandidates(p, ctx, 3 as Level, baselineScenario(p), WIN);
     expect(cands.every((c) => c.cost <= 1)).toBe(true);
@@ -131,7 +145,11 @@ describe("select.ts scoreCandidate internals", () => {
   it("ease = 1 - (cost + effort)/5: high cost+effort → lower ease → lower score for same exposure", () => {
     // diy_box_fan (cost=1, effort=2, ease=0.4) vs damp_mop_dont_sweep (cost=0, effort=1, ease=0.8)
     // Both have zero exposure delta (guidance); ease is 0.1 weight → 0.04 vs 0.08 diff
-    const p: Profile = { ...baseProfile, budget: "medium", home: { ...baseProfile.home, purifier: "none" } };
+    const p: Profile = {
+      ...baseProfile,
+      budget: "medium",
+      home: { ...baseProfile.home, purifier: "none" },
+    };
     const ctx = makeCtx(50);
     const cands = selectCandidates(p, ctx, 2 as Level, baselineScenario(p), WIN);
     const mop = cands.find((c) => c.id === "damp_mop_dont_sweep");
@@ -263,9 +281,14 @@ describe("schedule.ts commuteMode !== 'wfh' (line 80)", () => {
     // wfh mode → no active commute even if isCommuteDay=true and km>0
     const wfhSc = makeSc({ commuteMode: "wfh", commuteDaysPerWeek: 5 });
     const cells = buildDaySchedule(wfhSc, 20, true);
-    const anyOutdoor = cells.flat().some(
-      (s) => s.location === "outdoor_walk" || s.location === "outdoor_cycle" || s.location === "outdoor_open_transit",
-    );
+    const anyOutdoor = cells
+      .flat()
+      .some(
+        (s) =>
+          s.location === "outdoor_walk" ||
+          s.location === "outdoor_cycle" ||
+          s.location === "outdoor_open_transit",
+      );
     expect(anyOutdoor).toBe(false);
   });
 
@@ -293,7 +316,9 @@ describe("schedule.ts speed guard (line 82)", () => {
     // But if the mutant makes it speed >= 0, 0/0 = NaN → check that wfh produces no commute slots
     const wfhSc = makeSc({ commuteMode: "wfh" });
     const cells = buildDaySchedule(wfhSc, 10, true);
-    expect(cells.flat().every((s) => s.location === "home" || s.location === "work_indoor")).toBe(true);
+    expect(cells.flat().every((s) => s.location === "home" || s.location === "work_indoor")).toBe(
+      true,
+    );
   });
 });
 

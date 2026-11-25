@@ -6,7 +6,12 @@ export interface HomeParams {
 }
 
 /** One hour of the single-zone mass balance with constant inputs; exact solution, not Euler. */
-export function stepIndoor(cStart: number, cOut: number, a: number, h: HomeParams): { cEnd: number; cMean: number; cSS: number } {
+export function stepIndoor(
+  cStart: number,
+  cOut: number,
+  a: number,
+  h: HomeParams,
+): { cEnd: number; cMean: number; cSS: number } {
   const lambda = a + h.k + h.q;
   if (!(lambda > 0)) throw new RangeError("a + k + q must be > 0");
   const cSS = (h.P * a * cOut + (h.S ?? 0)) / lambda;

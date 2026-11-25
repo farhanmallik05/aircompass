@@ -1,8 +1,7 @@
 const MAX_BODY_BYTES = 8192;
 
 export type JsonBodyResult =
-  | { ok: true; data: unknown }
-  | { ok: false; status: 400 | 413 | 415; error: string };
+  { ok: true; data: unknown } | { ok: false; status: 400 | 413 | 415; error: string };
 
 /** Enforces JSON content-type and <= 8 KB payload cap before parsing. */
 export async function readBoundedJson(

@@ -6,7 +6,15 @@ import {
   tripChainingCo2eSaved,
 } from "./emissions";
 import { allHomePurifierHours } from "./schedule";
-import type { ActionId, ActionSection, Group, Level, Profile, Scenario, WindowSummary } from "../types";
+import type {
+  ActionId,
+  ActionSection,
+  Group,
+  Level,
+  Profile,
+  Scenario,
+  WindowSummary,
+} from "../types";
 
 export interface ActionDef {
   id: ActionId;

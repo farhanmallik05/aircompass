@@ -21,7 +21,8 @@ function collectLeafKeys(obj: unknown, prefix = ""): Record<string, string> {
   return out;
 }
 
-const placeholdersOf = (s: string) => [...s.matchAll(/\{([a-zA-Z0-9_]+)\}/g)].map((m) => m[1]).sort();
+const placeholdersOf = (s: string) =>
+  [...s.matchAll(/\{([a-zA-Z0-9_]+)\}/g)].map((m) => m[1]).sort();
 
 describe("i18n parity (en vs hi)", () => {
   const enLeaves = collectLeafKeys(en);

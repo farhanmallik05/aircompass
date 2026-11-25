@@ -1,16 +1,16 @@
 # Efficiency & Performance Measurements
 
-Measured on **2026-11-25T17:25:04.240Z** (Node v24.19.0, win32 x64).
+Measured on **2026-11-25T18:56:35.479Z** (Node v24.19.0, win32 x64).
 
 ## Measured Metrics
 
 | Metric | Result | Target / Budget |
 |---|---|---|
-| Deterministic engine (`buildPlanFacts`, 200 runs) | p50: **1.13 ms**, p95: **2.1 ms** | < 5 ms |
-| Fallback planner pipeline (20 runs) | p50: **1.2 ms**, p95: **2.33 ms** | < 10 ms |
-| Live Gemini `generatePlanJson` | **Skipped due to transient API error (fetch failed)** | 1 call (< 12 s timeout) |
-| Compiled `.next/static` JS (total gzipped across all chunks) | **220.4 KB** | No chart lib, self-hosted fonts |
-| Compiled `.next/static` total (raw / gzip) | 896.4 KB / 357.1 KB | Compact asset footprint |
+| Deterministic engine (`buildPlanFacts`, 200 runs) | p50: **1.29 ms**, p95: **2.95 ms** | < 5 ms |
+| Fallback planner pipeline (20 runs) | p50: **1.44 ms**, p95: **4.55 ms** | < 10 ms |
+| Live Gemini `generatePlanJson` | **Skipped due to transient API error (HTTP 429 RESOURCE_EXHAUSTED: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://aistudio.google.com/d)** | 1 call (< 12 s timeout) |
+| Compiled `.next/static` JS (total gzipped across all chunks) | **226.8 KB** | No chart lib, self-hosted fonts |
+| Compiled `.next/static` total (raw / gzip) | 918.7 KB / 363.7 KB | Compact asset footprint |
 
 ## Architectural Efficiency Tactics
 

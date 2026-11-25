@@ -17,7 +17,8 @@ const EPA_PM25 = [
 const truncate1 = (c: number) => Math.floor(c * 10 + 1e-9) / 10;
 
 function assertConc(c: number): void {
-  if (!Number.isFinite(c) || c < 0) throw new RangeError(`PM2.5 must be a finite number >= 0, got ${c}`);
+  if (!Number.isFinite(c) || c < 0)
+    throw new RangeError(`PM2.5 must be a finite number >= 0, got ${c}`);
 }
 
 /** PM2.5 (ug/m3) to US AQI, capped at 500. */

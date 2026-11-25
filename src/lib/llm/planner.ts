@@ -23,7 +23,10 @@ import { findViolations, languageOk, render } from "./guard";
 import { buildPlannerUserPrompt, buildRepairUserPrompt, getPlannerSystemPrompt } from "./prompt";
 import { buildTokens } from "./tokens";
 
-export function buildPlanFacts(profile: Profile, context: AirContext): {
+export function buildPlanFacts(
+  profile: Profile,
+  context: AirContext,
+): {
   facts: PlanFacts;
   baselineScenario: ReturnType<typeof baselineScenario>;
   combinedScenario: ReturnType<typeof baselineScenario>;
@@ -120,7 +123,9 @@ export function validateAndRenderPlanOut(
   if (!zRes.success) {
     return {
       ok: false,
-      violations: zRes.error.issues.slice(0, 4).map((i) => `schema:${i.path.join(".")}:${i.message}`),
+      violations: zRes.error.issues
+        .slice(0, 4)
+        .map((i) => `schema:${i.path.join(".")}:${i.message}`),
     };
   }
 
@@ -205,10 +210,11 @@ export async function generatePlanWithFallback(
   client: LlmClient | null,
   options: { quotaAllowed?: boolean } = {},
 ): Promise<PlanResponse> {
-  const { facts, baselineScenario: base, combinedScenario: combined } = buildPlanFacts(
-    profile,
-    context,
-  );
+  const {
+    facts,
+    baselineScenario: base,
+    combinedScenario: combined,
+  } = buildPlanFacts(profile, context);
   const tokens = buildTokens(facts);
 
   if (!client || options.quotaAllowed === false) {

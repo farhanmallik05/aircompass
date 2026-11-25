@@ -17,7 +17,9 @@ describe("client bundle & source secret hygiene", () => {
     const srcFiles = walkFiles(path.resolve(process.cwd(), "src")).filter((f) =>
       /\.(ts|tsx|js|jsx)$/.test(f),
     );
-    const bad = srcFiles.filter((f) => /NEXT_PUBLIC_.*(?:KEY|SECRET|TOKEN|CANARY)/i.test(readFileSync(f, "utf8")));
+    const bad = srcFiles.filter((f) =>
+      /NEXT_PUBLIC_.*(?:KEY|SECRET|TOKEN|CANARY)/i.test(readFileSync(f, "utf8")),
+    );
     expect(bad).toEqual([]);
   });
 

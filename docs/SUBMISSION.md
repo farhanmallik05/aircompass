@@ -9,10 +9,10 @@
 ---
 
 ## Text A — "Describe the changes/updates made in the deployed version"
-*(≤ 1024 chars — currently 820 chars)*
+*(≤ 1024 chars — verified by `node scripts/check-chars.mjs`)*
 
 ```text
-AirCompass turns winter-smog data into a household plan. (1) Hourly PM2.5/PM10 from Open-Meteo/CAMS with US AQI and India NAQI, plus a labelled recorded severe-winter day so every visitor sees the full flow. (2) A tested engine models indoor air (mass balance), breathing-weighted exposure, CO2e and the best window to go out; every number shows a range and "How we calculated", and trade-offs are shown honestly. (3) Gemini selects and words a plan from 26 actions; a guard blocks any figure the engine did not supply, with a deterministic fallback. (4) What-if chat uses Gemini function calling on the engine. (5) Hindi/English, WCAG 2.2 AA, printable Community Brief. (6) Zod validation, rate limits, nonce CSP, no server-side profiles. 143 tests, 88.26% branch coverage, 91.20% mutation score, 12/12 evals, 9/9 E2E+Axe pass. npm run verify runs lint+types+oracle+tests+evals+build.
+AirCompass turns winter-smog data into a household plan. (1) Hourly PM2.5/PM10 from Open-Meteo/CAMS with US AQI and India NAQI, plus a labelled recorded severe-winter day so every visitor sees the full flow. (2) A tested engine models indoor air (mass balance), breathing-weighted exposure, CO2e and best go-out window; every figure shows a range, "How we calculated", and honest trade-offs. (3) Gemini selects and words 26 actions; a guard blocks un-tokenised numbers with deterministic fallback. (4) What-if chat uses Gemini function calling on the engine. (5) Hindi/English, WCAG 2.2 AA tabs/forms, printable Community Brief. (6) Zod + localStorage schema validation, bounded rate limits, HSTS/CORP + nonce CSP. 158 tests, 96.74% stmts / 90.89% branches / 98.33% fn, 91.20% mutation, 12/12 evals, 10/10 E2E+Axe pass. npm run verify runs format+lint+types+oracle+tests+evals+build.
 ```
 
 ## Text B — "Mention the Gen AI services utilized in the submission, and where did you utilize it?"
@@ -71,15 +71,15 @@ Google Gemini API (@google/genai, gemini-3.6-flash / gemini-3.5-flash fallback),
 
 ## Final Pre-Submission Checklist
 
-- [ ] `npm run verify` green on clean clone
-- [ ] `npm run csp:smoke` green on production build
-- [ ] `npm run mutate` ≥ 85%
-- [ ] `npm run test:e2e` 9/9 green, Axe clean
-- [ ] `npm run eval` 12/12 pass
-- [ ] `node scripts/check-repo-size.mjs` < 10 MB
-- [ ] `node scripts/check-chars.mjs` Text A ≤ 1024, Text B ≤ 1024
-- [ ] Repo public: `gh api repos/farhanmallik05/aircompass --jq '.visibility'` = "public"
-- [ ] No secrets in bundle: `npm run test:coverage` (bundle-secrets.test.ts)
+- [x] `npm run verify` green on clean clone
+- [x] `npm run csp:smoke` green on production build
+- [x] `npm run mutate` ≥ 85% (91.20%)
+- [x] `npm run test:e2e` 10/10 green, Axe clean
+- [x] `npm run eval` 12/12 pass
+- [x] `node scripts/check-repo-size.mjs` < 10 MB
+- [x] `node scripts/check-chars.mjs` Text A ≤ 1024, Text B ≤ 1024
+- [x] Repo public: `gh api repos/farhanmallik05/aircompass --jq '.visibility'` = "public"
+- [x] No secrets in bundle: `npm run test:coverage` (bundle-secrets.test.ts)
 - [ ] Demo video unlisted, captions on
 - [ ] LinkedIn post live with correct URLs
 - [ ] Vercel deployment accessible logged-out

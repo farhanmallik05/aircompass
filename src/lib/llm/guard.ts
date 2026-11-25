@@ -11,26 +11,35 @@ export type Tokens = Record<string, string>;
 
 const TOKEN = /\{\{([a-z0-9_.]+)\}\}/gi;
 /** Terms that legitimately contain digits. Unicode-aware boundaries (\b is ASCII-only and fails next to Devanagari). */
-const ALLOWED_TERMS = /(?<![\p{L}\p{N}])(?:N95|FFP2|PM2\.5|PM10|CO2e|HEPA|MERV-?13)(?![\p{L}\p{N}])/gu;
+const ALLOWED_TERMS =
+  /(?<![\p{L}\p{N}])(?:N95|FFP2|PM2\.5|PM10|CO2e|HEPA|MERV-?13)(?![\p{L}\p{N}])/gu;
 
 const ONE_TO_TWELVE = "(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)";
 const EN_BIG =
   /\b(?:eleven|twelve|(?:thir|four|fif|six|seven|eigh|nine)teen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundreds?|thousands?|millions?|dozens?|half|halves|double[ds]?|triple[ds]?|twice|thrice|quarters?|thirds|fifths|tenths|per ?cent|percent(?:age)?s?)\b/;
-const EN_FRACTION = new RegExp(`\\b${ONE_TO_TWELVE}[- ](?:half|halves|third|thirds|fourth|fourths|fifth|fifths|quarter|quarters|tenth|tenths)\\b`);
+const EN_FRACTION = new RegExp(
+  `\\b${ONE_TO_TWELVE}[- ](?:half|halves|third|thirds|fourth|fourths|fifth|fifths|quarter|quarters|tenth|tenths)\\b`,
+);
 const EN_WITH_UNIT = new RegExp(
   `\\b${ONE_TO_TWELVE}[- ]?(?:o['’]?clock|a\\.?m\\.?|p\\.?m\\.?|hours?|hrs?|minutes?|mins?|days?|weeks?|degrees?)(?![a-z])`,
 );
-const EN_AT_TIME = new RegExp(`\\b(?:at|between|from|until|till|by|around|after|before)\\s+${ONE_TO_TWELVE}\\b`);
+const EN_AT_TIME = new RegExp(
+  `\\b(?:at|between|from|until|till|by|around|after|before)\\s+${ONE_TO_TWELVE}\\b`,
+);
 const UNIT_OR_SIGN = /[%٪﹪％]|µg|μg|\bug\/m|°|\bdegrees? (?:c|f|celsius|fahrenheit)\b/;
 const MARKUP = /<\/?[a-z!][^>]*>|https?:\/\/|www\.|\]\(|javascript:|data:text|&#?\w+;/i;
-const MEDICAL_EN = /\b(?:cures?|cured|curing|diagnos\w*|prescri\w*|dosage|doses?|mg|mcg|ml|antibiotics?|steroids?|guarantee[ds]?|risk-free|(?:completely|totally|100) ?(?:%|percent)? safe)\b/;
+const MEDICAL_EN =
+  /\b(?:cures?|cured|curing|diagnos\w*|prescri\w*|dosage|doses?|mg|mcg|ml|antibiotics?|steroids?|guarantee[ds]?|risk-free|(?:completely|totally|100) ?(?:%|percent)? safe)\b/;
 const MEDICAL_HI = ["इलाज", "खुराक", "गारंटी", "निदान", "नुस्खा"];
 
 const norm = (s: string) => s.normalize("NFKC").replace(/\p{Cf}/gu, "");
 const hiNorm = (s: string) => norm(s).replace(/ँ/g, "ं").toLowerCase(); // chandrabindu -> anusvara
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const hiAny = (words: string[]) =>
-  new RegExp(`(?<![\\p{L}\\p{M}])(?:${words.map((w) => esc(hiNorm(w))).join("|")})(?![\\p{L}\\p{M}])`, "u");
+  new RegExp(
+    `(?<![\\p{L}\\p{M}])(?:${words.map((w) => esc(hiNorm(w))).join("|")})(?![\\p{L}\\p{M}])`,
+    "u",
+  );
 
 const HI_BLOCKED = hiAny([...hiWords.always_blocked]);
 const HI_WITH_UNIT = new RegExp(
@@ -44,7 +53,8 @@ export function findViolations(raw: string, tokens: Tokens): string[] {
   const v: string[] = [];
   const text = norm(raw);
 
-  for (const m of text.matchAll(TOKEN)) if (!(m[1].toLowerCase() in tokens)) v.push(`unknown token: ${m[1]}`);
+  for (const m of text.matchAll(TOKEN))
+    if (!(m[1].toLowerCase() in tokens)) v.push(`unknown token: ${m[1]}`);
 
   const bare = text.replace(TOKEN, " ").replace(ALLOWED_TERMS, " ");
   if (/\{|\}|\$\{|<%/.test(bare)) v.push("malformed placeholder");
@@ -66,24 +76,32 @@ export function findViolations(raw: string, tokens: Tokens): string[] {
 }
 
 /** Substitute tokens after the guard passed. Unknown tokens never reach here. */
-export const render = (t: string, k: Tokens): string => t.replace(TOKEN, (_m, key: string) => k[key.toLowerCase()] ?? "");
+export const render = (t: string, k: Tokens): string =>
+  t.replace(TOKEN, (_m, key: string) => k[key.toLowerCase()] ?? "");
 
 /** Script-level language check (not semantic): Hindi needs mostly Devanagari letters, English almost none. */
 export function languageOk(text: string, lang: "en" | "hi"): boolean {
-  const letters = [...norm(text).replace(TOKEN, " ").replace(ALLOWED_TERMS, " ").matchAll(/\p{L}/gu)].map((m) => m[0]);
+  const letters = [
+    ...norm(text).replace(TOKEN, " ").replace(ALLOWED_TERMS, " ").matchAll(/\p{L}/gu),
+  ].map((m) => m[0]);
   if (letters.length < 20) return true;
   const dev = letters.filter((ch) => /\p{Script=Devanagari}/u.test(ch)).length / letters.length;
   return lang === "hi" ? dev >= 0.5 : dev < 0.05;
 }
 
 /** Chat: every number in the answer must match a number the engine supplied (facts or tool results). */
-export function unfaithfulNumbers(text: string, allowed: readonly number[], tol = { abs: 0.5, rel: 0.01 }): string[] {
+export function unfaithfulNumbers(
+  text: string,
+  allowed: readonly number[],
+  tol = { abs: 0.5, rel: 0.01 },
+): string[] {
   const t = norm(text).replace(ALLOWED_TERMS, " ");
   if (/[\u0966-\u096F\u0660-\u0669]/.test(t)) return ["non-ascii digit"];
   const bad: string[] = [];
   for (const m of t.matchAll(/\d+(?:\.\d+)?/g)) {
     const n = Number(m[0]);
-    if (!allowed.some((a) => Math.abs(a - n) <= Math.max(tol.abs, Math.abs(a) * tol.rel))) bad.push(m[0]);
+    if (!allowed.some((a) => Math.abs(a - n) <= Math.max(tol.abs, Math.abs(a) * tol.rel)))
+      bad.push(m[0]);
   }
   return bad;
 }

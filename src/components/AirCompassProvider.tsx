@@ -32,6 +32,7 @@ interface AirCompassState {
   calibrationPm25: number | null;
   loadingContext: boolean;
   loadingPlan: boolean;
+  planError: string | null;
   hasCustomHousehold: boolean;
   setLang: (lang: Lang) => void;
   setMode: (mode: DataMode) => void;
@@ -58,6 +59,7 @@ export function AirCompassProvider({ children }: { children: React.ReactNode }) 
   const [calibrationPm25, setCalibrationState] = useState<number | null>(null);
   const [loadingContext, setLoadingContext] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState(false);
+  const [planError, setPlanError] = useState<string | null>(null);
   const [deletedMsg, setDeletedMsg] = useState<string | null>(null);
 
   const activeProfile: Profile = profile ?? { ...SAMPLE_FAMILY_PROFILE, lang };
@@ -101,19 +103,26 @@ export function AirCompassProvider({ children }: { children: React.ReactNode }) 
     const cached = loadCachedPlan(fp);
     if (cached) {
       setPlanResponse(cached);
+      setPlanError(null);
       return;
     }
     setLoadingPlan(true);
+    setPlanError(null);
     try {
       const res = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ profile: p, context: ctx }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setPlanError(getDict(p.lang).plan.planFetchError);
+        return;
+      }
       const data = (await res.json()) as PlanResponse;
       saveCachedPlan(fp, data);
       setPlanResponse(data);
+    } catch {
+      setPlanError(getDict(p.lang).plan.planFetchError);
     } finally {
       setLoadingPlan(false);
     }
@@ -229,6 +238,7 @@ export function AirCompassProvider({ children }: { children: React.ReactNode }) 
         calibrationPm25,
         loadingContext,
         loadingPlan,
+        planError,
         hasCustomHousehold: profile !== null,
         setLang,
         setMode,

@@ -50,9 +50,15 @@ export function AirChart({
   const whoY = padT + plotH - (Math.min(15, maxVal) / maxVal) * plotH;
 
   return (
-    <section aria-labelledby="chart-heading" className="rounded-2xl border border-slate-300 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+    <section
+      aria-labelledby="chart-heading"
+      className="rounded-2xl border border-slate-300 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+    >
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h2 id="chart-heading" className="text-base font-semibold text-slate-900 dark:text-slate-100">
+        <h2
+          id="chart-heading"
+          className="text-base font-semibold text-slate-900 dark:text-slate-100"
+        >
           {dict.today.chartTitle}
         </h2>
         <button
@@ -78,7 +84,14 @@ export function AirChart({
             </desc>
 
             {/* Y-axis baseline & max label */}
-            <line x1={padL} y1={padT + plotH} x2={chartW - 8} y2={padT + plotH} stroke="#64748b" strokeWidth="1" />
+            <line
+              x1={padL}
+              y1={padT + plotH}
+              x2={chartW - 8}
+              y2={padT + plotH}
+              stroke="#64748b"
+              strokeWidth="1"
+            />
             <text x={padL - 6} y={padT + 10} textAnchor="end" fontSize="11" fill="currentColor">
               {Math.round(maxVal)}
             </text>
@@ -105,7 +118,7 @@ export function AirChart({
                     height={hPx}
                     rx="3"
                     fill={barFillForLevel(pt.pm25)}
-                    stroke={isBest ? "#0f172a" : "none"}
+                    className={isBest ? "stroke-slate-900 dark:stroke-slate-100" : undefined}
                     strokeWidth={isBest ? "2" : "0"}
                   />
                   {i % 3 === 0 ? (
@@ -129,11 +142,17 @@ export function AirChart({
               y1={whoY}
               x2={chartW - 8}
               y2={whoY}
-              stroke="#0f172a"
+              className="stroke-slate-900 dark:stroke-slate-100"
               strokeWidth="1.5"
               strokeDasharray="5 4"
             />
-            <text x={chartW - 12} y={Math.max(12, whoY - 4)} textAnchor="end" fontSize="11" fill="currentColor">
+            <text
+              x={chartW - 12}
+              y={Math.max(12, whoY - 4)}
+              textAnchor="end"
+              fontSize="11"
+              fill="currentColor"
+            >
               WHO 15 µg/m³
             </text>
           </svg>

@@ -10,7 +10,8 @@ export const MYTHS: readonly MythDef[] = [
   },
   {
     id: "indoor_plants",
-    source: "Cummings & Waring (2020), Journal of Exposure Science & Environmental Epidemiology (CADR comparison)",
+    source:
+      "Cummings & Waring (2020), Journal of Exposure Science & Environmental Epidemiology (CADR comparison)",
   },
   {
     id: "ozone_ionizer",
@@ -18,6 +19,7 @@ export const MYTHS: readonly MythDef[] = [
   },
   {
     id: "air_freshener",
-    source: "Indoor particulate emission studies on incense, mosquito coils, and fragranced aerosols",
+    source:
+      "Indoor particulate emission studies on incense, mosquito coils, and fragranced aerosols",
   },
 ] as const;

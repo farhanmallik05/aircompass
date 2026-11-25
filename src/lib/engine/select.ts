@@ -1,6 +1,15 @@
 import { ACTION_CATALOG, ACTION_BY_ID, type ActionDef } from "./catalog";
 import { evaluateActionImpact } from "./impact";
-import type { ActionSection, CandidateAction, Group, Level, Profile, AirContext, Scenario, WindowSummary } from "../types";
+import type {
+  ActionSection,
+  CandidateAction,
+  Group,
+  Level,
+  Profile,
+  AirContext,
+  Scenario,
+  WindowSummary,
+} from "../types";
 
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
 
@@ -20,7 +29,11 @@ function budgetAllows(budget: Profile["budget"], cost: 0 | 1 | 2): boolean {
   return true;
 }
 
-function scoreCandidate(def: ActionDef, impact: ReturnType<typeof evaluateActionImpact>, groups: readonly Group[]): number {
+function scoreCandidate(
+  def: ActionDef,
+  impact: ReturnType<typeof evaluateActionImpact>,
+  groups: readonly Group[],
+): number {
   const expPct = clamp(impact.exposureDeltaPct, 0, 50) / 50;
   const co2 = Math.min((impact.co2eKgPerYear ?? 0) / 500, 1);
   const matches = def.audience.filter((g) => groups.includes(g)).length;

@@ -25,8 +25,7 @@ async function watch(page: Page) {
   });
   return {
     errors,
-    violations: () =>
-      page.evaluate(() => (window as unknown as { __csp: Violation[] }).__csp),
+    violations: () => page.evaluate(() => (window as unknown as { __csp: Violation[] }).__csp),
   };
 }
 
@@ -44,7 +43,10 @@ test("page hydrates with no CSP violations or console errors", async ({ page }) 
   expect(w.errors, "console/page errors").toEqual([]);
 });
 
-test("every script and style tag carries the response nonce, and nonces are per request", async ({ page, request }) => {
+test("every script and style tag carries the response nonce, and nonces are per request", async ({
+  page,
+  request,
+}) => {
   const a = await request.get("/");
   const b = await request.get("/");
   const na = nonceOf(a.headers()["content-security-policy"]);
@@ -69,16 +71,21 @@ test("client-side navigation works under the CSP", async ({ page }) => {
   expect(w.errors).toEqual([]);
 });
 
-test("CSP is strict: no unsafe-inline/unsafe-eval for scripts in production", async ({ request }) => {
+test("CSP is strict: no unsafe-inline/unsafe-eval for scripts in production", async ({
+  request,
+}) => {
   const csp = (await request.get("/")).headers()["content-security-policy"] ?? "";
   const script = csp.split(";").find((d) => d.trim().startsWith("script-src")) ?? "";
   expect(script).toContain("'strict-dynamic'");
   expect(script).not.toContain("'unsafe-inline'");
   expect(script).not.toContain("'unsafe-eval'");
-  for (const d of ["object-src 'none'", "base-uri 'self'", "frame-ancestors 'none'"]) expect(csp).toContain(d);
+  for (const d of ["object-src 'none'", "base-uri 'self'", "frame-ancestors 'none'"])
+    expect(csp).toContain(d);
 });
 
-test("document responses are not publicly cacheable (a cached nonce would break the page)", async ({ request }) => {
+test("document responses are not publicly cacheable (a cached nonce would break the page)", async ({
+  request,
+}) => {
   const h = (await request.get("/")).headers();
   expect(h["cache-control"] ?? "").not.toMatch(/s-maxage|public/i);
   expect(h["x-vercel-cache"] ?? "", "edge must not serve cached HTML").not.toBe("HIT");
@@ -91,6 +98,11 @@ test("static security headers on pages and API routes", async ({ request }) => {
     expect(h["referrer-policy"], path).toBe("strict-origin-when-cross-origin");
     expect(h["permissions-policy"], path).toContain("camera=()");
     expect(h["cross-origin-opener-policy"], path).toBe("same-origin");
+    expect(h["cross-origin-resource-policy"], path).toBe("same-origin");
+    expect(h["x-frame-options"], path).toBe("DENY");
     expect(h["x-powered-by"], path).toBeUndefined();
   }
+  const apiHeaders = (await request.get("/api/ping")).headers();
+  expect(apiHeaders["x-robots-tag"]).toContain("noindex");
+  expect(apiHeaders["content-security-policy"]).toContain("default-src 'none'");
 });

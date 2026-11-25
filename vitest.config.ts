@@ -7,9 +7,9 @@ export default defineConfig({
     include: ["tests/{golden,security,unit,property,api}/**/*.test.ts"],
     coverage: {
       provider: "v8",
-      include: ["src/lib/**"],
+      include: ["src/lib/**", "src/app/api/**"],
       reporter: ["text-summary", "lcov"],
-      thresholds: { lines: 80, functions: 80, statements: 80, branches: 75 },
+      thresholds: { lines: 92, functions: 92, statements: 92, branches: 85 },
     },
   },
 });

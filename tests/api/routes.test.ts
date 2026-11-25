@@ -9,6 +9,8 @@ import { PROMPT_CANARY } from "@/lib/llm/guard";
 import { POST as planPost } from "@/app/api/plan/route";
 import { POST as chatPost } from "@/app/api/chat/route";
 import { GET as contextGet } from "@/app/api/context/route";
+import { GET as pingGet } from "@/app/api/ping/route";
+import { readBoundedJson } from "@/lib/security/headers";
 import { resetRateLimitsForTest } from "@/lib/security/rateLimit";
 import type { AirContext } from "@/lib/types";
 
@@ -24,9 +26,7 @@ function makeValidMockPlanJson(actionIds: string[]): string {
       when: "Follow across the {{best.start}} to {{best.end}} window.",
       steps: ["Keep doors closed.", "Check air band daily."],
     })),
-    memberNotes: [
-      { group: "child", note: "Keep play indoors while level stays {{level.name}}." },
-    ],
+    memberNotes: [{ group: "child", note: "Keep play indoors while level stays {{level.name}}." }],
     tradeoffs: ["Open transit saves emissions but may raise breathing exposure without N95."],
   });
 }
@@ -135,7 +135,12 @@ describe("API contracts & provider resilience (mocked boundary)", () => {
     // 1. Happy path -> outcome "ai"
     const happyClient: LlmClient = {
       generatePlanJson: async () => ({ rawText: makeValidMockPlanJson(validIds), model: "mock" }),
-      chatWithTools: async () => ({ text: "", toolCallsExecuted: 0, toolNumbers: [], model: "mock" }),
+      chatWithTools: async () => ({
+        text: "",
+        toolCallsExecuted: 0,
+        toolNumbers: [],
+        model: "mock",
+      }),
     };
     const aiRes = await generatePlanWithFallback(SAMPLE_FAMILY_PROFILE, ctx, happyClient);
     expect(aiRes.outcome).toBe("ai");
@@ -154,7 +159,12 @@ describe("API contracts & provider resilience (mocked boundary)", () => {
         }
         return { rawText: makeValidMockPlanJson(validIds), model: "mock" };
       },
-      chatWithTools: async () => ({ text: "", toolCallsExecuted: 0, toolNumbers: [], model: "mock" }),
+      chatWithTools: async () => ({
+        text: "",
+        toolCallsExecuted: 0,
+        toolNumbers: [],
+        model: "mock",
+      }),
     };
     const repRes = await generatePlanWithFallback(SAMPLE_FAMILY_PROFILE, ctx, repairClient);
     expect(repRes.outcome).toBe("repaired");
@@ -164,8 +174,14 @@ describe("API contracts & provider resilience (mocked boundary)", () => {
     const badModes: Array<{ name: string; fn: () => Promise<string> }> = [
       { name: "invalid json", fn: async () => "{not json" },
       { name: "wrong schema", fn: async () => JSON.stringify({ headline: "only" }) },
-      { name: "unknown actionId", fn: async () => makeValidMockPlanJson(["invented_action", ...validIds.slice(1)]) },
-      { name: "raw digits twice", fn: async () => makeValidMockPlanJson(validIds).replace("Reduces", "Cuts 88") },
+      {
+        name: "unknown actionId",
+        fn: async () => makeValidMockPlanJson(["invented_action", ...validIds.slice(1)]),
+      },
+      {
+        name: "raw digits twice",
+        fn: async () => makeValidMockPlanJson(validIds).replace("Reduces", "Cuts 88"),
+      },
       {
         name: "wrong language (hi text on en)",
         fn: async () =>
@@ -175,14 +191,27 @@ describe("API contracts & provider resilience (mocked boundary)", () => {
           ),
       },
       { name: "empty", fn: async () => "" },
-      { name: "canary leak", fn: async () => makeValidMockPlanJson(validIds).replace("Reduces", PROMPT_CANARY) },
-      { name: "timeout throw", fn: async () => { throw new Error("TimeoutError"); } },
+      {
+        name: "canary leak",
+        fn: async () => makeValidMockPlanJson(validIds).replace("Reduces", PROMPT_CANARY),
+      },
+      {
+        name: "timeout throw",
+        fn: async () => {
+          throw new Error("TimeoutError");
+        },
+      },
     ];
 
     for (const mode of badModes) {
       const badClient: LlmClient = {
         generatePlanJson: async () => ({ rawText: await mode.fn(), model: "mock" }),
-        chatWithTools: async () => ({ text: "", toolCallsExecuted: 0, toolNumbers: [], model: "mock" }),
+        chatWithTools: async () => ({
+          text: "",
+          toolCallsExecuted: 0,
+          toolNumbers: [],
+          model: "mock",
+        }),
       };
       const res = await generatePlanWithFallback(SAMPLE_FAMILY_PROFILE, ctx, badClient);
       expect(res.outcome, mode.name).toBe("fallback");
@@ -268,5 +297,55 @@ describe("API contracts & provider resilience (mocked boundary)", () => {
     );
     expect(chatRes.status).toBe(200);
     expect(chatRes.headers.get("content-type")).toContain("text/event-stream");
+    const sseText = await chatRes.text();
+    expect(sseText).toContain("event: done");
+
+    const pingRes = await pingGet();
+    expect(pingRes.status).toBe(200);
+    expect(await pingRes.json()).toEqual({ ok: true });
+
+    const calDemoRes = await contextGet(
+      new Request(
+        "http://localhost/api/context?lat=28.5&lon=77.3&name=Noida&country=IN&mode=demo&observedPm25=220",
+      ),
+    );
+    expect(calDemoRes.status).toBe(200);
+    const calBody = (await calDemoRes.json()) as { context: AirContext };
+    expect(calBody.context.calibrationFactor).toBeDefined();
+
+    // Upstream outage on live context falls back cleanly to demo fixture
+    const origFetch = globalThis.fetch;
+    globalThis.fetch = (async () => {
+      throw new Error("network down");
+    }) as typeof fetch;
+    try {
+      const liveFallback = await contextGet(
+        new Request("http://localhost/api/context?lat=28.5&lon=77.3&mode=live"),
+      );
+      expect(liveFallback.status).toBe(200);
+      const fbBody = (await liveFallback.json()) as { upstreamFallback?: boolean };
+      expect(fbBody.upstreamFallback).toBe(true);
+    } finally {
+      globalThis.fetch = origFetch;
+    }
+
+    // readBoundedJson malformed JSON + oversized Content-Length
+    const badJson = await readBoundedJson(
+      new Request("http://localhost/api/plan", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: "{bad json",
+      }),
+    );
+    expect(badJson).toMatchObject({ ok: false, status: 400 });
+
+    const bigHeader = await readBoundedJson(
+      new Request("http://localhost/api/plan", {
+        method: "POST",
+        headers: { "content-type": "application/json", "content-length": "99999" },
+        body: "{}",
+      }),
+    );
+    expect(bigHeader).toMatchObject({ ok: false, status: 413 });
   });
 });

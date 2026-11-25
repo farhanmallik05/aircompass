@@ -3,8 +3,8 @@
 > **GenAI-powered urban air-quality planner for Indian families** — Hack2skill PromptWars Virtual Challenge 06
 
 [![CI](https://img.shields.io/badge/verify-passing-brightgreen)](#verification-evidence)
-[![Tests](https://img.shields.io/badge/tests-143%20passing-brightgreen)](#verification-evidence)
-[![Coverage](https://img.shields.io/badge/branches-88.26%25-green)](#verification-evidence)
+[![Tests](https://img.shields.io/badge/tests-158%20passing-brightgreen)](#verification-evidence)
+[![Coverage](https://img.shields.io/badge/branches-90.89%25-green)](#verification-evidence)
 [![Mutation](https://img.shields.io/badge/mutation-91.20%25-blue)](#verification-evidence)
 [![WCAG](https://img.shields.io/badge/WCAG-2.2AA-blue)](#accessibility)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
@@ -81,7 +81,7 @@ Browser ──► Next.js 16 App Router (src/app/)
               └── security/      ← headers.ts, rateLimit.ts, sanitize.ts
 ```
 
-**Security:** Per-request cryptographic nonce CSP (`src/proxy.ts`) with strict `script-src` (no `unsafe-inline`/`unsafe-eval` scripts); Zod isolated server-side so client bundles never trigger JIT `eval`; `GEMINI_API_KEY` server-only; per-IP rate limiting + daily LLM cap; localStorage-only household profiles (one-click `"Delete my data"`).
+**Security:** Per-request cryptographic nonce CSP (`src/proxy.ts`) with strict `script-src` (no `unsafe-inline`/`unsafe-eval` scripts); HSTS, `X-Frame-Options: DENY`, `Cross-Origin-Resource-Policy: same-origin`, and strict `/api/*` headers (`next.config.ts`); Zod isolated server-side so client bundles never trigger JIT `eval`; `GEMINI_API_KEY` server-only; bounded hashed-IP rate limiting + daily LLM cap; schema-validated localStorage-only household profiles (one-click `"Delete my data"`).
 
 ---
 
@@ -91,20 +91,20 @@ All metrics below were measured locally on this repository (`npm run verify`, `n
 
 | Metric | Measured value | Command |
 |---|---|---|
-| Unit + integration tests | **143 / 143 pass** (10 files) | `npm run test:coverage` |
-| Statement / Line coverage | **84.72 %** (2341 / 2763) | `npm run test:coverage` |
-| Branch coverage | **88.26 %** (609 / 690) | `npm run test:coverage` |
-| Function coverage | **91.61 %** (142 / 155) | `npm run test:coverage` |
+| Unit + integration tests | **158 / 158 pass** (13 files) | `npm run test:coverage` |
+| Statement / Line coverage | **96.74 %** (2998 / 3099 across `src/lib/**` + `src/app/api/**`) | `npm run test:coverage` |
+| Branch coverage | **90.89 %** (888 / 977) | `npm run test:coverage` |
+| Function coverage | **98.33 %** (177 / 180) | `npm run test:coverage` |
 | Mutation score (Stryker) | **91.20 %** overall (engine **90.93 %**, guard **94.55 %**) | `npm run mutate` |
 | AI persona evals | **12 / 12 pass** (`I1–I12`, demo fixtures) | `npm run eval` |
-| E2E Playwright flows | **9 / 9 pass** | `npm run test:e2e` |
+| E2E Playwright flows | **10 / 10 pass** | `npm run test:e2e` |
 | CSP & security header gate | **6 / 6 pass** (production build) | `npm run csp:smoke` |
 | WCAG 2.2 AA Axe audit | **0 violations** (4 routes × 2 langs × 2 themes + 320 px reflow) | `npm run test:e2e` |
 | Golden oracle integrity | `golden.json matches oracle` | `npm run oracle:check` |
 | Production dependency audit | **0 vulnerabilities** (`--omit=dev --audit-level=high`) | `npm audit --omit=dev --audit-level=high` |
-| Engine p50 / p95 latency | **1.13 ms / 2.10 ms** (200 runs) | `npm run measure` |
-| Gzipped `.next/static` JS | **220.4 KB** (no chart library, self-hosted fonts) | `npm run measure` |
-| Tracked repository size | **1.17 MB** (137 files, `< 10 MB` limit) | `node scripts/check-repo-size.mjs` |
+| Engine p50 / p95 latency | **1.29 ms / 2.95 ms** (200 runs) | `npm run measure` |
+| Gzipped `.next/static` JS | **226.8 KB** (no chart library, self-hosted fonts) | `npm run measure` |
+| Tracked repository size | **2.65 MB** (`< 10 MB` limit) | `node scripts/check-repo-size.mjs` |
 | Secrets in built bundle | **0** | `npm run test:coverage` |
 
 ---

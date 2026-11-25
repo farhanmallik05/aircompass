@@ -9,7 +9,13 @@
 import { describe, it, expect } from "vitest";
 
 // ── guard.ts survivors ─────────────────────────────────────────────────────
-import { findViolations, languageOk, unfaithfulNumbers, render, PROMPT_CANARY } from "@/lib/llm/guard";
+import {
+  findViolations,
+  languageOk,
+  unfaithfulNumbers,
+  render,
+  PROMPT_CANARY,
+} from "@/lib/llm/guard";
 
 describe("guard.ts mutation killers", () => {
   it("hiNorm uses toLowerCase (not toUpperCase) — chandrabindu normalisation", () => {
@@ -139,7 +145,13 @@ describe("select.ts mutation killers", () => {
       budget: "zero",
     };
     const ctx = makeCtx24(50);
-    const cands = selectCandidates(zeroCostProfile, ctx, 2 as Level, baselineScenario(zeroCostProfile), DEFAULT_WIN);
+    const cands = selectCandidates(
+      zeroCostProfile,
+      ctx,
+      2 as Level,
+      baselineScenario(zeroCostProfile),
+      DEFAULT_WIN,
+    );
     // All candidates must have cost=0 (budget=zero enforces this)
     expect(cands.every((c) => c.cost === 0)).toBe(true);
     // Scores must be between -0.2 and 1.0 (clamped at both ends)
@@ -167,7 +179,13 @@ describe("select.ts mutation killers", () => {
   it("budget=low allows cost<=1 but not cost=2 (not cost<1 or cost<2)", () => {
     const lowProfile: Profile = { ...baseProfile, budget: "low" };
     const ctx = makeCtx24(150);
-    const cands = selectCandidates(lowProfile, ctx, 3 as Level, baselineScenario(lowProfile), DEFAULT_WIN);
+    const cands = selectCandidates(
+      lowProfile,
+      ctx,
+      3 as Level,
+      baselineScenario(lowProfile),
+      DEFAULT_WIN,
+    );
     // No cost-2 items (buy_hepa_purifier cost=2 must be excluded)
     expect(cands.every((c) => c.cost <= 1)).toBe(true);
     // But cost=1 items ARE allowed
@@ -175,10 +193,24 @@ describe("select.ts mutation killers", () => {
   });
 
   it("long commute co2e score > short commute co2e score by >= 0.15 for commute_to_public_transport", () => {
-    const short: Profile = { ...baseProfile, commute: { mode: "car", km: 2, daysPerWeek: 3 }, budget: "medium" };
-    const long: Profile = { ...baseProfile, commute: { mode: "car", km: 12, daysPerWeek: 5 }, budget: "medium" };
+    const short: Profile = {
+      ...baseProfile,
+      commute: { mode: "car", km: 2, daysPerWeek: 3 },
+      budget: "medium",
+    };
+    const long: Profile = {
+      ...baseProfile,
+      commute: { mode: "car", km: 12, daysPerWeek: 5 },
+      budget: "medium",
+    };
     const ctx = makeCtx24(200);
-    const shortCands = selectCandidates(short, ctx, 3 as Level, baselineScenario(short), DEFAULT_WIN);
+    const shortCands = selectCandidates(
+      short,
+      ctx,
+      3 as Level,
+      baselineScenario(short),
+      DEFAULT_WIN,
+    );
     const longCands = selectCandidates(long, ctx, 3 as Level, baselineScenario(long), DEFAULT_WIN);
     const shortScore = shortCands.find((c) => c.id === "commute_to_public_transport")?.score ?? -99;
     const longScore = longCands.find((c) => c.id === "commute_to_public_transport")?.score ?? -99;
@@ -187,7 +219,13 @@ describe("select.ts mutation killers", () => {
 
   it("selectFallbackOrder returns at most 7 items", () => {
     const ctx = makeCtx24(150);
-    const cands = selectCandidates(baseProfile, ctx, 3 as Level, baselineScenario(baseProfile), DEFAULT_WIN);
+    const cands = selectCandidates(
+      baseProfile,
+      ctx,
+      3 as Level,
+      baselineScenario(baseProfile),
+      DEFAULT_WIN,
+    );
     expect(selectFallbackOrder(cands).length).toBeLessThanOrEqual(7);
   });
 
@@ -199,7 +237,13 @@ describe("select.ts mutation killers", () => {
       commute: { mode: "car", km: 10, daysPerWeek: 5 },
       habits: { morningOutdoorExercise: false, schoolRun: false },
     };
-    const cands = selectCandidates(noExercise, ctx, 4 as Level, baselineScenario(noExercise), DEFAULT_WIN);
+    const cands = selectCandidates(
+      noExercise,
+      ctx,
+      4 as Level,
+      baselineScenario(noExercise),
+      DEFAULT_WIN,
+    );
     const pt = cands.find((c) => c.id === "commute_to_public_transport");
     if (pt && pt.tradeoff) {
       expect(pt.mitigation).toBe("n95_for_open_transport");
@@ -212,7 +256,12 @@ describe("select.ts mutation killers", () => {
 });
 
 // ── schedule.ts survivors ──────────────────────────────────────────────────
-import { buildDaySchedule, isHomeHour, allHomePurifierHours, COMMUTE_SPEED_KMH } from "@/lib/engine/schedule";
+import {
+  buildDaySchedule,
+  isHomeHour,
+  allHomePurifierHours,
+  COMMUTE_SPEED_KMH,
+} from "@/lib/engine/schedule";
 import type { Scenario } from "@/lib/types";
 
 function makeScenario(overrides: Partial<Scenario> = {}): Scenario {
@@ -243,7 +292,9 @@ describe("schedule.ts mutation killers", () => {
     // wfh mode → no commute slots
     const wfhSc = makeScenario({ commuteMode: "wfh" });
     const wfhDay = buildDaySchedule(wfhSc, 10, true);
-    const wfhSlots8 = wfhDay[8].filter((s) => s.location === "outdoor_walk" || s.location === "car_cabin");
+    const wfhSlots8 = wfhDay[8].filter(
+      (s) => s.location === "outdoor_walk" || s.location === "car_cabin",
+    );
     expect(wfhSlots8).toHaveLength(0);
 
     // isCommuteDay=false → no commute slots
@@ -350,7 +401,10 @@ describe("exposure.ts mutation killers", () => {
   };
 
   it("h >= 0 && h <= 23 guard: timestamp T99:00 falls back to index-based clock hour", () => {
-    const badTs = Array.from({ length: 24 }, (_, i) => `2026-11-20T99:${String(i).padStart(2, "0")}`);
+    const badTs = Array.from(
+      { length: 24 },
+      (_, i) => `2026-11-20T99:${String(i).padStart(2, "0")}`,
+    );
     // Should not throw — uses fallback index
     const result = computeExposure(Array(24).fill(100), baseSc, {
       roomAreaM2: 25,
@@ -388,7 +442,10 @@ describe("exposure.ts mutation killers", () => {
       purifier: "hepa",
       purifierHours: Array.from({ length: 24 }, (_, i) => i),
     };
-    const withFilter = computeExposure(Array(24).fill(200), withHepa, { roomAreaM2: 25, commuteKm: 0 });
+    const withFilter = computeExposure(Array(24).fill(200), withHepa, {
+      roomAreaM2: 25,
+      commuteKm: 0,
+    });
     expect(withFilter.exposureUgM3).toBeLessThan(noFilter.exposureUgM3);
   });
 
@@ -534,7 +591,13 @@ describe("impact.ts mutation killers", () => {
 
   const wfhProfile: Profile = {
     ...SAMPLE_FAMILY_PROFILE,
-    home: { ...SAMPLE_FAMILY_PROFILE.home, purifier: "none", cooking: "induction", windows: "sealed", roomAreaM2: 25 },
+    home: {
+      ...SAMPLE_FAMILY_PROFILE.home,
+      purifier: "none",
+      cooking: "induction",
+      windows: "sealed",
+      roomAreaM2: 25,
+    },
     commute: { mode: "wfh", km: 0, daysPerWeek: 0 },
     budget: "medium",
     household: { adults: 2, children: 0, seniors: 0, conditions: [] },
@@ -581,8 +644,16 @@ describe("impact.ts mutation killers", () => {
     const ctx = makeCtxWith(100);
     const series = next24Series(ctx);
 
-    const beforeCons = computeExposure(series.pm25, sc, { roomAreaM2: 25, commuteKm: 0, params: conservative }).exposureUgM3;
-    const beforeOpt = computeExposure(series.pm25, sc, { roomAreaM2: 25, commuteKm: 0, params: optimistic }).exposureUgM3;
+    const beforeCons = computeExposure(series.pm25, sc, {
+      roomAreaM2: 25,
+      commuteKm: 0,
+      params: conservative,
+    }).exposureUgM3;
+    const beforeOpt = computeExposure(series.pm25, sc, {
+      roomAreaM2: 25,
+      commuteKm: 0,
+      params: optimistic,
+    }).exposureUgM3;
     expect(beforeCons).toBeGreaterThan(beforeOpt);
   });
 
@@ -597,7 +668,13 @@ describe("impact.ts mutation killers", () => {
   it("guidance kind: actions without edit() return kind='guidance' and zero delta", () => {
     const ctx = makeCtxWith(150);
     const sc = baselineScenario(wfhProfile);
-    const impact = evaluateActionImpact(ACTION_BY_ID.damp_mop_dont_sweep, wfhProfile, ctx, sc, DEFAULT_WIN);
+    const impact = evaluateActionImpact(
+      ACTION_BY_ID.damp_mop_dont_sweep,
+      wfhProfile,
+      ctx,
+      sc,
+      DEFAULT_WIN,
+    );
     expect(impact.kind).toBe("guidance");
     expect(impact.exposureDeltaUgM3).toBe(0);
     expect(impact.exposureDeltaPct).toBe(0);
@@ -616,7 +693,13 @@ describe("impact.ts mutation killers", () => {
   it("exposureRangeUgM3: [min, max] from 3 param sets — conservative gives max delta", () => {
     const ctx = makeCtxWith(200, 0);
     const p: Profile = { ...wfhProfile, home: { ...wfhProfile.home, purifier: "none" } };
-    const impact = evaluateActionImpact(ACTION_BY_ID.buy_hepa_purifier, p, ctx, baselineScenario(p), DEFAULT_WIN);
+    const impact = evaluateActionImpact(
+      ACTION_BY_ID.buy_hepa_purifier,
+      p,
+      ctx,
+      baselineScenario(p),
+      DEFAULT_WIN,
+    );
     expect(impact.exposureRangeUgM3[0]).toBeLessThanOrEqual(impact.exposureRangeUgM3[1]);
     expect(impact.exposureRangeUgM3[1]).toBeGreaterThan(0);
   });
@@ -644,15 +727,21 @@ describe("catalog.ts mutation killers — appliesIf boolean literals", () => {
   });
 
   it("community_no_burning appliesIf returns exactly true", () => {
-    expect(ACTION_BY_ID.community_no_burning.appliesIf(baseProfile, 2 as Level, DEFAULT_WIN)).toBe(true);
+    expect(ACTION_BY_ID.community_no_burning.appliesIf(baseProfile, 2 as Level, DEFAULT_WIN)).toBe(
+      true,
+    );
   });
 
   it("society_dust_and_diesel_audit appliesIf returns exactly true", () => {
-    expect(ACTION_BY_ID.society_dust_and_diesel_audit.appliesIf(baseProfile, 2 as Level, DEFAULT_WIN)).toBe(true);
+    expect(
+      ACTION_BY_ID.society_dust_and_diesel_audit.appliesIf(baseProfile, 2 as Level, DEFAULT_WIN),
+    ).toBe(true);
   });
 
   it("share_community_brief appliesIf returns exactly true", () => {
-    expect(ACTION_BY_ID.share_community_brief.appliesIf(baseProfile, 2 as Level, DEFAULT_WIN)).toBe(true);
+    expect(ACTION_BY_ID.share_community_brief.appliesIf(baseProfile, 2 as Level, DEFAULT_WIN)).toBe(
+      true,
+    );
   });
 
   it("wfh_on_worst_day: daysPerWeek >= 3 (not > 3) and level >= 4", () => {

@@ -62,8 +62,7 @@ export function evaluateActionImpact(
       params,
     }).exposureUgM3;
     const rawDelta = before - after;
-    const cappedDelta =
-      rawDelta > 0 && before > 0 ? Math.min(rawDelta, before * 0.8) : rawDelta;
+    const cappedDelta = rawDelta > 0 && before > 0 ? Math.min(rawDelta, before * 0.8) : rawDelta;
     deltas.push(cappedDelta);
     if (params.name === BASE_PARAMS.name) {
       baseBefore = before;
@@ -101,7 +100,8 @@ export function buildCombinedScenario(
   let current = { ...baseScenario };
   for (const def of defs) {
     // Do not auto-apply an exposure-worsening commute swap into the combined indoor/protective baseline
-    if (def.id === "commute_to_public_transport" || def.id === "walk_or_cycle_short_trips") continue;
+    if (def.id === "commute_to_public_transport" || def.id === "walk_or_cycle_short_trips")
+      continue;
     if (def.edit) current = def.edit(current, profile, windows);
   }
   return current;

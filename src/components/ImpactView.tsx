@@ -30,8 +30,7 @@ export function ImpactView() {
   const simScenario: Scenario = {
     ...base,
     purifier,
-    purifierHours:
-      purifier === "none" ? [] : allHomePurifierHours(commuteMode, commuteDays),
+    purifierHours: purifier === "none" ? [] : allHomePurifierHours(commuteMode, commuteDays),
     windowsOpenHours: bestWindowsOnly
       ? windows.noGoodWindow
         ? []
@@ -62,8 +61,12 @@ export function ImpactView() {
   const cigs = cigaretteEquivalentPerDay(afterUg);
   const perHouseholdCo2 = Math.max(
     0,
-    co2eSavedKgPerYear(activeProfile.commute.km, activeProfile.commute.daysPerWeek, activeProfile.commute.mode, "wfh") -
-      co2eSavedKgPerYear(activeProfile.commute.km, commuteDays, commuteMode, "wfh"),
+    co2eSavedKgPerYear(
+      activeProfile.commute.km,
+      activeProfile.commute.daysPerWeek,
+      activeProfile.commute.mode,
+      "wfh",
+    ) - co2eSavedKgPerYear(activeProfile.commute.km, commuteDays, commuteMode, "wfh"),
   );
   const communityCo2 = Math.round(households * perHouseholdCo2);
 
@@ -97,7 +100,10 @@ export function ImpactView() {
             <p className="text-xs font-semibold uppercase text-teal-900 dark:text-teal-200">
               {dict.impact.afterLabel}
             </p>
-            <p className="mt-1 text-3xl font-extrabold tabular-nums text-teal-950 dark:text-white" data-testid="impact-after-ugm3">
+            <p
+              className="mt-1 text-3xl font-extrabold tabular-nums text-teal-950 dark:text-white"
+              data-testid="impact-after-ugm3"
+            >
               {afterUg.toFixed(1)} <span className="text-base font-normal">µg/m³</span>{" "}
               <span className="text-sm font-semibold">
                 ({delta >= 0 ? `-${pct}%` : `+${Math.abs(pct)}%`})
@@ -112,7 +118,10 @@ export function ImpactView() {
       </section>
 
       {/* What-if interactive controls */}
-      <section aria-labelledby="whatif-heading" className="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+      <section
+        aria-labelledby="whatif-heading"
+        className="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+      >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 id="whatif-heading" className="text-lg font-bold">
             {dict.impact.controlsHeading}
@@ -221,7 +230,10 @@ export function ImpactView() {
       </section>
 
       {/* Community Multiplier */}
-      <section aria-labelledby="community-heading" className="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+      <section
+        aria-labelledby="community-heading"
+        className="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+      >
         <h2 id="community-heading" className="text-lg font-bold">
           {dict.impact.communityHeading}
         </h2>

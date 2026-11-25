@@ -10,6 +10,7 @@ export function BriefView() {
   const { lang, activeProfile, context, planResponse } = useAirCompass();
   const dict = getDict(lang);
   const [copied, setCopied] = useState(false);
+  const [copyErr, setCopyErr] = useState(false);
 
   const nowIdx = Math.max(0, Math.min(context.nowIndex, context.hours.length - 1));
   const mean24 = next24hMeanPm25(context.hours, nowIdx);
@@ -26,9 +27,17 @@ export function BriefView() {
   ].join("\n");
 
   async function handleCopy() {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
+    setCopyErr(false);
+    setCopied(false);
+    try {
+      if (typeof navigator === "undefined" || !navigator.clipboard) {
+        setCopyErr(true);
+        return;
+      }
       await navigator.clipboard.writeText(shareText);
       setCopied(true);
+    } catch {
+      setCopyErr(true);
     }
   }
 
@@ -69,8 +78,17 @@ export function BriefView() {
       </div>
 
       {copied ? (
-        <p role="status" aria-live="polite" className="text-sm font-semibold text-teal-800 dark:text-teal-300">
+        <p
+          role="status"
+          aria-live="polite"
+          className="text-sm font-semibold text-teal-800 dark:text-teal-300"
+        >
           {dict.brief.copiedToast}
+        </p>
+      ) : null}
+      {copyErr ? (
+        <p role="alert" className="text-sm font-semibold text-rose-700 dark:text-rose-300">
+          {dict.brief.copyError}
         </p>
       ) : null}
 
@@ -103,10 +121,20 @@ export function BriefView() {
         <section>
           <h3 className="text-base font-bold">{dict.brief.rwaChecklistTitle}</h3>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
-            <li>{dict.actions.community_no_burning.title} — {dict.actions.community_no_burning.why}</li>
-            <li>{dict.actions.society_dust_and_diesel_audit.title} — {dict.actions.society_dust_and_diesel_audit.why}</li>
-            <li>{dict.actions.child_play_indoors_when_poor.title} — {dict.actions.child_play_indoors_when_poor.why}</li>
-            <li>{dict.actions.no_idling.title} — {dict.actions.no_idling.why}</li>
+            <li>
+              {dict.actions.community_no_burning.title} — {dict.actions.community_no_burning.why}
+            </li>
+            <li>
+              {dict.actions.society_dust_and_diesel_audit.title} —{" "}
+              {dict.actions.society_dust_and_diesel_audit.why}
+            </li>
+            <li>
+              {dict.actions.child_play_indoors_when_poor.title} —{" "}
+              {dict.actions.child_play_indoors_when_poor.why}
+            </li>
+            <li>
+              {dict.actions.no_idling.title} — {dict.actions.no_idling.why}
+            </li>
           </ul>
         </section>
 
