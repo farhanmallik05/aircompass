@@ -66,8 +66,8 @@
 > "The Impact Simulator uses a one-compartment indoor ODE model.
 > Physics-based. Peer-reviewed parameters.
 > 
-> It tells you: *before* your plan, you breathe the equivalent of 3 cigarettes a day.
-> *After* your plan, you breathe the equivalent of 1.2.
+> It tells you: *before* your plan, ~5.3 cigarette-equivalents a day (117.5 µg/m³).
+> *After* adding filtration, N95, indoor exercise, and metro commute: ~2.4 (52.9 µg/m³, down 55%).
 > That's not AI guessing. That's ODE integration."
 
 *[Show test run or terminal output — 143 tests, 91% mutation]*
@@ -77,7 +77,7 @@
 > - **91.2% mutation score** — Stryker verified every assertion
 > - **WCAG 2.2 AA** accessible — zero Axe violations
 > - **Nonce CSP** security — Playwright e2e tested in production build
-> - **1.28 MB repo** — ships fast, runs fast"
+> - **2.65 MB repo** — well under the 10 MB limit, runs fast"
 
 ---
 
@@ -124,7 +124,7 @@
 > **Live Demo:** [your-vercel-url]
 >
 > Built with:
-> → **Next.js 15** + TypeScript
+> → **Next.js 16** + TypeScript
 > → **Google Gemini** via Gemini API
 > → **Open-Meteo** for real-time AQI
 > → **Google Antigravity** as my AI coding partner
