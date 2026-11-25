@@ -1,0 +1,81 @@
+{
+  "_meta": {
+    "source": "US EPA PM2.5 AQI 2024 revision (40 CFR Part 58 App. G) guidance adaptation",
+    "verifiedOn": "2026-11-25",
+    "note": "Calm, non-alarmist guidance; L0-L1 never advises avoiding routine daily life."
+  },
+  "levels": [
+    {
+      "level": 0,
+      "band": { "en": "Good", "hi": "अच्छी" },
+      "everyone": {
+        "en": "Normal activity; air the house",
+        "hi": "सामान्य गतिविधि जारी रखें; घर में हवा आने दें"
+      },
+      "sensitive": {
+        "en": "Normal activity",
+        "hi": "सामान्य गतिविधि"
+      }
+    },
+    {
+      "level": 1,
+      "band": { "en": "Moderate", "hi": "संतोषजनक" },
+      "everyone": {
+        "en": "Normal activity",
+        "hi": "सामान्य गतिविधि"
+      },
+      "sensitive": {
+        "en": "Unusually sensitive people: consider shorter or lighter outdoor exertion",
+        "hi": "अधिक संवेदनशील लोग बाहर भारी व्यायाम कुछ कम या छोटा रखने पर विचार करें"
+      }
+    },
+    {
+      "level": 2,
+      "band": { "en": "Sensitive", "hi": "संवेदनशील समूहों के लिए अस्वस्थ" },
+      "everyone": {
+        "en": "Normal activity; shorten very intense outdoor exertion",
+        "hi": "सामान्य गतिविधि; बहुत तीव्र बाहरी व्यायाम थोड़ा छोटा रखें"
+      },
+      "sensitive": {
+        "en": "Limit prolonged outdoor exertion; keep windows shut at peak hours",
+        "hi": "लंबे समय तक बाहर मेहनत सीमित करें; चरम घंटों में खिड़कियाँ बंद रखें"
+      }
+    },
+    {
+      "level": 3,
+      "band": { "en": "Unhealthy", "hi": "अस्वस्थ" },
+      "everyone": {
+        "en": "Reduce prolonged outdoor exertion; wear N95 for open-transport commutes",
+        "hi": "बाहर लंबी मेहनत कम करें; खुले परिवहन के सफ़र में N95 पहनें"
+      },
+      "sensitive": {
+        "en": "Avoid outdoor exertion; choose indoor activities; wear N95 for essential trips",
+        "hi": "बाहर मेहनत से बचें; घर के भीतर की गतिविधियाँ चुनें; ज़रूरी बाहर जाने पर N95 पहनें"
+      }
+    },
+    {
+      "level": 4,
+      "band": { "en": "Very unhealthy", "hi": "बहुत अस्वस्थ" },
+      "everyone": {
+        "en": "Avoid prolonged outdoor exertion; keep windows shut; run purifier if available",
+        "hi": "बाहर लंबी मेहनत से बचें; खिड़कियाँ बंद रखें; उपलब्ध हो तो प्यूरीफायर चलाएँ"
+      },
+      "sensitive": {
+        "en": "Stay indoors; no outdoor PE or play",
+        "hi": "घर के भीतर रहें; बाहर खेल या पीटी न करें"
+      }
+    },
+    {
+      "level": 5,
+      "band": { "en": "Hazardous", "hi": "गंभीर" },
+      "everyone": {
+        "en": "Avoid outdoor exertion; WFH if possible; wear N95 for essential trips",
+        "hi": "बाहर मेहनत से बचें; संभव हो तो घर से काम करें; ज़रूरी बाहर जाने पर N95 पहनें"
+      },
+      "sensitive": {
+        "en": "Stay indoors; follow your doctor's plan; seek care if symptoms worsen",
+        "hi": "घर के भीतर रहें; अपने डॉक्टर की सलाह का पालन करें; लक्षण बढ़ें तो चिकित्सा सहायता लें"
+      }
+    }
+  ]
+}

@@ -1,0 +1,453 @@
+{
+  "generated_by": "scripts/oracle.mjs",
+  "note": "Do not edit by hand. Change the oracle, regenerate, review the diff in the PR.",
+  "epa_aqi_pm25": [
+    {
+      "pm25": 0,
+      "aqi": 0
+    },
+    {
+      "pm25": 5,
+      "aqi": 28
+    },
+    {
+      "pm25": 9,
+      "aqi": 50
+    },
+    {
+      "pm25": 9.04,
+      "aqi": 50
+    },
+    {
+      "pm25": 9.1,
+      "aqi": 51
+    },
+    {
+      "pm25": 20,
+      "aqi": 71
+    },
+    {
+      "pm25": 35.4,
+      "aqi": 100
+    },
+    {
+      "pm25": 35.5,
+      "aqi": 101
+    },
+    {
+      "pm25": 55.4,
+      "aqi": 150
+    },
+    {
+      "pm25": 55.5,
+      "aqi": 151
+    },
+    {
+      "pm25": 60,
+      "aqi": 154
+    },
+    {
+      "pm25": 125.4,
+      "aqi": 200
+    },
+    {
+      "pm25": 125.5,
+      "aqi": 201
+    },
+    {
+      "pm25": 150,
+      "aqi": 225
+    },
+    {
+      "pm25": 225.4,
+      "aqi": 300
+    },
+    {
+      "pm25": 225.5,
+      "aqi": 301
+    },
+    {
+      "pm25": 230,
+      "aqi": 310
+    },
+    {
+      "pm25": 325.4,
+      "aqi": 500
+    },
+    {
+      "pm25": 400,
+      "aqi": 500
+    }
+  ],
+  "naqi_pm25": [
+    {
+      "pm25": 0,
+      "index": 0
+    },
+    {
+      "pm25": 30,
+      "index": 50
+    },
+    {
+      "pm25": 31,
+      "index": 51
+    },
+    {
+      "pm25": 45,
+      "index": 75
+    },
+    {
+      "pm25": 60,
+      "index": 100
+    },
+    {
+      "pm25": 61,
+      "index": 101
+    },
+    {
+      "pm25": 75,
+      "index": 149
+    },
+    {
+      "pm25": 90,
+      "index": 200
+    },
+    {
+      "pm25": 100,
+      "index": 232
+    },
+    {
+      "pm25": 120,
+      "index": 300
+    },
+    {
+      "pm25": 121,
+      "index": 301
+    },
+    {
+      "pm25": 150,
+      "index": 323
+    },
+    {
+      "pm25": 155,
+      "index": 327
+    },
+    {
+      "pm25": 250,
+      "index": 400
+    },
+    {
+      "pm25": 251,
+      "index": 401,
+      "assumption": true
+    },
+    {
+      "pm25": 300,
+      "index": 439,
+      "assumption": true
+    },
+    {
+      "pm25": 380,
+      "index": 500,
+      "assumption": true
+    },
+    {
+      "pm25": 500,
+      "index": 500,
+      "assumption": true
+    }
+  ],
+  "naqi_pm10": [
+    {
+      "pm10": 0,
+      "index": 0
+    },
+    {
+      "pm10": 50,
+      "index": 50
+    },
+    {
+      "pm10": 51,
+      "index": 51
+    },
+    {
+      "pm10": 80,
+      "index": 80
+    },
+    {
+      "pm10": 100,
+      "index": 100
+    },
+    {
+      "pm10": 101,
+      "index": 101
+    },
+    {
+      "pm10": 180,
+      "index": 153
+    },
+    {
+      "pm10": 250,
+      "index": 200
+    },
+    {
+      "pm10": 251,
+      "index": 201
+    },
+    {
+      "pm10": 300,
+      "index": 250
+    },
+    {
+      "pm10": 350,
+      "index": 300
+    },
+    {
+      "pm10": 351,
+      "index": 301
+    },
+    {
+      "pm10": 400,
+      "index": 362
+    },
+    {
+      "pm10": 430,
+      "index": 400
+    },
+    {
+      "pm10": 431,
+      "index": 401,
+      "assumption": true
+    },
+    {
+      "pm10": 500,
+      "index": 487,
+      "assumption": true
+    }
+  ],
+  "naqi_category_edges": [
+    {
+      "index": 0,
+      "category": "Good"
+    },
+    {
+      "index": 50,
+      "category": "Good"
+    },
+    {
+      "index": 51,
+      "category": "Satisfactory"
+    },
+    {
+      "index": 100,
+      "category": "Satisfactory"
+    },
+    {
+      "index": 101,
+      "category": "Moderate"
+    },
+    {
+      "index": 200,
+      "category": "Moderate"
+    },
+    {
+      "index": 201,
+      "category": "Poor"
+    },
+    {
+      "index": 300,
+      "category": "Poor"
+    },
+    {
+      "index": 301,
+      "category": "Very Poor"
+    },
+    {
+      "index": 400,
+      "category": "Very Poor"
+    },
+    {
+      "index": 401,
+      "category": "Severe"
+    },
+    {
+      "index": 500,
+      "category": "Severe"
+    }
+  ],
+  "naqi_overall": [
+    {
+      "pm25": 0,
+      "index": 0,
+      "category": "Good",
+      "dominant": "pm25"
+    },
+    {
+      "pm25": 75,
+      "index": 149,
+      "category": "Moderate",
+      "dominant": "pm25"
+    },
+    {
+      "pm25": 75,
+      "pm10": 180,
+      "index": 153,
+      "category": "Moderate",
+      "dominant": "pm10"
+    },
+    {
+      "pm25": 150,
+      "pm10": 100,
+      "index": 323,
+      "category": "Very Poor",
+      "dominant": "pm25"
+    },
+    {
+      "pm25": 45,
+      "pm10": 300,
+      "index": 250,
+      "category": "Poor",
+      "dominant": "pm10"
+    },
+    {
+      "pm25": 300,
+      "pm10": 100,
+      "index": 439,
+      "category": "Severe",
+      "dominant": "pm25"
+    },
+    {
+      "pm25": 30,
+      "pm10": 50,
+      "index": 50,
+      "category": "Good",
+      "dominant": "pm25"
+    }
+  ],
+  "naqi_cpcb_worked_example": {
+    "pm25": 150,
+    "cpcb_published_approx": 323,
+    "our_index": 323,
+    "tolerance": 1
+  },
+  "indoor_step": [
+    {
+      "cStart": 100,
+      "cOut": 200,
+      "a": 0.7,
+      "q": 0,
+      "S": 0,
+      "cSS": 112,
+      "cEnd": 107.585447,
+      "cMean": 104.414553
+    },
+    {
+      "cStart": 100,
+      "cOut": 200,
+      "a": 4,
+      "q": 0,
+      "S": 0,
+      "cSS": 148.837209,
+      "cEnd": 148.174559,
+      "cMean": 137.633824
+    },
+    {
+      "cStart": 100,
+      "cOut": 200,
+      "a": 0.7,
+      "q": 3.08642,
+      "S": 0,
+      "cSS": 27.407853,
+      "cEnd": 28.627348,
+      "cMean": 44.873667
+    },
+    {
+      "cStart": 20,
+      "cOut": 20,
+      "a": 0.7,
+      "q": 0,
+      "S": 10,
+      "cSS": 21.2,
+      "cEnd": 20.758545,
+      "cMean": 20.441455
+    }
+  ],
+  "purifier_q_15m2_room": {
+    "hepa_cadr250": 3.08642,
+    "diy_cadr200": 2.469136,
+    "derate": 0.5,
+    "ceiling_m": 2.7
+  },
+  "exposure_identity": {
+    "note": "Cout constant, always at home/indoors, windows shut, no purifier, no commute, no exercise: steady-state exposure = P*a*C/(a+k).",
+    "cOut": 200,
+    "a": 0.7,
+    "expected": 112,
+    "with_hepa": 27.407853,
+    "todo_until": "T05 (exposure engine)"
+  },
+  "best_window": {
+    "day": [
+      260,
+      270,
+      280,
+      290,
+      300,
+      310,
+      300,
+      280,
+      240,
+      200,
+      170,
+      150,
+      140,
+      135,
+      140,
+      155,
+      185,
+      230,
+      270,
+      290,
+      300,
+      290,
+      280,
+      270
+    ],
+    "best": {
+      "start": 12,
+      "end": 14,
+      "mean": 137.5
+    },
+    "avoid": {
+      "start": 4,
+      "end": 7,
+      "mean": 303.333333
+    },
+    "tie_rule": "earliest start",
+    "todo_until": "T07 (window engine)"
+  },
+  "co2e_kg_per_year": [
+    {
+      "kmOneWay": 12,
+      "daysPerWeek": 5,
+      "from": "car",
+      "to": "metro",
+      "kg": 777.6
+    },
+    {
+      "kmOneWay": 12,
+      "daysPerWeek": 5,
+      "from": "car",
+      "to": "bus",
+      "kg": 576
+    },
+    {
+      "kmOneWay": 12,
+      "daysPerWeek": 5,
+      "from": "car",
+      "to": "wfh",
+      "kg": 979.2
+    }
+  ],
+  "co2e_formula": "kmOneWay * 2 trips/day * daysPerWeek * 48 weeks * (EF_from - EF_to)"
+}

@@ -1,0 +1,24 @@
+name: ci
+on: [push, pull_request]
+permissions: { contents: read }
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run lint && npm run typecheck
+      - run: npm run oracle:check
+      - run: npm run test:coverage
+      - run: npm run eval
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run csp:smoke
+      - run: npm run test:e2e
+      - run: node scripts/check-chars.mjs && node scripts/check-repo-size.mjs
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm audit --audit-level=high || true
+      - uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }

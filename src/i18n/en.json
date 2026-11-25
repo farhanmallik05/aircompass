@@ -1,0 +1,371 @@
+{
+  "app": {
+    "name": "AirCompass",
+    "tagline": "Clear, science-backed daily air plans for families facing severe winter smog.",
+    "skipToMain": "Skip to main content",
+    "nav": {
+      "today": "Today",
+      "plan": "Plan",
+      "impact": "Impact",
+      "brief": "Community Brief"
+    },
+    "langLabel": "Language",
+    "langEn": "English",
+    "langHi": "हिन्दी",
+    "modeLabel": "Data mode",
+    "modeLive": "Live forecast",
+    "modeRecorded": "Recorded severe smog day",
+    "sampleFamilyBtn": "Try a sample family",
+    "setupBtn": "Set up my household",
+    "deleteDataBtn": "Delete my data",
+    "deletedToast": "Household data cleared from this browser.",
+    "footer": {
+      "attribution": "Air quality data by Open-Meteo.com, CAMS ENSEMBLE data provider (CC BY 4.0).",
+      "disclaimer": "Informational guidance only, not medical advice. Consult a clinician for personal health decisions."
+    }
+  },
+  "dataBadge": {
+    "cams_europe_11km": "Modelled hourly (~11 km CAMS Europe)",
+    "cams_global_25_45km": "Modelled (~25-45 km CAMS global, 3-hourly interpolated; local peaks may be higher)",
+    "recorded": "Recorded severe winter day ({date})",
+    "illustrative": "Illustrative synthetic severe day (offline fallback)",
+    "calibrated": "Calibrated x{factor} to local reading"
+  },
+  "levels": {
+    "0": { "name": "Good", "summary": "Normal activity; air the house." },
+    "1": { "name": "Moderate", "summary": "Normal activity; unusually sensitive people may shorten heavy outdoor exertion." },
+    "2": { "name": "Sensitive", "summary": "Shorten intense outdoor exertion; sensitive groups keep windows shut at peak hours." },
+    "3": { "name": "Unhealthy", "summary": "Reduce prolonged outdoor exertion; wear a well-fitted N95 on open transport." },
+    "4": { "name": "Very unhealthy", "summary": "Avoid prolonged outdoor exertion; shut windows and run air filtration indoors." },
+    "5": { "name": "Hazardous", "summary": "Avoid outdoor exertion; stay indoors with clean air and use N95 for essential trips." }
+  },
+  "today": {
+    "title": "Today's Air & Household Plan",
+    "subtitle": "Hourly exposure guidance tailored to your location, home, and family sensitivities.",
+    "nowChip": "Now",
+    "todayLevelChip": "Today's level (next 24h mean)",
+    "usAqiLabel": "US AQI (EPA 2024)",
+    "providerAqiLabel": "Provider instant US AQI",
+    "naqiLabel": "India NAQI (PM-based, last 24h)",
+    "naqiInsufficient": "Insufficient data (< 16 valid hours)",
+    "naqiDominant": "Dominant pollutant: {pollutant}",
+    "naqiSevereAssumption": "Severe band (> 250/430) uses standard upper-anchor convention; category Severe is primary.",
+    "windowsHeading": "Best & worst hours today",
+    "goOutWindow": "Best window (go out / air house)",
+    "avoidWindow": "Avoid window (peak pollution)",
+    "noGoodWindow": "No good window today (all windows still Very unhealthy or worse) — keep windows shut.",
+    "shortDataNote": "Fewer than 24 forecast hours available; computed from available hours.",
+    "chartTitle": "Next 24 hours PM2.5 (µg/m³) with WHO 24h guideline (15 µg/m³)",
+    "showTableBtn": "Show as table",
+    "showChartBtn": "Show as chart",
+    "tableColHour": "Hour",
+    "tableColPm25": "PM2.5 (µg/m³)",
+    "tableColPm10": "PM10 (µg/m³)",
+    "tableColAqi": "US AQI",
+    "memberRiskHeading": "Family sensitivity guidance",
+    "emergencyTitle": "When to seek urgent medical care",
+    "emergencyBody": "Chest pain, severe breathlessness, bluish lips, wheezing not relieved by prescribed rescue medicine, or fainting: seek emergency medical care immediately.",
+    "calibrationLabel": "Optional: calibrate with a nearby monitor PM2.5 (µg/m³)",
+    "calibrationApply": "Calibrate",
+    "calibrationReset": "Reset",
+    "loadingContext": "Loading hourly air and weather context..."
+  },
+  "setup": {
+    "title": "Household Setup (stored only in your browser)",
+    "placeSearchLabel": "Search city or neighbourhood",
+    "placeSearchPlaceholder": "e.g. Greater Noida, Delhi, Lucknow",
+    "searchBtn": "Search",
+    "useLocationBtn": "Use my location",
+    "selectedPlace": "Selected place: {name} ({country})",
+    "adultsLabel": "Adults",
+    "childrenLabel": "Children (under 18)",
+    "seniorsLabel": "Seniors (60+)",
+    "conditionsLegend": "Household health sensitivities",
+    "condRespiratory": "Asthma or respiratory condition",
+    "condCardiac": "Heart or cardiovascular condition",
+    "condPregnant": "Pregnancy",
+    "homeTypeLabel": "Home type",
+    "homeApartment": "Apartment",
+    "homeHouse": "Independent house",
+    "windowsLabel": "Window sealing",
+    "winSealed": "Tightly sealed / AC",
+    "winNormal": "Normal windows",
+    "winLeaky": "Drafty / leaky gaps",
+    "purifierLabel": "Indoor air purifier",
+    "purNone": "None yet",
+    "purHepa": "HEPA air purifier",
+    "purDiy": "DIY box-fan filter",
+    "cookingLabel": "Primary cooking fuel",
+    "cookLpg": "LPG gas",
+    "cookInduction": "Induction / electric",
+    "cookBiomass": "Wood / coal / biomass",
+    "cookOther": "Other",
+    "roomAreaLabel": "Main room area (m²)",
+    "commuteModeLabel": "Primary commute mode",
+    "commuteKmLabel": "One-way commute distance (km)",
+    "commuteDaysLabel": "Commute days per week",
+    "morningExerciseLabel": "Morning outdoor exercise habit",
+    "schoolRunLabel": "Daily school drop-off / pick-up",
+    "budgetLabel": "Action budget",
+    "budgetZero": "Zero cost only",
+    "budgetLow": "Low cost (masks, DIY filter, sweeps)",
+    "budgetMedium": "Medium (HEPA / induction upgrade)",
+    "notesLabel": "Optional context note (max 300 chars, treated as untrusted text)",
+    "submitBtn": "Build my household plan",
+    "errorSummary": "Please check the highlighted fields before continuing.",
+    "modes": {
+      "walk": "Walking",
+      "cycle": "Cycling",
+      "two_wheeler": "Two-wheeler",
+      "auto": "Auto-rickshaw",
+      "bus": "Public bus",
+      "metro": "Metro / rail",
+      "car": "Petrol / private car",
+      "wfh": "Work from home"
+    }
+  },
+  "groups": {
+    "child": "Children",
+    "senior": "Seniors (60+)",
+    "respiratory": "Respiratory / asthma",
+    "cardiac": "Cardiac care",
+    "pregnant": "Pregnancy",
+    "adult": "Adults"
+  },
+  "plan": {
+    "title": "Your Tailored Air Plan",
+    "badgeAi": "AI-worded plan (engine verified)",
+    "badgeRepaired": "AI-worded plan (guard repaired)",
+    "badgeFallback": "Engine plan (AI unavailable or bypassed)",
+    "liveAnnouncement": "Plan updated: {count} actions loaded.",
+    "loadingPlan": "Computing indoor physics, exposure, and tailored wording...",
+    "tabs": {
+      "all": "All actions",
+      "routine": "Routine",
+      "indoor": "Indoors",
+      "swap": "Swaps"
+    },
+    "whyLabel": "Why this matters",
+    "whenLabel": "When",
+    "stepsLabel": "Practical steps",
+    "impactExposure": "Breathing exposure cut: {ugm3} ({pct}), range {range}",
+    "impactTradeoff": "Exposure trade-off: increases breathed PM2.5 by {ugm3} ({pct}), range {range} — pair with N95 mask",
+    "impactCo2e": "Community fuel/CO2e saved: {co2e}",
+    "impactGuidance": "Preventive guidance (unquantified particle reduction)",
+    "confidenceLabel": "Confidence: {level}",
+    "howCalculated": "How we calculated",
+    "tradeoffsHeading": "Honest trade-offs to watch",
+    "memberNotesHeading": "Member-specific notes",
+    "mythsHeading": "Four common air-quality myths",
+    "chatHeading": "Ask a What-If Question",
+    "chatPlaceholder": "e.g. What if I run a DIY box-fan filter and switch commute days?",
+    "chatSendBtn": "Ask",
+    "chatSending": "Simulating with engine...",
+    "chatToolNote": "Numbers verified by live engine tool simulation."
+  },
+  "impact": {
+    "title": "Exposure & Community Impact Simulator",
+    "subtitle": "Adjust actions below for instant client-side physics recalculation (zero network round trips).",
+    "beforeLabel": "Baseline breathed air (24h weighted)",
+    "afterLabel": "With your selected plan",
+    "cigaretteNote": "Rule of thumb (not a clinical measure): ~{cigs} cigarette-equivalents/day (Berkeley Earth 22 µg/m³ scale).",
+    "controlsHeading": "What-if controls",
+    "purifierControl": "Air filtration at home",
+    "windowsControl": "Open windows only in best 2h window",
+    "n95Control": "Well-fitted N95/FFP2 on open transit & outdoors",
+    "exerciseIndoorsControl": "Move exercise indoors",
+    "cookVentControl": "Run exhaust / cross-ventilate while cooking",
+    "commuteModeControl": "Commute mode",
+    "commuteDaysControl": "Commute days per week",
+    "communityHeading": "Community multiplier",
+    "communitySliderLabel": "Households in your RWA or street adopting this swap",
+    "communityResult": "{households} households save {kg} kg CO2e/year (and cut local tailpipe PM & NOx).",
+    "resetBtn": "Reset to baseline"
+  },
+  "brief": {
+    "title": "Community & RWA Clean-Air Brief",
+    "subtitle": "Printable one-page summary for housing societies, RWAs, and schools.",
+    "printBtn": "Print / Save as PDF",
+    "copyShareBtn": "Copy family summary",
+    "whatsappBtn": "Share via WhatsApp",
+    "copiedToast": "Summary copied to clipboard.",
+    "rwaChecklistTitle": "High-impact society & school steps",
+    "familySummaryTitle": "Household action snapshot"
+  },
+  "actions": {
+    "shift_exercise_to_best_window": {
+      "title": "Shift outdoor exercise to cleanest window",
+      "why": "Breathing rates quadruple during jogging, so avoiding early-morning smog inversions sharply cuts inhaled dose.",
+      "when": "Move outdoor sessions to {bestStart}-{bestEnd}.",
+      "steps": ["Check Today's strip before stepping out.", "Keep high-effort intervals brief if level is Moderate or worse."]
+    },
+    "exercise_indoors_when_poor": {
+      "title": "Move exercise indoors on polluted days",
+      "why": "Indoor air filtered or shut away from traffic holds far less PM2.5 than street air at high breathing rates.",
+      "when": "Whenever Today's level reaches Unhealthy (L3) or higher.",
+      "steps": ["Use bodyweight mobility, yoga, or indoor stairs.", "Run a purifier in the workout room if available."]
+    },
+    "n95_for_open_transport": {
+      "title": "Wear a fitted N95 / FFP2 on open commutes",
+      "why": "Walkers, cyclists, two-wheelers, autos, and buses breathe near-outdoor concentrations along corridors.",
+      "when": "For all open-air commutes and essential walks when level ≥ L3.",
+      "steps": ["Pinch the nose wire tightly so air passes through the filter, not gaps.", "Replace the respirator when straps loosen or breathing resistance rises."]
+    },
+    "commute_to_public_transport": {
+      "title": "Shift private car/two-wheeler trips to bus or metro",
+      "why": "Replaces private tailpipe CO2e and road NOx/PM, though open-air waiting/bus trips can raise personal exposure without a mask.",
+      "when": "On regular work or college commute days.",
+      "steps": ["Pair bus or metro commutes with a fitted N95 on severe smog days.", "Choose metro where available for lower cabin exposure and lower CO2e."]
+    },
+    "wfh_on_worst_day": {
+      "title": "Work or study from home on peak smog days",
+      "why": "Eliminates one round-trip commute in peak traffic emissions and keeps you inside cleaner filtered air.",
+      "when": "When Today's level is Very unhealthy (L4) or Hazardous (L5).",
+      "steps": ["Request remote work on Severe forecast days.", "Keep doors and windows sealed during morning and evening rush hours."]
+    },
+    "no_idling": {
+      "title": "Turn off engine at signals and school gates",
+      "why": "Cutting 5 minutes/day of idling saves fuel, CO2e, and concentrated exhaust near children at school gates.",
+      "when": "At red lights, railway crossings, and pickup queues.",
+      "steps": ["Switch off ignition for waits longer than 30 seconds.", "Park away from school entrance walkways when waiting."]
+    },
+    "errands_in_best_window": {
+      "title": "Batch outdoor errands into the cleanest window",
+      "why": "Midday boundary-layer mixing typically dilutes ground-level smoke compared with dawn and late evening.",
+      "when": "During {bestStart}-{bestEnd} when level permits.",
+      "steps": ["Combine grocery, pharmacy, and bank stops into one midday loop.", "Avoid roadside waiting during peak evening hours."]
+    },
+    "child_play_indoors_when_poor": {
+      "title": "Keep children's play indoors on Unhealthy+ days",
+      "why": "Children breathe more air per kg of body weight and develop lungs are vulnerable to PM2.5.",
+      "when": "On all days rated Unhealthy (L3) through Hazardous (L5).",
+      "steps": ["Coordinate with school teachers to cancel outdoor PE on L4-L5 days.", "Set up active indoor games away from kitchen smoke."]
+    },
+    "trip_chaining": {
+      "title": "Chain errands into existing commutes",
+      "why": "Combining stops trims total vehicle km by roughly 10% (5-15% range), cutting fuel burn and emissions.",
+      "when": "Across weekly car or two-wheeler trips.",
+      "steps": ["Plan weekly errands along your main commute route.", "Avoid cold-start short solo drives under 2 km."]
+    },
+    "air_house_in_best_window": {
+      "title": "Air the house only in the cleanest 2-hour window",
+      "why": "Cross-ventilating during the lowest PM2.5 hours refreshes CO2 without flooding rooms with peak smog.",
+      "when": "Open opposite windows briefly around {bestStart}-{bestEnd} if below L4.",
+      "steps": ["Close windows promptly before evening inversion builds.", "Keep windows shut all day if the best window stays L4+."]
+    },
+    "close_windows_at_peak": {
+      "title": "Shut windows during peak smog hours",
+      "why": "Evening and early-morning temperature inversions trap smoke near ground level; sealing reduces penetration.",
+      "when": "Before and throughout the avoid window ({avoidStart}-{avoidEnd}).",
+      "steps": ["Close balcony doors and kitchen exterior vents before dusk.", "Turn off exhaust fans once cooking finishes so polluted air isn't pulled in."]
+    },
+    "run_purifier_through_night": {
+      "title": "Run your purifier continuously while at home",
+      "why": "Nighttime outdoor PM2.5 peaks while you sleep for 8 hours; continuous filtration cuts overnight indoor levels.",
+      "when": "All sleeping and indoor hours, especially 22:00-07:00.",
+      "steps": ["Keep bedroom door closed so the unit cleans a smaller air volume.", "Set to a quiet medium speed overnight rather than turning it off."]
+    },
+    "diy_box_fan_filter": {
+      "title": "Build a taped MERV-13 / HEPA DIY box-fan filter",
+      "why": "A sealed box fan with a true high-MERV or replacement HEPA filter delivers substantial CADR at low cost.",
+      "when": "Run whenever bedrooms or living spaces are occupied.",
+      "steps": ["Tape all edge gaps securely so air passes through the filter media.", "Run continuously on medium speed in the main sleeping room."]
+    },
+    "buy_hepa_purifier": {
+      "title": "Add a true HEPA air purifier in the main room",
+      "why": "Properly sized HEPA filtration (250+ m³/h CADR) provides the largest verified drop in indoor PM2.5 exposure.",
+      "when": "Run continuously in the bedroom or main living room.",
+      "steps": ["Match CADR to room size and avoid ionizer/ozone add-on modes.", "Check pre-filter dust weekly and replace HEPA media per schedule."]
+    },
+    "seal_gaps_and_door_sweeps": {
+      "title": "Seal window cracks and add door sweeps",
+      "why": "Reducing uncontrolled air exchange from leaky frames slows outdoor smog infiltration into bedrooms.",
+      "when": "One-time low-cost weekend fix before peak winter weeks.",
+      "steps": ["Apply foam weatherstripping along loose sliding window tracks.", "Fit rubber sweeps under main entrance and balcony doors."]
+    },
+    "cooking_ventilation": {
+      "title": "Ventilate kitchen while frying or tadka",
+      "why": "Cooking aerosols spike indoor PM2.5 inside apartments unless exhausted directly outdoors.",
+      "when": "During active stove use (morning and evening meals).",
+      "steps": ["Switch on chimney/exhaust fan and cover pans when simmering.", "Shut interior doors between kitchen and sleeping rooms while cooking."]
+    },
+    "damp_mop_dont_sweep": {
+      "title": "Damp mop floors instead of dry sweeping",
+      "why": "Dry brooms resuspend settled fine dust and soot back into breathing height.",
+      "when": "Daily indoor cleaning routine.",
+      "steps": ["Use a damp microfiber mop and wet cloth on sills.", "Leave outdoor shoes at the entrance mat."]
+    },
+    "avoid_indoor_smoke_sources": {
+      "title": "Avoid indoor smoke (incense, mosquito coils, candles)",
+      "why": "In sealed winter rooms, a single stick of incense or mosquito coil sharply raises fine particle levels.",
+      "when": "Especially on closed-window winter days.",
+      "steps": ["Use window mesh screens or electric liquid/bat alternatives instead of coils.", "Skip indoor agarbatti, dhoop, and scented candles while rooms are shut."]
+    },
+    "lpg_instead_of_biomass": {
+      "title": "Switch cooking from wood/coal/biomass to LPG",
+      "why": "Eliminating solid-fuel indoor smoke removes the single largest indoor PM2.5 source.",
+      "when": "Every meal preparation.",
+      "steps": ["Use LPG or clean electric stoves for indoor cooking.", "If outdoor solid-fuel cooking occurs nearby, keep windows shut downwind."]
+    },
+    "induction_cooking": {
+      "title": "Shift high-use boiling/simmering to induction",
+      "why": "Removes indoor combustion byproducts from gas burners in tight winter rooms.",
+      "when": "Daily tea, boiling, and everyday cooking.",
+      "steps": ["Use an induction cooktop for water, dal, and slow simmering.", "Continue venting oil smoke when frying."]
+    },
+    "warmth_without_burning": {
+      "title": "Stay warm without burning wood, coal, or trash",
+      "why": "Open bonfires and coal braziers create intense neighbourhood smog blankets at breathing height.",
+      "when": "Cold mornings and nights.",
+      "steps": ["Layer woollens indoors and use safe oil-filled or electric heating.", "Never burn charcoal or angithi inside closed rooms (CO risk)."]
+    },
+    "carpool_shared_ride": {
+      "title": "Carpool or share daily car commutes",
+      "why": "Halves per-person car CO2e while retaining lower enclosed-cabin particle exposure on severe days.",
+      "when": "Regular office or school-run days.",
+      "steps": ["Pair with neighbours or colleagues along the same corridor.", "Keep cabin climate control on recirculate in heavy traffic."]
+    },
+    "walk_or_cycle_short_trips": {
+      "title": "Walk or cycle short trips under 3 km on cleaner days",
+      "why": "Eliminates cold-start tailpipe emissions on short hops, suppressed when air is Unhealthy (L3+).",
+      "when": "Only when Today's level is Good, Moderate, or Sensitive (L0-L2).",
+      "steps": ["Prefer quieter side streets away from diesel arterials.", "Switch back to enclosed transit or N95 when AQI rises to L3+."]
+    },
+    "community_no_burning": {
+      "title": "Organise a zero leaf/waste-burning pledge on your street",
+      "why": "A single smouldering leaf or garbage pile bathes an entire block in toxic winter smoke.",
+      "when": "Coordinate with security guards and sanitation staff this week.",
+      "steps": ["Share safe electric warming options for night guards.", "Report open waste burning via municipal/GRAP clean-air helplines."]
+    },
+    "society_dust_and_diesel_audit": {
+      "title": "Run an RWA dust, sprinkling, and DG-set audit",
+      "why": "Road dust, uncovered construction material, and poorly maintained diesel generators drive hyperlocal spikes.",
+      "when": "Raise at the next RWA committee meeting using the Community Brief.",
+      "steps": ["Cover soil/sand piles and wet-sweep society driveways.", "Service society DG sets and enforce clean emission norms."]
+    },
+    "share_community_brief": {
+      "title": "Print & share the one-page Community Brief",
+      "why": "Shared school and RWA action protects children and outdoor workers across the whole complex.",
+      "when": "Today — takes two minutes via the Community Brief view.",
+      "steps": ["Download or print the one-page PDF brief.", "Post in your society WhatsApp group and school parent forum."]
+    }
+  },
+  "myths": {
+    "cloth_mask": {
+      "title": "Myth: Cloth or surgical masks block PM2.5 smog",
+      "fact": "Fact: Cloth and loose surgical masks leak around the edges and let microscopic 2.5 µm particles pass. Only a snug N95/FFP2 respirator filters effectively."
+    },
+    "indoor_plants": {
+      "title": "Myth: Houseplants clean room air as well as a purifier",
+      "fact": "Fact: Controlled chamber studies show potted plants remove negligible PM2.5 at room scale — it would take dozens to hundreds of plants per square metre to match one small HEPA unit."
+    },
+    "ozone_ionizer": {
+      "title": "Myth: Ionizers or ozone purifiers are safer 'filterless' cleaners",
+      "fact": "Fact: Ionizers and ozone generators can emit lung-irritating ozone and secondary ultrafine particles. Prefer mechanical HEPA or MERV-13 filtration."
+    },
+    "air_freshener": {
+      "title": "Myth: Incense or aerosol air fresheners 'purify' stale indoor air",
+      "fact": "Fact: Sprays, candles, and incense release fine particulate matter and VOCs, worsening indoor pollution behind closed winter windows."
+    }
+  }
+}

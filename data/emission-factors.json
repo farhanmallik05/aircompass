@@ -1,0 +1,65 @@
+{
+  "_meta": {
+    "verifiedOn": "2026-11-25",
+    "sources": [
+      "UK DESNZ/DEFRA GHG Conversion Factors (average petrol car ~0.17 kg CO2e/km, rail/metro ~0.035 kg CO2e/pkm)",
+      "India GHG Program (WRI India, CII, TERI) India-Specific Road Transport Emission Factors (car 0.10-0.26 kg CO2/vkm, two-wheeler 0.03-0.06 kg CO2/vkm, intracity bus 0.015-0.07 kg CO2/pkm)"
+    ],
+    "notes": "Central values align with DEFRA / golden oracle benchmarks; mode ranges reflect real fleet variance across Indian and international passenger occupancy."
+  },
+  "workingWeeksPerYear": 48,
+  "modes": {
+    "car": {
+      "kgPerPassengerKm": 0.17,
+      "rangeKgPerPassengerKm": [0.11, 0.24],
+      "source": "DEFRA average petrol car (~0.17) / India GHG Program petrol car range adjusted for ~1.2 occupancy"
+    },
+    "two_wheeler": {
+      "kgPerPassengerKm": 0.10,
+      "rangeKgPerPassengerKm": [0.035, 0.10],
+      "source": "Starter commuter benchmark (upper bound) / India GHG Program 100-300cc fleet lower bound"
+    },
+    "auto": {
+      "kgPerPassengerKm": 0.09,
+      "rangeKgPerPassengerKm": [0.055, 0.11],
+      "source": "CNG three-wheeler per passenger-km assumption with 1-1.5 occupancy"
+    },
+    "bus": {
+      "kgPerPassengerKm": 0.07,
+      "rangeKgPerPassengerKm": [0.015, 0.10],
+      "source": "DEFRA / India GHG Program intracity bus range (occupancy dependent)"
+    },
+    "metro": {
+      "kgPerPassengerKm": 0.035,
+      "rangeKgPerPassengerKm": [0.020, 0.045],
+      "source": "DEFRA light rail/metro (~0.035) / CEA grid-weighted metro range"
+    },
+    "walk": {
+      "kgPerPassengerKm": 0,
+      "rangeKgPerPassengerKm": [0, 0],
+      "source": "Zero tailpipe emissions"
+    },
+    "cycle": {
+      "kgPerPassengerKm": 0,
+      "rangeKgPerPassengerKm": [0, 0],
+      "source": "Zero tailpipe emissions"
+    },
+    "wfh": {
+      "kgPerPassengerKm": 0,
+      "rangeKgPerPassengerKm": [0, 0],
+      "source": "Zero commute tailpipe emissions"
+    }
+  },
+  "idling": {
+    "litersPerHour": [0.6, 1.0],
+    "minutesPerDay": 5,
+    "daysPerYear": 250,
+    "kgCo2PerLiterPetrol": 2.31,
+    "source": "Assumption + range (natural fuel-burn proxy; local PM/NOx also cut, never estimated as unverified grams)"
+  },
+  "tripChaining": {
+    "reductionFraction": 0.10,
+    "rangeFraction": [0.05, 0.15],
+    "source": "Assumption + range (10% central reduction, 5-15% sensitivity)"
+  }
+}

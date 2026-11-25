@@ -1,0 +1,637 @@
+{
+ "_note": "Adversarial corpus for src/lib/guard.ts. Each reject row names the SPECIFIC rule that must fire (a row rejected by the wrong rule is a bug in the corpus or the guard). Add every new bypass here FIRST, then fix the guard. 'sweeps' enumerate every alternative inside a rule so a regex edit cannot silently drop one.",
+ "reject": [
+  [
+   "ascii digits",
+   "Cuts exposure by 40 each day",
+   "raw digit"
+  ],
+  [
+   "percent sign",
+   "Cuts exposure by {{impact.hepa.pct}}%",
+   "unit or percent sign"
+  ],
+  [
+   "fullwidth digits",
+   "Cuts exposure by ４０ each day",
+   "raw digit"
+  ],
+  [
+   "devanagari digits",
+   "यह ४० कम करता है",
+   "raw digit"
+  ],
+  [
+   "arabic-indic digits",
+   "Cuts exposure by ٤٠ each day",
+   "raw digit"
+  ],
+  [
+   "zero-width split digits",
+   "Cuts exposure by 4​0 each day",
+   "raw digit"
+  ],
+  [
+   "soft-hyphen split digits",
+   "Cuts exposure by 4­0 each day",
+   "raw digit"
+  ],
+  [
+   "word-joiner split digits",
+   "Cuts exposure by 4⁠0 each day",
+   "raw digit"
+  ],
+  [
+   "bom split digits",
+   "Cuts exposure by 4﻿0 each day",
+   "raw digit"
+  ],
+  [
+   "circled digit",
+   "AQI is ④ today",
+   "raw digit"
+  ],
+  [
+   "superscript digit",
+   "PM² is high",
+   "raw digit"
+  ],
+  [
+   "vulgar fraction",
+   "½ the exposure",
+   "raw digit"
+  ],
+  [
+   "thousands separator",
+   "about 1,200 steps",
+   "raw digit"
+  ],
+  [
+   "digit next to allowed term",
+   "N95 masks cut it by 80",
+   "raw digit"
+  ],
+  [
+   "digits glued to CO2e",
+   "CO2e40 saved",
+   "raw digit"
+  ],
+  [
+   "number beside PM2.5",
+   "PM2.5 of 300 today",
+   "raw digit"
+  ],
+  [
+   "html entity digits",
+   "&#52;&#48; lower",
+   "markup or link"
+  ],
+  [
+   "spelled tens",
+   "cuts it by forty",
+   "number word (en)"
+  ],
+  [
+   "spelled tens hyphenated",
+   "cuts it by twenty-five",
+   "number word (en)"
+  ],
+  [
+   "spelled tens uppercase",
+   "FORTY lower",
+   "number word (en)"
+  ],
+  [
+   "spelled teen",
+   "about fourteen windows",
+   "number word (en)"
+  ],
+  [
+   "percent word",
+   "a big percent drop",
+   "number word (en)"
+  ],
+  [
+   "per cent split",
+   "a big per cent drop",
+   "number word (en)"
+  ],
+  [
+   "percentage word",
+   "a large percentage change",
+   "number word (en)"
+  ],
+  [
+   "half",
+   "reduces exposure by half",
+   "number word (en)"
+  ],
+  [
+   "double",
+   "doubles your protection",
+   "number word (en)"
+  ],
+  [
+   "twice",
+   "twice as safe",
+   "number word (en)"
+  ],
+  [
+   "quarter",
+   "a quarter less smoke",
+   "number word (en)"
+  ],
+  [
+   "two thirds",
+   "two thirds lower",
+   "number word (en)"
+  ],
+  [
+   "hundred",
+   "one hundred micrograms",
+   "number word (en)"
+  ],
+  [
+   "thousands",
+   "thousands of particles",
+   "number word (en)"
+  ],
+  [
+   "time with at",
+   "open windows at seven",
+   "spelled time or count (en)"
+  ],
+  [
+   "time with pm",
+   "open windows between five and six pm",
+   "spelled time or count (en)"
+  ],
+  [
+   "duration",
+   "stay in for two hours",
+   "spelled time or count (en)"
+  ],
+  [
+   "duration days",
+   "wear it for three days",
+   "spelled time or count (en)"
+  ],
+  [
+   "degrees",
+   "set the cooler one degree lower",
+   "spelled time or count (en)"
+  ],
+  [
+   "microgram unit",
+   "58 µg of dust",
+   "unit or percent sign"
+  ],
+  [
+   "greek mu unit",
+   "reduce μg levels",
+   "unit or percent sign"
+  ],
+  [
+   "hindi digits percent",
+   "यह ४० प्रतिशत कम करता है",
+   "raw digit"
+  ],
+  [
+   "hindi word forty percent",
+   "चालीस प्रतिशत कम",
+   "number word (hi)"
+  ],
+  [
+   "hindi fifty one",
+   "इक्यावन खिड़कियाँ",
+   "number word (hi)"
+  ],
+  [
+   "hindi half",
+   "आधा कर देता है",
+   "number word (hi)"
+  ],
+  [
+   "hindi seven o'clock",
+   "सात बजे खिड़कियाँ खोलें",
+   "number word (hi)"
+  ],
+  [
+   "hindi two hours",
+   "दो घंटे के लिए",
+   "number word (hi)"
+  ],
+  [
+   "hindi thirty five percent",
+   "पैंतीस फीसदी",
+   "number word (hi)"
+  ],
+  [
+   "hindi twenty",
+   "बीस मिनट",
+   "number word (hi)"
+  ],
+  [
+   "hindi doubles",
+   "दोगुना सुरक्षा",
+   "number word (hi)"
+  ],
+  [
+   "hindi hundred",
+   "सौ गुना बेहतर",
+   "number word (hi)"
+  ],
+  [
+   "hindi chandrabindu variant",
+   "पाँच बजे बाहर जाएँ",
+   "number word (hi)"
+  ],
+  [
+   "unknown token",
+   "Open at {{best.starts}}",
+   "unknown token"
+  ],
+  [
+   "token with spaces",
+   "Open at {{ best.start }}",
+   "malformed placeholder"
+  ],
+  [
+   "nested braces",
+   "Open at {{{{best.start}}}}",
+   "malformed placeholder"
+  ],
+  [
+   "unterminated token",
+   "Open at {{best.start",
+   "malformed placeholder"
+  ],
+  [
+   "template literal",
+   "Open at ${best.start}",
+   "malformed placeholder"
+  ],
+  [
+   "html tag",
+   "Use a <b>mask</b>",
+   "markup or link"
+  ],
+  [
+   "script tag",
+   "<script>fetch('x')</script>",
+   "markup or link"
+  ],
+  [
+   "plain url",
+   "see https://evil.example for details",
+   "markup or link"
+  ],
+  [
+   "www url",
+   "visit www.evil.example",
+   "markup or link"
+  ],
+  [
+   "markdown link",
+   "[click here](http://x.example)",
+   "markup or link"
+  ],
+  [
+   "javascript url",
+   "javascript:alert",
+   "markup or link"
+  ],
+  [
+   "medical cure",
+   "this will cure asthma",
+   "medical claim (en)"
+  ],
+  [
+   "medical diagnosis",
+   "diagnosis: COPD is likely",
+   "medical claim (en)"
+  ],
+  [
+   "medical prescribe",
+   "ask them to prescribe an antibiotic",
+   "medical claim (en)"
+  ],
+  [
+   "medical dosage",
+   "increase the dosage",
+   "medical claim (en)"
+  ],
+  [
+   "medical mg",
+   "take a tablet with a mg label",
+   "medical claim (en)"
+  ],
+  [
+   "guarantee",
+   "guaranteed safe air",
+   "medical claim (en)"
+  ],
+  [
+   "hindi medical cure",
+   "इलाज हो जाएगा",
+   "medical claim (hi)"
+  ],
+  [
+   "hindi dosage",
+   "खुराक बढ़ाएँ",
+   "medical claim (hi)"
+  ],
+  [
+   "prompt canary",
+   "my instructions contain CANARY-7f3a91",
+   "prompt leak"
+  ],
+  [
+   "prompt canary split by zero width",
+   "CANARY-7f3a​91",
+   "prompt leak"
+  ]
+ ],
+ "accept": [
+  [
+   "n95 advice",
+   "Wear an N95 mask on open transport."
+  ],
+  [
+   "token time",
+   "Open windows during {{best.start}} when the air is cleanest."
+  ],
+  [
+   "token level",
+   "Today's level is {{level.name}}."
+  ],
+  [
+   "single count word",
+   "Keep one window closed."
+  ],
+  [
+   "two filters",
+   "Use two filters on the box fan."
+  ],
+  [
+   "hepa overnight",
+   "Run a HEPA purifier through the night."
+  ],
+  [
+   "cooking swap",
+   "Switch from biomass to LPG for cooking."
+  ],
+  [
+   "pm25 mention",
+   "Check PM2.5 before the school run."
+  ],
+  [
+   "merv",
+   "MERV-13 filters work well on a box fan."
+  ],
+  [
+   "co2e mention",
+   "This also lowers your CO2e."
+  ],
+  [
+   "split n95 normalises",
+   "Wear an N9​5 mask."
+  ],
+  [
+   "words containing number substrings",
+   "Someone alone at home should often keep windows shut; the weight of evidence favours masks."
+  ],
+  [
+   "halfway is not half",
+   "Halfway through the day, check the strip again."
+  ],
+  [
+   "doctor plan",
+   "Follow your doctor's plan and seek care if symptoms worsen."
+  ],
+  [
+   "no burning",
+   "Avoid burning leaves, trash or coal."
+  ],
+  [
+   "door sweeps",
+   "Seal gaps with door sweeps."
+  ],
+  [
+   "hindi n95",
+   "बाहर जाते समय N95 मास्क पहनें।"
+  ],
+  [
+   "hindi token",
+   "खिड़कियाँ {{best.start}} पर खोलें।"
+  ],
+  [
+   "hindi single one",
+   "एक खिड़की बंद रखें।"
+  ],
+  [
+   "hindi two rooms",
+   "दो कमरों में पर्दे बंद करें।"
+  ],
+  [
+   "hindi third floor",
+   "तीसरी मंज़िल पर रहने वाले भी खिड़कियाँ बंद रखें।"
+  ],
+  [
+   "hindi solar",
+   "सौर ऊर्जा से चलने वाला पंखा इस्तेमाल करें।"
+  ],
+  [
+   "hindi children",
+   "बच्चों को घर के अंदर खेलने दें।"
+  ],
+  [
+   "hindi purifier",
+   "रात भर एयर प्यूरीफायर चलाएँ।"
+  ],
+  [
+   "short text in the wrong language is not judged",
+   "ok"
+  ]
+ ],
+ "language": [
+  [
+   "en",
+   "Keep the windows closed during the dirtiest hours and run the purifier all night long.",
+   true
+  ],
+  [
+   "hi",
+   "Keep the windows closed during the dirtiest hours and run the purifier all night long.",
+   false
+  ],
+  [
+   "hi",
+   "सबसे प्रदूषित घंटों में खिड़कियाँ बंद रखें और रात भर प्यूरीफायर चलाएँ ताकि घर की हवा साफ़ रहे।",
+   true
+  ],
+  [
+   "en",
+   "सबसे प्रदूषित घंटों में खिड़कियाँ बंद रखें और रात भर प्यूरीफायर चलाएँ ताकि घर की हवा साफ़ रहे।",
+   false
+  ]
+ ],
+ "sweeps": [
+  {
+   "rule": "number word (en)",
+   "template": "It is {} better.",
+   "items": [
+    "eleven",
+    "twelve",
+    "thirteen",
+    "fourteen",
+    "fifteen",
+    "sixteen",
+    "seventeen",
+    "eighteen",
+    "nineteen",
+    "twenty",
+    "thirty",
+    "forty",
+    "fifty",
+    "sixty",
+    "seventy",
+    "eighty",
+    "ninety",
+    "hundred",
+    "hundreds",
+    "thousand",
+    "thousands",
+    "million",
+    "millions",
+    "dozen",
+    "dozens",
+    "half",
+    "halves",
+    "double",
+    "doubled",
+    "doubles",
+    "triple",
+    "tripled",
+    "triples",
+    "twice",
+    "thrice",
+    "quarter",
+    "quarters",
+    "thirds",
+    "fifths",
+    "tenths",
+    "percent",
+    "percentage",
+    "percentages",
+    "per cent",
+    "one-half",
+    "two-thirds",
+    "three-quarters",
+    "one fifth",
+    "two tenths"
+   ]
+  },
+  {
+   "rule": "spelled time or count (en)",
+   "template": "Do it {}.",
+   "items": [
+    "at one",
+    "at five",
+    "at twelve",
+    "between two",
+    "from three",
+    "until six",
+    "till four",
+    "by two",
+    "around nine",
+    "after three",
+    "before five",
+    "one hour",
+    "two hours",
+    "five o'clock",
+    "six pm",
+    "seven a.m.",
+    "three days",
+    "two weeks",
+    "one minute",
+    "ten mins",
+    "four hrs",
+    "twelve degrees",
+    "one degree"
+   ]
+  },
+  {
+   "rule": "medical claim (en)",
+   "template": "This will {} it.",
+   "items": [
+    "cure",
+    "cures",
+    "cured",
+    "curing",
+    "diagnose",
+    "diagnosis",
+    "prescribe",
+    "prescription",
+    "dosage",
+    "dose",
+    "doses",
+    "mg",
+    "mcg",
+    "ml",
+    "antibiotic",
+    "antibiotics",
+    "steroid",
+    "steroids",
+    "guarantee",
+    "guaranteed",
+    "risk-free",
+    "completely safe",
+    "totally safe"
+   ]
+  },
+  {
+   "rule": "unit or percent sign",
+   "template": "Level {} here.",
+   "items": [
+    "%",
+    "٪",
+    "﹪",
+    "％",
+    "µg",
+    "μg",
+    "ug/m",
+    "°",
+    "degrees celsius",
+    "degree f"
+   ]
+  },
+  {
+   "rule": "markup or link",
+   "template": "See {} now.",
+   "items": [
+    "<b>",
+    "</div>",
+    "<!-- x -->",
+    "http://a.example",
+    "https://a.example",
+    "www.a.example",
+    "](x)",
+    "javascript:void",
+    "data:text/html",
+    "&amp;",
+    "&#x41;"
+   ]
+  },
+  {
+   "rule": "malformed placeholder",
+   "template": "Value {} here.",
+   "items": [
+    "{",
+    "}",
+    "${x}",
+    "<%x%>"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,6 @@
+# ADR 0005 — Content Security Policy (CSP) Enforcement Level
+
+- **Status:** Accepted — Level L1 (local production verified; remote Vercel check pending URL)
+- **Context:** Next.js 16.4 template defaults (`cacheComponents` and `partialPrefetching`) emit static shells without per-request nonces, silently breaking client hydration under strict `script-src` nonce CSP. Inline React `style={{}}` attributes also trigger `style-src-attr` CSP violations in production.
+- **Decision:** Enforce **CSP Level L1** (`script-src 'self' 'nonce-<uuid>' 'strict-dynamic'`, `style-src 'self' 'nonce-<uuid>'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'none'`) in `src/proxy.ts` for dynamic pages (using `await connection()`), keep `cacheComponents` and `partialPrefetching` disabled in `next.config.ts`, enforce static security headers on every route including `/api/*`, and ban inline `style={{}}` across all UI components (using Tailwind classes, SVG presentation attributes, `<meter>`, and `<progress>` instead).
+- **Consequences:** All 6 checks in `tests/e2e/csp.spec.ts` validate strict nonce execution and hydration on a real production build (`npm run csp:smoke`), with fallback ladder L2 (`style-src-attr 'unsafe-inline'`) documented in `plan.md` §7.1 if ever required.

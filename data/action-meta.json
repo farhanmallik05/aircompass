@@ -1,0 +1,106 @@
+{
+  "shift_exercise_to_best_window": {
+    "method": "Shifts 30 min outdoor exercise (4x breathing factor) from 06:30 to the cleanest 2h window.",
+    "assumptions": ["30 min session at 4.0x resting inhalation rate", "Diurnal PM2.5 follows hourly forecast"]
+  },
+  "exercise_indoors_when_poor": {
+    "method": "Moves 30 min workout indoors (2.5x indoor breathing factor vs 4.0x outdoor).",
+    "assumptions": ["Indoor workout inhalation factor 2.5x", "Main room follows single-zone indoor PM2.5"]
+  },
+  "n95_for_open_transport": {
+    "method": "Applies N95/FFP2 penetration factor (0.2 base; 0.1-0.4 sensitivity range) to open-air slots.",
+    "assumptions": ["Assumes fitted N95/FFP2 seal (80% base reduction; 60-90% range)", "Does not alter closed car/metro cabin"]
+  },
+  "commute_to_public_transport": {
+    "method": "Replaces private commute emissions with public bus; compares 1.0x outdoor bus exposure against cabin.",
+    "assumptions": ["Car cabin 0.6x outdoor, bus 1.0x outdoor", "48 working weeks/year; DEFRA/India GHG factor ranges"]
+  },
+  "wfh_on_worst_day": {
+    "method": "Converts 1 commute day/week to home-based day and removes 1 round-trip of tailpipe CO2e.",
+    "assumptions": ["Eliminates 1 round-trip/week across 48 weeks", "Home air modeled via single-zone mass balance"]
+  },
+  "no_idling": {
+    "method": "Cuts 5 min/day engine idling (0.6-1.0 L/h petrol, 250 days/yr * 2.31 kg CO2/L).",
+    "assumptions": ["Idling fuel burn 0.6-1.0 L/h assumption", "Also avoids concentrated tailpipe PM/NOx near school gates"]
+  },
+  "errands_in_best_window": {
+    "method": "Schedules discretionary errands into the lowest 2h outdoor PM2.5 window (08:00-20:00).",
+    "assumptions": ["Based on next 24h forecast window means"]
+  },
+  "child_play_indoors_when_poor": {
+    "method": "Preventive threshold guidance for children (higher minute ventilation per body weight) at L3+.",
+    "assumptions": ["Applies US EPA child sensitive-group activity threshold"]
+  },
+  "trip_chaining": {
+    "method": "Assumes 10% (range 5-15%) annual distance reduction by combining stops with existing commutes.",
+    "assumptions": ["10% distance reduction assumption (5-15% sensitivity)"]
+  },
+  "air_house_in_best_window": {
+    "method": "Replaces morning/evening window opening with the cleanest 2h midday window (or keeps shut at L4+).",
+    "assumptions": ["Window-open ACH a=4.0 h^-1 (3.5-4.5); closed normal a=0.7 h^-1 (0.5-1.0)"]
+  },
+  "close_windows_at_peak": {
+    "method": "Removes baseline window-opening hours that overlap the worst 3h outdoor smog peak.",
+    "assumptions": ["Closing windows shifts a from 4.0 to 0.7 h^-1 during avoid hours"]
+  },
+  "run_purifier_through_night": {
+    "method": "Extends owned purifier operation from evening-only (18-22) to all home-occupied hours including sleep.",
+    "assumptions": ["Effective ACH q = derate * CADR / (area * 2.7m)", "Derate 0.5 base (0.3-0.7 range); capped at 80%"]
+  },
+  "diy_box_fan_filter": {
+    "method": "Single-zone mass balance with DIY box-fan filter (200 m3/h CADR) across all home hours.",
+    "assumptions": ["Conservative CADR 200 m3/h with 0.5 derate (0.3-0.7 range)", "Ceiling height 2.7 m"]
+  },
+  "buy_hepa_purifier": {
+    "method": "Single-zone mass balance with HEPA purifier (250 m3/h CADR) across all home hours.",
+    "assumptions": ["CADR 250 m3/h with 0.5 derate (0.3-0.7 range)", "Displayed room reduction capped at 80%"]
+  },
+  "seal_gaps_and_door_sweeps": {
+    "method": "Improves home envelope from leaky (a=2.0 h^-1) to normal closed (a=0.7 h^-1).",
+    "assumptions": ["Leaky a=2.0 (1.7-2.3), normal closed a=0.7 (0.5-1.0)"]
+  },
+  "cooking_ventilation": {
+    "method": "Halves cooking particle source S during hours 07 and 19 via exhaust/cross-ventilation.",
+    "assumptions": ["Cooking S: biomass 60, other 25, LPG 10 ug/m3/h (+-50% range)", "Exhaust halves S"]
+  },
+  "damp_mop_dont_sweep": {
+    "method": "Qualitative dust-resuspension prevention (wet mopping avoids lifting settled PM into breathing zone).",
+    "assumptions": ["Indoor resuspension not parameterized in single-zone mass balance"]
+  },
+  "avoid_indoor_smoke_sources": {
+    "method": "Qualitative source control: eliminates indoor incense, mosquito coil, and candle aerosol spikes.",
+    "assumptions": ["Avoids acute indoor peak emissions in closed winter rooms"]
+  },
+  "lpg_instead_of_biomass": {
+    "method": "Reduces indoor cooking source S from biomass (60 ug/m3/h) to LPG (10 ug/m3/h) at cooking hours.",
+    "assumptions": ["Cooking source S assumption with +-50% sensitivity range"]
+  },
+  "induction_cooking": {
+    "method": "Eliminates gas burner indoor combustion source S (10 -> 0 ug/m3/h during hours 07 & 19).",
+    "assumptions": ["Cooking source S assumption (+-50%); frying aerosols still require exhaust"]
+  },
+  "warmth_without_burning": {
+    "method": "Guidance swap replacing biomass/coal warming fires with safe layering or electric heating.",
+    "assumptions": ["Prevents neighbourhood biomass smoke and indoor carbon monoxide hazards"]
+  },
+  "carpool_shared_ride": {
+    "method": "Halves per-person car CO2e (2 occupants) while keeping closed-cabin filtration/recirculation.",
+    "assumptions": ["Assumes 2 commuters sharing an existing car trip", "48 working weeks/year"]
+  },
+  "walk_or_cycle_short_trips": {
+    "method": "Zero-emission active travel on short <= 3 km trips when air is Good-Sensitive (L0-L2).",
+    "assumptions": ["Suppressed automatically at L3+ to avoid high-breathing outdoor smog exposure"]
+  },
+  "community_no_burning": {
+    "method": "Collective street/guard action halting open leaf, trash, and coal burning.",
+    "assumptions": ["Community-level qualitative impact"]
+  },
+  "society_dust_and_diesel_audit": {
+    "method": "RWA operational audit of construction dust covers, wet sweeping, and DG-set maintenance.",
+    "assumptions": ["Community-level qualitative impact"]
+  },
+  "share_community_brief": {
+    "method": "Distributes printable 1-page air action brief to RWAs and school parent groups.",
+    "assumptions": ["Community-level qualitative impact"]
+  }
+}

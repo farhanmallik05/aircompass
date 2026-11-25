@@ -1,0 +1,128 @@
+{
+  "en": {
+    "headline": "Focus on clean indoor air and fitted N95 masks at {{level.name}} air quality",
+    "summary": "Today's air sits at {{level.name}} with current US AQI {{aqi.now}}. Combining protective steps lowers breathed air from {{exposure.before}} to {{exposure.after}}, with the cleanest outdoor window from {{best.start}} to {{best.end}}.",
+    "cards": [
+      {
+        "actionId": "buy_hepa_purifier",
+        "title": "Run a true HEPA purifier in the main room",
+        "why": "Continuous mechanical filtration gives the strongest drop in breathed PM2.5 indoors.",
+        "when": "Keep running across sleeping and home hours.",
+        "steps": [
+          "Close bedroom doors to reduce treated volume.",
+          "Keep ionizer modes turned off."
+        ]
+      },
+      {
+        "actionId": "exercise_indoors_when_poor",
+        "title": "Move morning exercise indoors",
+        "why": "Heavy outdoor exertion draws deep particles during peak morning inversion.",
+        "when": "Stay indoors whenever air stays {{level.name}}.",
+        "steps": [
+          "Choose indoor mobility or yoga.",
+          "Pair with filtered room air."
+        ]
+      },
+      {
+        "actionId": "air_house_in_best_window",
+        "title": "Manage windows around peak smog",
+        "why": "Shutting windows during {{avoid.start}} to {{avoid.end}} slows outdoor smoke infiltration.",
+        "when": "Open briefly at {{best.start}} only if air is moderate.",
+        "steps": [
+          "Close windows well before dusk.",
+          "Turn off exhaust fans after cooking."
+        ]
+      },
+      {
+        "actionId": "commute_to_public_transport",
+        "title": "Shift car commute to bus with N95 protection",
+        "why": "Saves {{co2e.commute_to_public_transport}} of commute emissions, though open waiting slightly raises exposure unless masked.",
+        "when": "On regular office commute days.",
+        "steps": [
+          "Wear a fitted N95 mask at stops and onboard.",
+          "Prefer metro where corridor allows."
+        ]
+      },
+      {
+        "actionId": "share_community_brief",
+        "title": "Share the Community Brief with your RWA",
+        "why": "Coordinated anti-burning and dust control protects every family on the street.",
+        "when": "Share before the next society meeting.",
+        "steps": [
+          "Print the single-page brief.",
+          "Post in society and school parent groups."
+        ]
+      }
+    ],
+    "memberNotes": [
+      { "group": "child", "note": "Keep children's outdoor play indoors while level remains {{level.name}}." },
+      { "group": "respiratory", "note": "Keep rescue inhaler handy and avoid strenuous outdoor trips." }
+    ],
+    "tradeoffs": [
+      "Shifting from car to bus saves {{co2e.commute_to_public_transport}} but increases exposure by {{impact.commute_to_public_transport.ugm3}} without an N95 mask."
+    ]
+  },
+  "hi": {
+    "headline": "{{level.name}} वायु गुणवत्ता में घर के अंदर साफ़ हवा और फ़िट N95 पर ध्यान दें",
+    "summary": "वर्तमान US AQI {{aqi.now}} के साथ आज का स्तर {{level.name}} है। सुरक्षा कदमों से सांस का संपर्क {{exposure.before}} से {{exposure.after}} हो सकता है, और सबसे साफ़ समय {{best.start}} से {{best.end}} है।",
+    "cards": [
+      {
+        "actionId": "buy_hepa_purifier",
+        "title": "मुख्य कमरे में HEPA प्यूरीफायर चलाएँ",
+        "why": "लगातार यांत्रिक फ़िल्ट्रेशन घर के अंदर PM2.5 संपर्क में सबसे बड़ी कमी देता है।",
+        "when": "घर पर रहने और सोने के समय लगातार चलाएँ।",
+        "steps": [
+          "कमरे का दरवाज़ा बंद रखें ताकि हवा जल्दी साफ़ हो।",
+          "आयनाइज़र मोड बंद रखें।"
+        ]
+      },
+      {
+        "actionId": "exercise_indoors_when_poor",
+        "title": "सुबह का व्यायाम घर के अंदर करें",
+        "why": "सुबह के स्मॉग में बाहर दौड़ने से फेफड़ों में गहरे कण जाते हैं।",
+        "when": "जब तक स्तर {{level.name}} रहे, अंदर व्यायाम करें।",
+        "steps": [
+          "योग या हल्की स्ट्रेचिंग चुनें।",
+          "साफ़ फ़िल्टर वाले कमरे में अभ्यास करें।"
+        ]
+      },
+      {
+        "actionId": "air_house_in_best_window",
+        "title": "चरम स्मॉग समय में खिड़कियाँ नियंत्रित रखें",
+        "why": "{{avoid.start}} से {{avoid.end}} के दौरान खिड़कियाँ बंद रखने से बाहर का धुआँ अंदर कम आता है।",
+        "when": "हवा बेहतर होने पर ही {{best.start}} पर संक्षेप में खोलें।",
+        "steps": [
+          "शाम से पहले सभी खिड़कियाँ बंद कर दें।",
+          "खाना पकने के बाद एग्जॉस्ट बंद करें।"
+        ]
+      },
+      {
+        "actionId": "commute_to_public_transport",
+        "title": "N95 सुरक्षा के साथ कार से बस सफ़र अपनाएँ",
+        "why": "इससे {{co2e.commute_to_public_transport}} उत्सर्जन बचता है, पर मास्क बिना खुले सफ़र में संपर्क थोड़ा बढ़ सकता है।",
+        "when": "नियमित काम के दिनों में।",
+        "steps": [
+          "बस स्टॉप और सफ़र में फ़िट N95 पहनें।",
+          "संभव हो तो मेट्रो मार्ग चुनें।"
+        ]
+      },
+      {
+        "actionId": "share_community_brief",
+        "title": "अपने RWA के साथ सामुदायिक संक्षेप साझा करें",
+        "why": "कचरा न जलाने और धूल नियंत्रण की सामूहिक पहल पूरे मोहल्ले को सुरक्षित रखती है।",
+        "when": "अगली सोसाइटी बैठक से पहले साझा करें।",
+        "steps": [
+          "एक-पृष्ठ संक्षेप प्रिंट करें।",
+          "सोसाइटी और स्कूल समूहों में भेजें।"
+        ]
+      }
+    ],
+    "memberNotes": [
+      { "group": "child", "note": "{{level.name}} स्तर पर बच्चों का खेल घर के अंदर रखें।" },
+      { "group": "respiratory", "note": "राहत दवा पास रखें और बाहर भारी मेहनत से बचें।" }
+    ],
+    "tradeoffs": [
+      "कार से बस बदलने पर {{co2e.commute_to_public_transport}} बचता है, पर बिना N95 के संपर्क {{impact.commute_to_public_transport.ugm3}} बढ़ सकता है।"
+    ]
+  }
+}

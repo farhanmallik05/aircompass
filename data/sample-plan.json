@@ -1,0 +1,841 @@
+{
+  "outcome": "fallback",
+  "plan": {
+    "headline": "Clean indoor air and protective routine for Very unhealthy air",
+    "summary": "Current US AQI 273 (Very unhealthy). Cleanest window 15:00–17:00; peak avoid window 21:00–00:00.",
+    "cards": [
+      {
+        "actionId": "diy_box_fan_filter",
+        "section": "indoor",
+        "title": "Build a taped MERV-13 / HEPA DIY box-fan filter",
+        "why": "A sealed box fan with a true high-MERV or replacement HEPA filter delivers substantial CADR at low cost.",
+        "when": "Run whenever bedrooms or living spaces are occupied.",
+        "steps": [
+          "Tape all edge gaps securely so air passes through the filter media.",
+          "Run continuously on medium speed in the main sleeping room."
+        ],
+        "impact": {
+          "actionId": "diy_box_fan_filter",
+          "kind": "quantified",
+          "exposureDeltaUgM3": 41.2,
+          "exposureDeltaPct": 35.1,
+          "exposureRangeUgM3": [
+            34.2,
+            41.2
+          ],
+          "confidence": "low",
+          "method": "Single-zone mass balance with DIY box-fan filter (200 m3/h CADR) across all home hours.",
+          "assumptions": [
+            "Conservative CADR 200 m3/h with 0.5 derate (0.3-0.7 range)",
+            "Ceiling height 2.7 m"
+          ]
+        },
+        "cost": 1,
+        "effort": 2,
+        "tradeoff": false
+      },
+      {
+        "actionId": "carpool_shared_ride",
+        "section": "swap",
+        "title": "Carpool or share daily car commutes",
+        "why": "Halves per-person car CO2e while retaining lower enclosed-cabin particle exposure on severe days.",
+        "when": "Regular office or school-run days.",
+        "steps": [
+          "Pair with neighbours or colleagues along the same corridor.",
+          "Keep cabin climate control on recirculate in heavy traffic."
+        ],
+        "impact": {
+          "actionId": "carpool_shared_ride",
+          "kind": "guidance",
+          "exposureDeltaUgM3": 0,
+          "exposureDeltaPct": 0,
+          "exposureRangeUgM3": [
+            0,
+            0
+          ],
+          "co2eKgPerYear": 489.6,
+          "co2eRangeKgPerYear": [
+            316.8,
+            691.2
+          ],
+          "confidence": "low",
+          "method": "Halves per-person car CO2e (2 occupants) while keeping closed-cabin filtration/recirculation.",
+          "assumptions": [
+            "Assumes 2 commuters sharing an existing car trip",
+            "48 working weeks/year"
+          ]
+        },
+        "cost": 0,
+        "effort": 2,
+        "tradeoff": false
+      },
+      {
+        "actionId": "n95_for_open_transport",
+        "section": "routine",
+        "title": "Wear a fitted N95 / FFP2 on open commutes",
+        "why": "Walkers, cyclists, two-wheelers, autos, and buses breathe near-outdoor concentrations along corridors.",
+        "when": "For all open-air commutes and essential walks when level ≥ L3.",
+        "steps": [
+          "Pinch the nose wire tightly so air passes through the filter, not gaps.",
+          "Replace the respirator when straps loosen or breathing resistance rises."
+        ],
+        "impact": {
+          "actionId": "n95_for_open_transport",
+          "kind": "quantified",
+          "exposureDeltaUgM3": 12.8,
+          "exposureDeltaPct": 10.9,
+          "exposureRangeUgM3": [
+            9.6,
+            14.3
+          ],
+          "confidence": "low",
+          "method": "Applies N95/FFP2 penetration factor (0.2 base; 0.1-0.4 sensitivity range) to open-air slots.",
+          "assumptions": [
+            "Assumes fitted N95/FFP2 seal (80% base reduction; 60-90% range)",
+            "Does not alter closed car/metro cabin"
+          ]
+        },
+        "cost": 1,
+        "effort": 1,
+        "tradeoff": false
+      },
+      {
+        "actionId": "commute_to_public_transport",
+        "section": "routine",
+        "title": "Shift private car/two-wheeler trips to bus or metro",
+        "why": "Replaces private tailpipe CO2e and road NOx/PM, though open-air waiting/bus trips can raise personal exposure without a mask.",
+        "when": "On regular work or college commute days.",
+        "steps": [
+          "Pair bus or metro commutes with a fitted N95 on severe smog days.",
+          "Choose metro where available for lower cabin exposure and lower CO2e."
+        ],
+        "impact": {
+          "actionId": "commute_to_public_transport",
+          "kind": "quantified",
+          "exposureDeltaUgM3": -2.8,
+          "exposureDeltaPct": -2.4,
+          "exposureRangeUgM3": [
+            -2.9,
+            -2.7
+          ],
+          "co2eKgPerYear": 576,
+          "co2eRangeKgPerYear": [
+            57.6,
+            1296
+          ],
+          "confidence": "low",
+          "method": "Replaces private commute emissions with public bus; compares 1.0x outdoor bus exposure against cabin.",
+          "assumptions": [
+            "Car cabin 0.6x outdoor, bus 1.0x outdoor",
+            "48 working weeks/year; DEFRA/India GHG factor ranges"
+          ]
+        },
+        "cost": 0,
+        "effort": 3,
+        "tradeoff": true
+      },
+      {
+        "actionId": "exercise_indoors_when_poor",
+        "section": "routine",
+        "title": "Move exercise indoors on polluted days",
+        "why": "Indoor air filtered or shut away from traffic holds far less PM2.5 than street air at high breathing rates.",
+        "when": "Whenever Today's level reaches Unhealthy (L3) or higher.",
+        "steps": [
+          "Use bodyweight mobility, yoga, or indoor stairs.",
+          "Run a purifier in the workout room if available."
+        ],
+        "impact": {
+          "actionId": "exercise_indoors_when_poor",
+          "kind": "quantified",
+          "exposureDeltaUgM3": 7,
+          "exposureDeltaPct": 5.9,
+          "exposureRangeUgM3": [
+            4.1,
+            9.5
+          ],
+          "confidence": "low",
+          "method": "Moves 30 min workout indoors (2.5x indoor breathing factor vs 4.0x outdoor).",
+          "assumptions": [
+            "Indoor workout inhalation factor 2.5x",
+            "Main room follows single-zone indoor PM2.5"
+          ]
+        },
+        "cost": 0,
+        "effort": 1,
+        "tradeoff": false
+      },
+      {
+        "actionId": "air_house_in_best_window",
+        "section": "indoor",
+        "title": "Air the house only in the cleanest 2-hour window",
+        "why": "Cross-ventilating during the lowest PM2.5 hours refreshes CO2 without flooding rooms with peak smog.",
+        "when": "Open opposite windows briefly around 15:00-17:00 if below L4.",
+        "steps": [
+          "Close windows promptly before evening inversion builds.",
+          "Keep windows shut all day if the best window stays L4+."
+        ],
+        "impact": {
+          "actionId": "air_house_in_best_window",
+          "kind": "quantified",
+          "exposureDeltaUgM3": 6.1,
+          "exposureDeltaPct": 5.2,
+          "exposureRangeUgM3": [
+            4.1,
+            7.5
+          ],
+          "confidence": "low",
+          "method": "Replaces morning/evening window opening with the cleanest 2h midday window (or keeps shut at L4+).",
+          "assumptions": [
+            "Window-open ACH a=4.0 h^-1 (3.5-4.5); closed normal a=0.7 h^-1 (0.5-1.0)"
+          ]
+        },
+        "cost": 0,
+        "effort": 1,
+        "tradeoff": false
+      },
+      {
+        "actionId": "cooking_ventilation",
+        "section": "indoor",
+        "title": "Ventilate kitchen while frying or tadka",
+        "why": "Cooking aerosols spike indoor PM2.5 inside apartments unless exhausted directly outdoors.",
+        "when": "During active stove use (morning and evening meals).",
+        "steps": [
+          "Switch on chimney/exhaust fan and cover pans when simmering.",
+          "Shut interior doors between kitchen and sleeping rooms while cooking."
+        ],
+        "impact": {
+          "actionId": "cooking_ventilation",
+          "kind": "quantified",
+          "exposureDeltaUgM3": 0.2,
+          "exposureDeltaPct": 0.2,
+          "exposureRangeUgM3": [
+            0.1,
+            0.3
+          ],
+          "confidence": "low",
+          "method": "Halves cooking particle source S during hours 07 and 19 via exhaust/cross-ventilation.",
+          "assumptions": [
+            "Cooking S: biomass 60, other 25, LPG 10 ug/m3/h (+-50% range)",
+            "Exhaust halves S"
+          ]
+        },
+        "cost": 0,
+        "effort": 1,
+        "tradeoff": false
+      }
+    ],
+    "memberNotes": [
+      {
+        "group": "adult",
+        "note": "Avoid prolonged outdoor exertion; keep windows shut; run purifier if available"
+      },
+      {
+        "group": "child",
+        "note": "Children: Stay indoors; no outdoor PE or play"
+      },
+      {
+        "group": "senior",
+        "note": "Seniors (60+): Stay indoors; no outdoor PE or play"
+      },
+      {
+        "group": "respiratory",
+        "note": "Respiratory / asthma: Stay indoors; no outdoor PE or play"
+      }
+    ],
+    "tradeoffs": [
+      "This commute swap saves 576 kg CO2e/yr but raises exposure by 2.8 µg/m³ — pair with a fitted N95 mask."
+    ]
+  },
+  "facts": {
+    "levelNow": 4,
+    "levelToday": 4,
+    "aqiNow": 273,
+    "aqiToday": 259,
+    "pm25Now": 197.9,
+    "pm25TodayMean": 183.8,
+    "naqi": {
+      "sufficient": true,
+      "validHours": 24,
+      "index": 316,
+      "category": "Very Poor",
+      "dominant": "pm25",
+      "assumptionUsed": false
+    },
+    "windows": {
+      "best": {
+        "start": 15,
+        "end": 17,
+        "mean": 112.1,
+        "startLabel": "15:00",
+        "endLabel": "17:00"
+      },
+      "avoid": {
+        "start": 21,
+        "end": 24,
+        "mean": 260.766667,
+        "startLabel": "21:00",
+        "endLabel": "00:00"
+      },
+      "noGoodWindow": false,
+      "shortData": false,
+      "hoursEvaluated": 24
+    },
+    "baselineExposureUgM3": 117.5,
+    "combinedExposureUgM3": 56,
+    "candidates": [
+      {
+        "id": "diy_box_fan_filter",
+        "section": "indoor",
+        "cost": 1,
+        "effort": 2,
+        "audience": [
+          "adult",
+          "child",
+          "senior",
+          "respiratory",
+          "cardiac",
+          "pregnant"
+        ],
+        "score": 0.5612,
+        "impact": {
+          "actionId": "diy_box_fan_filter",
+          "kind": "quantified",
+          "exposureDeltaUgM3": 41.2,
+          "exposureDeltaPct": 35.1,
+          "exposureRangeUgM3": [
+            34.2,
+            41.2
+          ],
+          "confidence": "low",
+          "method": "Single-zone mass balance with DIY box-fan filter (200 m3/h CADR) across all home hours.",
+          "assumptions": [
+            "Conservative CADR 200 m3/h with 0.5 derate (0.3-0.7 range)",
+            "Ceiling height 2.7 m"
+          ]
+        },
+        "tradeoff": false
+      },
+      {
+        "id": "carpool_shared_ride",
+        "section": "swap",
+        "cost": 0,
+        "effort": 2,
+        "audience": [
+          "adult"
+        ],
+        "score": 0.2808,
+        "impact": {
+          "actionId": "carpool_shared_ride",
+          "kind": "guidance",
+          "exposureDeltaUgM3": 0,
+          "exposureDeltaPct": 0,
+          "exposureRangeUgM3": [
+            0,
+            0
+          ],
+          "co2eKgPerYear": 489.6,
+          "co2eRangeKgPerYear": [
+            316.8,
+            691.2
+          ],
+          "confidence": "low",
+          "method": "Halves per-person car CO2e (2 occupants) while keeping closed-cabin filtration/recirculation.",
+          "assumptions": [
+            "Assumes 2 commuters sharing an existing car trip",
+            "48 working weeks/year"
+          ]
+        },
+        "tradeoff": false
+      },
+      {
+        "id": "n95_for_open_transport",
+        "section": "routine",
+        "cost": 1,
+        "effort": 1,
+        "audience": [
+          "adult",
+          "senior",
+          "respiratory",
+          "cardiac",
+          "pregnant"
+        ],
+        "score": 0.2658,
+        "impact": {
+          "actionId": "n95_for_open_transport",
+          "kind": "quantified",
+          "exposureDeltaUgM3": 12.8,
+          "exposureDeltaPct": 10.9,
+          "exposureRangeUgM3": [
+            9.6,
+            14.3
+          ],
+          "confidence": "low",
+          "method": "Applies N95/FFP2 penetration factor (0.2 base; 0.1-0.4 sensitivity range) to open-air slots.",
+          "assumptions": [
+            "Assumes fitted N95/FFP2 seal (80% base reduction; 60-90% range)",
+            "Does not alter closed car/metro cabin"
+          ]
+        },
+        "tradeoff": false
+      },
+      {
+        "id": "commute_to_public_transport",
+        "section": "routine",
+        "cost": 0,
+        "effort": 3,
+        "audience": [
+          "adult"
+        ],
+        "score": 0.265,
+        "impact": {
+          "actionId": "commute_to_public_transport",
+          "kind": "quantified",
+          "exposureDeltaUgM3": -2.8,
+          "exposureDeltaPct": -2.4,
+          "exposureRangeUgM3": [
+            -2.9,
+            -2.7
+          ],
+          "co2eKgPerYear": 576,
+          "co2eRangeKgPerYear": [
+            57.6,
+            1296
+          ],
+          "confidence": "low",
+          "method": "Replaces private commute emissions with public bus; compares 1.0x outdoor bus exposure against cabin.",
+          "assumptions": [
+            "Car cabin 0.6x outdoor, bus 1.0x outdoor",
+            "48 working weeks/year; DEFRA/India GHG factor ranges"
+          ]
+        },
+        "tradeoff": true,
+        "mitigation": "n95_for_open_transport"
+      },
+      {
+        "id": "exercise_indoors_when_poor",
+        "section": "routine",
+        "cost": 0,
+        "effort": 1,
+        "audience": [
+          "adult",
+          "child",
+          "senior",
+          "respiratory",
+          "cardiac",
+          "pregnant"
+        ],
+        "score": 0.2508,
+        "impact": {
+          "actionId": "exercise_indoors_when_poor",
+          "kind": "quantified",
+          "exposureDeltaUgM3": 7,
+          "exposureDeltaPct": 5.9,
+          "exposureRangeUgM3": [
+            4.1,
+            9.5
+          ],
+          "confidence": "low",
+          "method": "Moves 30 min workout indoors (2.5x indoor breathing factor vs 4.0x outdoor).",
+          "assumptions": [
+            "Indoor workout inhalation factor 2.5x",
+            "Main room follows single-zone indoor PM2.5"
+          ]
+        },
+        "tradeoff": false
+      },
+      {
+        "id": "air_house_in_best_window",
+        "section": "indoor",
+        "cost": 0,
+        "effort": 1,
+        "audience": [
+          "adult",
+          "child",
+          "senior",
+          "respiratory",
+          "cardiac",
+          "pregnant"
+        ],
+        "score": 0.2424,
+        "impact": {
+          "actionId": "air_house_in_best_window",
+          "kind": "quantified",
+          "exposureDeltaUgM3": 6.1,
+          "exposureDeltaPct": 5.2,
+          "exposureRangeUgM3": [
+            4.1,
+            7.5
+          ],
+          "confidence": "low",
+          "method": "Replaces morning/evening window opening with the cleanest 2h midday window (or keeps shut at L4+).",
+          "assumptions": [
+            "Window-open ACH a=4.0 h^-1 (3.5-4.5); closed normal a=0.7 h^-1 (0.5-1.0)"
+          ]
+        },
+        "tradeoff": false
+      },
+      {
+        "id": "cooking_ventilation",
+        "section": "indoor",
+        "cost": 0,
+        "effort": 1,
+        "audience": [
+          "adult",
+          "child",
+          "senior",
+          "respiratory",
+          "cardiac",
+          "pregnant"
+        ],
+        "score": 0.1824,
+        "impact": {
+          "actionId": "cooking_ventilation",
+          "kind": "quantified",
+          "exposureDeltaUgM3": 0.2,
+          "exposureDeltaPct": 0.2,
+          "exposureRangeUgM3": [
+            0.1,
+            0.3
+          ],
+          "confidence": "low",
+          "method": "Halves cooking particle source S during hours 07 and 19 via exhaust/cross-ventilation.",
+          "assumptions": [
+            "Cooking S: biomass 60, other 25, LPG 10 ug/m3/h (+-50% range)",
+            "Exhaust halves S"
+          ]
+        },
+        "tradeoff": false
+      },
+      {
+        "id": "avoid_indoor_smoke_sources",
+        "section": "indoor",
+        "cost": 0,
+        "effort": 1,
+        "audience": [
+          "adult",
+          "child",
+          "senior",
+          "respiratory",
+          "cardiac",
+          "pregnant"
+        ],
+        "score": 0.18,
+        "impact": {
+          "actionId": "avoid_indoor_smoke_sources",
+          "kind": "guidance",
+          "exposureDeltaUgM3": 0,
+          "exposureDeltaPct": 0,
+          "exposureRangeUgM3": [
+            0,
+            0
+          ],
+          "confidence": "low",
+          "method": "Qualitative source control: eliminates indoor incense, mosquito coil, and candle aerosol spikes.",
+          "assumptions": [
+            "Avoids acute indoor peak emissions in closed winter rooms"
+          ]
+        },
+        "tradeoff": false
+      },
+      {
+        "id": "damp_mop_dont_sweep",
+        "section": "indoor",
+        "cost": 0,
+        "effort": 1,
+        "audience": [
+          "adult",
+          "child",
+          "senior",
+          "respiratory"
+        ],
+        "score": 0.18,
+        "impact": {
+          "actionId": "damp_mop_dont_sweep",
+          "kind": "guidance",
+          "exposureDeltaUgM3": 0,
+          "exposureDeltaPct": 0,
+          "exposureRangeUgM3": [
+            0,
+            0
+          ],
+          "confidence": "low",
+          "method": "Qualitative dust-resuspension prevention (wet mopping avoids lifting settled PM into breathing zone).",
+          "assumptions": [
+            "Indoor resuspension not parameterized in single-zone mass balance"
+          ]
+        },
+        "tradeoff": false
+      },
+      {
+        "id": "community_no_burning",
+        "section": "swap",
+        "cost": 0,
+        "effort": 1,
+        "audience": [
+          "adult",
+          "senior",
+          "child"
+        ],
+        "score": 0.155,
+        "impact": {
+          "actionId": "community_no_burning",
+          "kind": "guidance",
+          "exposureDeltaUgM3": 0,
+          "exposureDeltaPct": 0,
+          "exposureRangeUgM3": [
+            0,
+            0
+          ],
+          "confidence": "low",
+          "method": "Collective street/guard action halting open leaf, trash, and coal burning.",
+          "assumptions": [
+            "Community-level qualitative impact"
+          ]
+        },
+        "tradeoff": false
+      },
+      {
+        "id": "share_community_brief",
+        "section": "swap",
+        "cost": 0,
+        "effort": 1,
+        "audience": [
+          "adult",
+          "child",
+          "senior"
+        ],
+        "score": 0.155,
+        "impact": {
+          "actionId": "share_community_brief",
+          "kind": "guidance",
+          "exposureDeltaUgM3": 0,
+          "exposureDeltaPct": 0,
+          "exposureRangeUgM3": [
+            0,
+            0
+          ],
+          "confidence": "low",
+          "method": "Distributes printable 1-page air action brief to RWAs and school parent groups.",
+          "assumptions": [
+            "Community-level qualitative impact"
+          ]
+        },
+        "tradeoff": false
+      },
+      {
+        "id": "no_idling",
+        "section": "routine",
+        "cost": 0,
+        "effort": 1,
+        "audience": [
+          "adult",
+          "child"
+        ],
+        "score": 0.1454,
+        "impact": {
+          "actionId": "no_idling",
+          "kind": "guidance",
+          "exposureDeltaUgM3": 0,
+          "exposureDeltaPct": 0,
+          "exposureRangeUgM3": [
+            0,
+            0
+          ],
+          "co2eKgPerYear": 38.5,
+          "co2eRangeKgPerYear": [
+            28.9,
+            48.1
+          ],
+          "confidence": "low",
+          "method": "Cuts 5 min/day engine idling (0.6-1.0 L/h petrol, 250 days/yr * 2.31 kg CO2/L).",
+          "assumptions": [
+            "Idling fuel burn 0.6-1.0 L/h assumption",
+            "Also avoids concentrated tailpipe PM/NOx near school gates"
+          ]
+        },
+        "tradeoff": false
+      },
+      {
+        "id": "warmth_without_burning",
+        "section": "swap",
+        "cost": 1,
+        "effort": 1,
+        "audience": [
+          "adult",
+          "senior",
+          "child"
+        ],
+        "score": 0.135,
+        "impact": {
+          "actionId": "warmth_without_burning",
+          "kind": "guidance",
+          "exposureDeltaUgM3": 0,
+          "exposureDeltaPct": 0,
+          "exposureRangeUgM3": [
+            0,
+            0
+          ],
+          "confidence": "low",
+          "method": "Guidance swap replacing biomass/coal warming fires with safe layering or electric heating.",
+          "assumptions": [
+            "Prevents neighbourhood biomass smoke and indoor carbon monoxide hazards"
+          ]
+        },
+        "tradeoff": false
+      },
+      {
+        "id": "wfh_on_worst_day",
+        "section": "routine",
+        "cost": 0,
+        "effort": 2,
+        "audience": [
+          "adult",
+          "respiratory",
+          "cardiac",
+          "pregnant"
+        ],
+        "score": -0.0117,
+        "impact": {
+          "actionId": "wfh_on_worst_day",
+          "kind": "quantified",
+          "exposureDeltaUgM3": -0.3,
+          "exposureDeltaPct": -0.3,
+          "exposureRangeUgM3": [
+            -0.4,
+            -0.3
+          ],
+          "co2eKgPerYear": 195.84,
+          "co2eRangeKgPerYear": [
+            126.72,
+            276.48
+          ],
+          "confidence": "medium",
+          "method": "Converts 1 commute day/week to home-based day and removes 1 round-trip of tailpipe CO2e.",
+          "assumptions": [
+            "Eliminates 1 round-trip/week across 48 weeks",
+            "Home air modeled via single-zone mass balance"
+          ]
+        },
+        "tradeoff": true,
+        "mitigation": "n95_for_open_transport"
+      }
+    ],
+    "members": [
+      "adult",
+      "child",
+      "senior",
+      "respiratory"
+    ],
+    "lang": "en",
+    "budget": "low",
+    "dataNote": "recorded",
+    "recordedDate": "2026-11-12"
+  },
+  "baselineScenario": {
+    "windowsOpenHours": [
+      7,
+      8,
+      17,
+      18
+    ],
+    "envelope": "normal",
+    "purifier": "none",
+    "purifierHours": [],
+    "exerciseHour": 6,
+    "exerciseIndoors": false,
+    "commuteMode": "car",
+    "commuteDaysPerWeek": 5,
+    "n95Outdoors": false,
+    "cooking": "lpg",
+    "cookVent": false
+  },
+  "combinedScenario": {
+    "windowsOpenHours": [
+      15,
+      16
+    ],
+    "envelope": "normal",
+    "purifier": "diy",
+    "purifierHours": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+    ],
+    "exerciseHour": 6,
+    "exerciseIndoors": true,
+    "commuteMode": "car",
+    "commuteDaysPerWeek": 5,
+    "n95Outdoors": true,
+    "cooking": "lpg",
+    "cookVent": true
+  },
+  "tokens": {
+    "aqi.now": "273",
+    "aqi.today": "259",
+    "level.name": "Very unhealthy",
+    "best.start": "15:00",
+    "best.end": "17:00",
+    "avoid.start": "21:00",
+    "avoid.end": "00:00",
+    "exposure.before": "118 µg/m³",
+    "exposure.after": "56 µg/m³",
+    "impact.diy_box_fan_filter.pct": "35 %",
+    "impact.diy_box_fan_filter.ugm3": "41.2 µg/m³",
+    "impact.diy_box_fan_filter.range": "34.2 to 41.2 µg/m³",
+    "impact.carpool_shared_ride.pct": "0 %",
+    "impact.carpool_shared_ride.ugm3": "0.0 µg/m³",
+    "impact.carpool_shared_ride.range": "0.0 to 0.0 µg/m³",
+    "co2e.carpool_shared_ride": "490 kg CO2e/yr",
+    "impact.n95_for_open_transport.pct": "11 %",
+    "impact.n95_for_open_transport.ugm3": "12.8 µg/m³",
+    "impact.n95_for_open_transport.range": "9.6 to 14.3 µg/m³",
+    "impact.commute_to_public_transport.pct": "2 %",
+    "impact.commute_to_public_transport.ugm3": "2.8 µg/m³",
+    "impact.commute_to_public_transport.range": "2.7 to 2.9 µg/m³",
+    "co2e.commute_to_public_transport": "576 kg CO2e/yr",
+    "impact.exercise_indoors_when_poor.pct": "6 %",
+    "impact.exercise_indoors_when_poor.ugm3": "7.0 µg/m³",
+    "impact.exercise_indoors_when_poor.range": "4.1 to 9.5 µg/m³",
+    "impact.air_house_in_best_window.pct": "5 %",
+    "impact.air_house_in_best_window.ugm3": "6.1 µg/m³",
+    "impact.air_house_in_best_window.range": "4.1 to 7.5 µg/m³",
+    "impact.cooking_ventilation.pct": "0 %",
+    "impact.cooking_ventilation.ugm3": "0.2 µg/m³",
+    "impact.cooking_ventilation.range": "0.1 to 0.3 µg/m³",
+    "impact.avoid_indoor_smoke_sources.pct": "0 %",
+    "impact.avoid_indoor_smoke_sources.ugm3": "0.0 µg/m³",
+    "impact.avoid_indoor_smoke_sources.range": "0.0 to 0.0 µg/m³",
+    "impact.damp_mop_dont_sweep.pct": "0 %",
+    "impact.damp_mop_dont_sweep.ugm3": "0.0 µg/m³",
+    "impact.damp_mop_dont_sweep.range": "0.0 to 0.0 µg/m³",
+    "impact.community_no_burning.pct": "0 %",
+    "impact.community_no_burning.ugm3": "0.0 µg/m³",
+    "impact.community_no_burning.range": "0.0 to 0.0 µg/m³",
+    "impact.share_community_brief.pct": "0 %",
+    "impact.share_community_brief.ugm3": "0.0 µg/m³",
+    "impact.share_community_brief.range": "0.0 to 0.0 µg/m³",
+    "impact.no_idling.pct": "0 %",
+    "impact.no_idling.ugm3": "0.0 µg/m³",
+    "impact.no_idling.range": "0.0 to 0.0 µg/m³",
+    "co2e.no_idling": "39 kg CO2e/yr",
+    "impact.warmth_without_burning.pct": "0 %",
+    "impact.warmth_without_burning.ugm3": "0.0 µg/m³",
+    "impact.warmth_without_burning.range": "0.0 to 0.0 µg/m³",
+    "impact.wfh_on_worst_day.pct": "0 %",
+    "impact.wfh_on_worst_day.ugm3": "0.3 µg/m³",
+    "impact.wfh_on_worst_day.range": "0.3 to 0.4 µg/m³",
+    "co2e.wfh_on_worst_day": "196 kg CO2e/yr"
+  },
+  "reason": "no_api_key"
+}
