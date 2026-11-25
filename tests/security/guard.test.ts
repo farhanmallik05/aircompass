@@ -50,6 +50,14 @@ describe("output guard", () => {
     const nineteen = "abcdefghijklmnopqrs";
     expect(languageOk(nineteen, "hi")).toBe(true);
     expect(languageOk(nineteen + "t", "hi")).toBe(false);
+    // Exact 0.50 and 0.05 Devanagari ratio boundaries on 20-letter strings
+    expect(languageOk("कखगघङचछजझञabcdefghij", "hi")).toBe(true);
+    expect(languageOk("कabcdefghijklmnopqrs", "en")).toBe(false);
+    expect(languageOk("कabcdefghijklmnopqrs", "hi")).toBe(false);
+  });
+
+  it("inserts word boundary space when stripping tokens so adjacent words cannot merge", () => {
+    expect(rules("one{{aqi.now}}hours")).toContain("spelled time or count (en)");
   });
 });
 
@@ -62,6 +70,7 @@ describe("chat numeric faithfulness", () => {
     expect(unfaithfulNumbers("about 13.4 and 14", allowed)).toEqual(["14"]); // small values: absolute tolerance 0.5
     expect(unfaithfulNumbers("about 1005 and 1011", allowed)).toEqual(["1011"]); // large values: relative tolerance 1 %
     expect(unfaithfulNumbers("about 311 and 316", allowed)).toEqual(["316"]); // 312 +- 3.12
+    expect(unfaithfulNumbers("Exposure delta is 38.25", [38.25])).toEqual([]); // multi-decimal digits stay intact
   });
   it("flags non-ASCII digits outright and ignores digits inside allowed terms", () => {
     expect(unfaithfulNumbers("AQI ३१२", allowed)).toEqual(["non-ascii digit"]);

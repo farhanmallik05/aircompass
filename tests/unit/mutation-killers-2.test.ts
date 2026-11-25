@@ -8,9 +8,9 @@
  *   schedule.ts: lines 61, 80, 82, 86, 92, 107, 111, 114-115, 121-125, 148
  */
 import { describe, it, expect } from "vitest";
-import { selectCandidates, selectFallbackOrder, householdGroups } from "@/lib/engine/select";
+import { selectCandidates } from "@/lib/engine/select";
 import { buildDaySchedule, allHomePurifierHours } from "@/lib/engine/schedule";
-import { baselineScenario, PARAMETER_SETS } from "@/lib/engine/sensitivity";
+import { baselineScenario } from "@/lib/engine/sensitivity";
 import { SAMPLE_FAMILY_PROFILE } from "@/lib/providers/demo";
 import type { AirContext, HourPoint, Level, Profile, Scenario, WindowSummary } from "@/lib/types";
 
@@ -27,7 +27,7 @@ function makeCtx(pm25 = 150): AirContext {
   return {
     place: SAMPLE_FAMILY_PROFILE.place,
     source: "demo",
-    dataNote: "",
+    dataNote: "recorded",
     recordedDate: "2026-11-20",
     fetchedAt: "2026-11-25T12:00:00Z",
     hours: makeHours24(pm25),
@@ -198,7 +198,7 @@ describe("select.ts tradeoff threshold (line 54)", () => {
 describe("select.ts pick logic (lines 71-85)", () => {
   it("section filter: c.section === sec (not !==): only matching sections are pre-picked", () => {
     const ctx = makeCtx(100);
-    const p = { ...baseProfile, budget: "medium" };
+    const p: Profile = { ...baseProfile, budget: "medium" };
     const cands = selectCandidates(p, ctx, 3 as Level, baselineScenario(p), WIN);
     // Result must have entries from all three sections (routine, indoor, swap)
     const routine = cands.filter((c) => c.section === "routine");
@@ -211,14 +211,14 @@ describe("select.ts pick logic (lines 71-85)", () => {
 
   it("picked.size < 14 (not <= 14 or >= 14): caps result at max 14", () => {
     const ctx = makeCtx(200);
-    const p = { ...baseProfile, budget: "medium" };
+    const p: Profile = { ...baseProfile, budget: "medium" };
     const cands = selectCandidates(p, ctx, 3 as Level, baselineScenario(p), WIN);
     expect(cands.length).toBeLessThanOrEqual(14);
   });
 
   it("sort: b.score - a.score descending (not b.score + a.score)", () => {
     const ctx = makeCtx(200);
-    const p = { ...baseProfile, budget: "medium" };
+    const p: Profile = { ...baseProfile, budget: "medium" };
     const cands = selectCandidates(p, ctx, 3 as Level, baselineScenario(p), WIN);
     // Verify descending score order
     for (let i = 0; i < cands.length - 1; i++) {
@@ -229,7 +229,7 @@ describe("select.ts pick logic (lines 71-85)", () => {
   it("tie-break: equal scores sorted by localeCompare(id) ascending (not removed by ArrowFunction→undefined)", () => {
     // Two sections always produce at least 2 from each; ties within scores are broken by id
     const ctx = makeCtx(100);
-    const p = { ...baseProfile, budget: "zero" };
+    const p: Profile = { ...baseProfile, budget: "zero" };
     const cands = selectCandidates(p, ctx, 2 as Level, baselineScenario(p), WIN);
     // Groups by score and checks within-group id ordering
     const scoreGroups = new Map<number, string[]>();

@@ -78,7 +78,17 @@ async function main() {
       const elapsed = Math.round(performance.now() - t0);
       liveSummary = `${elapsed} ms (${res.model}, inputTokens=${res.inputTokens ?? "n/a"}, outputTokens=${res.outputTokens ?? "n/a"})`;
     } catch (err) {
-      liveSummary = `Skipped due to transient API error (${err instanceof Error ? err.message : "unknown"})`;
+      let reason = err instanceof Error ? err.message : "unknown";
+      try {
+        const parsed = JSON.parse(reason) as { error?: { code?: number; status?: string; message?: string } };
+        if (parsed.error) {
+          const shortMsg = parsed.error.message?.split("\n")[0] ?? parsed.error.status ?? "API error";
+          reason = `HTTP ${parsed.error.code ?? "?"} ${parsed.error.status ?? ""}: ${shortMsg}`.trim();
+        }
+      } catch {
+        // Not JSON; keep truncated single-line message
+      }
+      liveSummary = `Skipped due to transient API error (${reason.slice(0, 180)})`;
     }
   }
 

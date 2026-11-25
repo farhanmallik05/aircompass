@@ -33,3 +33,9 @@ Every ticket is logged with the scope, artifacts produced, manual adjustments, a
 
 - **Produced:** Self-hosted Noto Sans & Noto Sans Devanagari `.woff2` (`next/font/local`), `src/components/{AppShell,AirCompassProvider,AirChart,Icons,SetupForm,TodayView,PlanView,ChatDrawer,ImpactView,BriefView}.tsx`, `src/app/{page,plan/page,impact/page,brief/page}.tsx`, `tests/e2e/flows-and-a11y.spec.ts`, `tests/security/bundle-secrets.test.ts`, `scripts/{build-sample,measure,check-chars,check-repo-size}.ts`.
 - **Accessibility & CSP fixes verified by Playwright + Axe:** Replaced `dark:bg-teal-600` (`3.66:1`) with `dark:bg-teal-300 dark:text-slate-950` (`> 12:1` contrast), restricted `<h1>` focus shift to subsequent route transitions so initial `Tab` hits `"Skip to main content"`, and verified 0 Axe violations across all 16 `route × lang × colorScheme` audits + 320px reflow.
+
+## T23 — Mutation Hardening, README Evidence, & Public Repo Readiness
+
+- **Produced:** `tests/unit/{mutation-killers,mutation-killers-2}.test.ts`, expanded boundary specs in `tests/unit/engine-coverage.test.ts` and `tests/security/guard.test.ts`, `docs/assets/aircompass-today.png`, judging `README.md`, and `docs/{CHALLENGE,SCORE_LOG,SUBMISSION}.md`.
+- **Refinement:** Removed a redundant `commuteDaysPerWeek < 7` outer guard in `src/lib/engine/schedule.ts` and cleaned JSON API error formatting in `scripts/measure.ts`.
+- **Verification:** `npm run verify` green (`143/143` tests, `88.26%` branches, `91.61%` functions, `12/12` evals, Next 16.4.6 build), `npm run mutate` **91.20 %** overall (`90.93 %` engine, `94.55 %` guard), `npm run test:e2e` **9/9** green (incl. `6/6` CSP gate & Axe WCAG 2.2 AA), `npm audit --omit=dev --audit-level=high` 0 vulnerabilities. Public GitHub repository live at `https://github.com/farhanmallik05/aircompass`.

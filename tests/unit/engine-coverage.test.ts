@@ -17,6 +17,7 @@ import {
   BASE_PARAMS,
   baselineScenario,
   cookingSourceForHour,
+  PARAMETER_SETS,
 } from "@/lib/engine/sensitivity";
 import { findWindows, findWindowsFromHours } from "@/lib/engine/window";
 import { SAMPLE_FAMILY_PROFILE } from "@/lib/providers/demo";
@@ -689,5 +690,395 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
         household: { adults: 0, children: 0, seniors: 0, conditions: [] },
       }),
     ).toEqual(["adult"]);
+  });
+
+  it("trailingNaqi handles clamped nowIndex, <16 valid PM10 hours, and zero-PM10 validity", () => {
+    const h20 = makeHours(Array.from({ length: 20 }, () => 60));
+    expect(trailingNaqi(h20, 99)).toEqual({
+      sufficient: true,
+      validHours: 20,
+      index: 100,
+      category: "Satisfactory",
+      dominant: "pm25",
+      assumptionUsed: false,
+    });
+
+    // 15 valid high PM10 + 1 NaN must ignore PM10 so dominant stays pm25
+    const pm10Incomplete = makeHours(Array.from({ length: 16 }, () => 30)).map((h, i) => ({
+      ...h,
+      pm10: i === 0 ? Number.NaN : 500,
+    }));
+    expect(trailingNaqi(pm10Incomplete, 15)).toMatchObject({
+      sufficient: true,
+      index: 50,
+      dominant: "pm25",
+      assumptionUsed: false,
+    });
+
+    // 15 hours at PM10=200 + 1 hour at PM10=0 => 16 valid hours (0 counts as valid), mean10=187.5 -> NAQI 159
+    const pm10WithZero = makeHours(Array.from({ length: 16 }, () => 10)).map((h, i) => ({
+      ...h,
+      pm10: i === 0 ? 0 : 200,
+    }));
+    expect(trailingNaqi(pm10WithZero, 15)).toMatchObject({
+      sufficient: true,
+      index: 159,
+      dominant: "pm10",
+      assumptionUsed: false,
+    });
+
+    // All-zero PM2.5 and PM10 remain valid and report index 0
+    const allZero = makeHours(Array.from({ length: 16 }, () => 0)).map((h) => ({ ...h, pm10: 0 }));
+    expect(trailingNaqi(allZero, 15)).toMatchObject({
+      sufficient: true,
+      index: 0,
+      category: "Good",
+      dominant: "pm25",
+    });
+  });
+
+  it("baselineScenario and cookingSourceForHour preserve purifier/vent defaults, leaky hours, and parameter scaling", () => {
+    const base = baselineScenario(SAMPLE_FAMILY_PROFILE);
+    expect(base.purifierHours).toEqual([]);
+    expect(base.cookVent).toBe(false);
+
+    const leaky = baselineScenario({
+      ...SAMPLE_FAMILY_PROFILE,
+      home: { ...SAMPLE_FAMILY_PROFILE.home, windows: "leaky" },
+    });
+    expect(leaky.windowsOpenHours).toEqual(Array.from({ length: 24 }, (_, h) => h));
+    expect(cookingSourceForHour(7, "biomass", false, PARAMETER_SETS[0])).toBe(90);
+  });
+
+  it("schedule and exposure enforce trip-hour spillovers, sleep/work boundaries, commuteDays weighting, and timestamp edges", () => {
+    const base = baselineScenario(SAMPLE_FAMILY_PROFILE);
+    // Exact 1h car trip (20 km at 20 km/h): no spill into h=9 or h=18; car_cabin n95Eligible=false
+    const car1h = buildDaySchedule({ ...base, commuteMode: "car", exerciseHour: null }, 20, true);
+    expect(car1h[8]).toEqual([{ f: 1, location: "car_cabin", v: 1, n95Eligible: false }]);
+    expect(car1h[9]).toEqual([{ f: 1, location: "work_indoor", v: 1, n95Eligible: false }]);
+    expect(car1h[16]).toEqual([{ f: 1, location: "work_indoor", v: 1, n95Eligible: false }]);
+    expect(car1h[17]).toEqual([{ f: 1, location: "car_cabin", v: 1, n95Eligible: false }]);
+    expect(car1h[18]).toEqual([{ f: 1, location: "home", v: 1, n95Eligible: false }]);
+    expect(car1h[5]).toEqual([{ f: 1, location: "home", v: 0.8, n95Eligible: false }]);
+    expect(car1h[6]).toEqual([{ f: 1, location: "home", v: 1, n95Eligible: false }]);
+    expect(car1h[21]).toEqual([{ f: 1, location: "home", v: 1, n95Eligible: false }]);
+    expect(car1h[22]).toEqual([{ f: 1, location: "home", v: 0.8, n95Eligible: false }]);
+
+    // 1.5h car trip (30 km): spills 0.5h into h=9 and h=18
+    const carSpill = buildDaySchedule({ ...base, commuteMode: "car", exerciseHour: null }, 30, true);
+    expect(carSpill[9]).toEqual([
+      { f: 0.5, location: "car_cabin", v: 1, n95Eligible: false },
+      { f: 0.5, location: "work_indoor", v: 1, n95Eligible: false },
+    ]);
+    expect(carSpill[18]).toEqual([
+      { f: 0.5, location: "car_cabin", v: 1, n95Eligible: false },
+      { f: 0.5, location: "home", v: 1, n95Eligible: false },
+    ]);
+
+    // 0.5h car trip (10 km): h=17 remainder is home, not work_indoor
+    const carHalf = buildDaySchedule({ ...base, commuteMode: "car", exerciseHour: null }, 10, true);
+    expect(carHalf[17]).toEqual([
+      { f: 0.5, location: "car_cabin", v: 1, n95Eligible: false },
+      { f: 0.5, location: "home", v: 1, n95Eligible: false },
+    ]);
+
+    // WFH ignores km>0 and keeps h=8 at home; every hour sums f to 1.0
+    const wfhKm = buildDaySchedule({ ...base, commuteMode: "wfh", exerciseHour: null }, 10, true);
+    expect(wfhKm[8]).toEqual([{ f: 1, location: "home", v: 1, n95Eligible: false }]);
+    for (const hourSlots of carSpill) {
+      const sumF = hourSlots.reduce((s, slot) => s + slot.f, 0);
+      expect(sumF).toBeCloseTo(1, 9);
+    }
+
+    expect(allHomePurifierHours("car", 7)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 18, 19, 20, 21, 22, 23]);
+
+    // Exposure: commuteDays=0 == wfh, commuteDays=10 clamped to 7, commuteDays=5 == (5*exp7 + 2*exp0)/7
+    const out200 = Array.from({ length: 24 }, () => 200);
+    const shuttle: Scenario = {
+      ...base,
+      windowsOpenHours: [],
+      purifier: "none",
+      purifierHours: [],
+      exerciseHour: null,
+      cooking: "induction",
+      commuteMode: "car",
+      commuteDaysPerWeek: 7,
+    };
+    const exp7 = computeExposure(out200, shuttle, { roomAreaM2: 15, commuteKm: 15 }).exposureUgM3;
+    const exp10 = computeExposure(out200, { ...shuttle, commuteDaysPerWeek: 10 }, { roomAreaM2: 15, commuteKm: 15 }).exposureUgM3;
+    const exp0 = computeExposure(out200, { ...shuttle, commuteDaysPerWeek: 0 }, { roomAreaM2: 15, commuteKm: 15 }).exposureUgM3;
+    const expWfh = computeExposure(out200, { ...shuttle, commuteMode: "wfh", commuteDaysPerWeek: 5 }, { roomAreaM2: 15, commuteKm: 15 }).exposureUgM3;
+    const exp5 = computeExposure(out200, { ...shuttle, commuteDaysPerWeek: 5 }, { roomAreaM2: 15, commuteKm: 15 }).exposureUgM3;
+    expect(exp10).toBeCloseTo(exp7, 9);
+    expect(exp0).toBeCloseTo(expWfh, 9);
+    expect(exp5).toBeCloseTo((5 * exp7 + 2 * exp0) / 7, 9);
+
+    // Walk (v=2.0) vs Cycle (v=3.0) on constant 200 ug/m3 for 1h commute
+    const expWalk = computeExposure(out200, { ...shuttle, commuteMode: "walk" }, { roomAreaM2: 15, commuteKm: 4.5 }).exposureUgM3;
+    const expCycle = computeExposure(out200, { ...shuttle, commuteMode: "cycle" }, { roomAreaM2: 15, commuteKm: 14 }).exposureUgM3;
+    expect(expCycle).toBeGreaterThan(expWalk);
+
+    // T00:00 and T23:00 parse as hours 0 and 23, while T24:00 falls back to index % 24
+    const spikeAtIdx0 = Array.from({ length: 24 }, (_, i) => (i === 0 ? 400 : 40));
+    const tsValidBounds = Array.from({ length: 24 }, (_, i) => {
+      const mappedHour = i === 0 ? 12 : i === 12 ? 0 : i === 23 ? 23 : i;
+      return `2026-11-20T${String(mappedHour).padStart(2, "0")}:00`;
+    });
+    const tsInvalid24 = Array.from({ length: 24 }, (_, i) =>
+      i === 0 ? "2026-11-20T24:00" : `2026-11-20T${String(i).padStart(2, "0")}:00`,
+    );
+    const expT00 = computeExposure(spikeAtIdx0, shuttle, { roomAreaM2: 15, commuteKm: 20, timestamps: tsValidBounds }).exposureUgM3;
+    const expT24 = computeExposure(spikeAtIdx0, shuttle, { roomAreaM2: 15, commuteKm: 20, timestamps: tsInvalid24 }).exposureUgM3;
+    expect(expT00).not.toBeCloseTo(expT24, 1);
+
+    // Diurnal work_indoor warmup carryover: sealed home vs commute days on step day
+    const stepDay = Array.from({ length: 24 }, (_, h) => (h < 12 ? 20 : 300));
+    const sealedCar = computeExposure(stepDay, { ...shuttle, envelope: "sealed", commuteMode: "car" }, { roomAreaM2: 15, commuteKm: 10 }).exposureUgM3;
+    const sealedWfh = computeExposure(stepDay, { ...shuttle, envelope: "sealed", commuteMode: "wfh" }, { roomAreaM2: 15, commuteKm: 0 }).exposureUgM3;
+    expect(sealedCar).not.toBeCloseTo(sealedWfh, 1);
+  });
+
+  it("window finder handles T00/T23 vs invalid T24/T8 timestamps, zero PM2.5, n=1/n=2 edge cases, and tie tolerances", () => {
+    // T23:00 and T00:00 parse as hours 23 and 0
+    const wrapPeak = Array.from({ length: 24 }, (_, i) => ({
+      t: `2026-11-20T${String((23 + i) % 24).padStart(2, "0")}:00`,
+      pm25: i < 3 ? 500 : 40,
+      pm10: 60,
+      usAqi: 100,
+    }));
+    expect(findWindows(wrapPeak, 0).avoid).toMatchObject({ start: 23, end: 2, mean: 500 });
+
+    // T24:00 and single-digit T8:00 are invalid and fall back to index % 24
+    const fallbackTs = Array.from({ length: 24 }, (_, i) => ({
+      t: i === 0 ? "2026-11-20T24:00" : i === 8 ? "2026-11-20T8:00" : `2026-11-20T${String(i).padStart(2, "0")}:00`,
+      pm25: i === 8 || i === 9 ? 10 : 120,
+      pm10: 150,
+      usAqi: 150,
+    }));
+    expect(findWindows(fallbackTs, 0).best).toMatchObject({ start: 8, end: 10, mean: 10 });
+
+    // PM2.5 === 0 is valid and yields mean 0
+    const zeroBest = Array.from({ length: 24 }, (_, h) => (h === 12 || h === 13 ? 0 : 80));
+    expect(findWindowsFromHours(zeroBest).best).toMatchObject({ start: 12, end: 14, mean: 0 });
+
+    // n = 2 inside 08..20, starting at 19 (fallback), outside 08..20, and n = 1
+    expect(findWindowsFromHours([100, 40], [18, 19])).toMatchObject({
+      best: { start: 18, end: 20, mean: 70 },
+      avoid: { start: 18, end: 20, mean: 70 },
+      shortData: true,
+    });
+    expect(findWindowsFromHours([80, 60], [19, 20])).toMatchObject({
+      best: { start: 19, end: 21, mean: 70 },
+    });
+    expect(findWindowsFromHours([100, 40], [1, 2])).toMatchObject({
+      best: { start: 1, end: 3, mean: 70 },
+    });
+    expect(findWindowsFromHours([50], [10])).toMatchObject({
+      best: { start: 10, end: 11, mean: 50 },
+      avoid: { start: 10, end: 11, mean: 50 },
+      noGoodWindow: false,
+      shortData: true,
+    });
+
+    // Exact ties pick earliest; near-tie within 0.001 picks better window
+    expect(findWindowsFromHours([100, 100, 100, 100], [8, 9, 10, 11])).toMatchObject({
+      best: { start: 8, end: 10, mean: 100 },
+      avoid: { start: 8, end: 11, mean: 100 },
+    });
+    expect(findWindowsFromHours([100, 100, 100], [1, 2, 3]).best.start).toBe(1);
+    expect(findWindowsFromHours([100, 100, 99.999, 99.999], [8, 9, 10, 11]).best).toMatchObject({
+      start: 10,
+      mean: 99.999,
+    });
+  });
+
+  it("catalog covers all mode/sensitivity/budget/envelope applicability and exact CO2e boundaries", () => {
+    const baseClean: Profile = {
+      lang: "en",
+      place: { name: "Delhi", lat: 28.6, lon: 77.2, country: "IN" },
+      household: { adults: 1, children: 0, seniors: 0, conditions: [] },
+      home: { type: "apartment", windows: "normal", ac: false, purifier: "none", cooking: "lpg", roomAreaM2: 15 },
+      commute: { mode: "car", km: 10, daysPerWeek: 5 },
+      habits: { morningOutdoorExercise: true, schoolRun: false },
+      budget: "medium",
+    };
+
+    const cases: Array<{ id: ActionId; p: Profile; level: Level; expected: boolean }> = [
+      { id: "shift_exercise_to_best_window", p: { ...baseClean, habits: { morningOutdoorExercise: false, schoolRun: false } }, level: 3, expected: false },
+      { id: "shift_exercise_to_best_window", p: { ...baseClean, household: { ...baseClean.household, seniors: 1 } }, level: 3, expected: false },
+      { id: "shift_exercise_to_best_window", p: { ...baseClean, household: { ...baseClean.household, conditions: ["cardiac"] } }, level: 3, expected: false },
+      { id: "shift_exercise_to_best_window", p: { ...baseClean, household: { ...baseClean.household, children: 1 } }, level: 2, expected: true },
+      ...(["walk", "cycle", "two_wheeler", "auto", "bus"] as const).flatMap((mode) => [
+        { id: "n95_for_open_transport" as const, p: { ...baseClean, commute: { mode, km: 5, daysPerWeek: 5 }, habits: { morningOutdoorExercise: false, schoolRun: false } }, level: 3 as Level, expected: true },
+        { id: "n95_for_open_transport" as const, p: { ...baseClean, commute: { mode, km: 5, daysPerWeek: 5 }, habits: { morningOutdoorExercise: false, schoolRun: false } }, level: 2 as Level, expected: false },
+      ]),
+      ...(["two_wheeler", "auto"] as const).map((mode) => ({
+        id: "commute_to_public_transport" as const,
+        p: { ...baseClean, commute: { mode, km: 5, daysPerWeek: 5 } },
+        level: 3 as Level,
+        expected: true,
+      })),
+      ...(["walk", "cycle", "bus", "wfh"] as const).map((mode) => ({
+        id: "commute_to_public_transport" as const,
+        p: { ...baseClean, commute: { mode, km: 5, daysPerWeek: 5 } },
+        level: 3 as Level,
+        expected: false,
+      })),
+      { id: "wfh_on_worst_day", p: { ...baseClean, commute: { mode: "wfh", km: 0, daysPerWeek: 5 } }, level: 4, expected: false },
+      { id: "wfh_on_worst_day", p: baseClean, level: 3, expected: false },
+      { id: "no_idling", p: baseClean, level: 2, expected: true },
+      { id: "no_idling", p: { ...baseClean, commute: { mode: "two_wheeler", km: 5, daysPerWeek: 5 } }, level: 2, expected: true },
+      { id: "no_idling", p: { ...baseClean, commute: { mode: "auto", km: 5, daysPerWeek: 5 } }, level: 2, expected: false },
+      { id: "child_play_indoors_when_poor", p: { ...baseClean, household: { ...baseClean.household, children: 1 } }, level: 2, expected: false },
+      { id: "trip_chaining", p: baseClean, level: 2, expected: true },
+      { id: "trip_chaining", p: { ...baseClean, commute: { mode: "auto", km: 5, daysPerWeek: 5 } }, level: 2, expected: false },
+      { id: "air_house_in_best_window", p: baseClean, level: 1, expected: false },
+      { id: "close_windows_at_peak", p: { ...baseClean, home: { ...baseClean.home, windows: "leaky" } }, level: 3, expected: false },
+      { id: "close_windows_at_peak", p: baseClean, level: 1, expected: false },
+      { id: "diy_box_fan_filter", p: { ...baseClean, budget: "zero" }, level: 3, expected: true },
+      { id: "diy_box_fan_filter", p: { ...baseClean, budget: "low", home: { ...baseClean.home, purifier: "hepa" } }, level: 3, expected: false },
+      { id: "buy_hepa_purifier", p: { ...baseClean, home: { ...baseClean.home, purifier: "hepa" } }, level: 3, expected: false },
+      { id: "cooking_ventilation", p: { ...baseClean, home: { ...baseClean.home, cooking: "biomass" } }, level: 2, expected: true },
+      { id: "cooking_ventilation", p: { ...baseClean, home: { ...baseClean.home, cooking: "other" } }, level: 2, expected: true },
+      { id: "carpool_shared_ride", p: { ...baseClean, commute: { mode: "car", km: 0, daysPerWeek: 5 } }, level: 2, expected: false },
+      { id: "carpool_shared_ride", p: { ...baseClean, commute: { mode: "car", km: 10, daysPerWeek: 0 } }, level: 2, expected: false },
+      { id: "walk_or_cycle_short_trips", p: { ...baseClean, commute: { mode: "car", km: 0, daysPerWeek: 5 } }, level: 2, expected: false },
+      { id: "walk_or_cycle_short_trips", p: { ...baseClean, commute: { mode: "car", km: 3, daysPerWeek: 5 } }, level: 2, expected: true },
+      { id: "walk_or_cycle_short_trips", p: { ...baseClean, commute: { mode: "car", km: 2, daysPerWeek: 5 } }, level: 3, expected: false },
+      ...(["walk", "cycle", "wfh"] as const).map((mode) => ({
+        id: "walk_or_cycle_short_trips" as const,
+        p: { ...baseClean, commute: { mode, km: 2, daysPerWeek: 5 } },
+        level: 2 as Level,
+        expected: false,
+      })),
+    ];
+
+    const failures = cases.filter((c) => ACTION_BY_ID[c.id].appliesIf(c.p, c.level, DEFAULT_WINDOWS) !== c.expected);
+    expect(failures).toEqual([]);
+
+    // seal_gaps_and_door_sweeps resets leaky [0..23] windowsOpenHours to normal [7, 8, 17, 18]
+    const leakyP = { ...baseClean, home: { ...baseClean.home, windows: "leaky" as const } };
+    expect(ACTION_BY_ID.seal_gaps_and_door_sweeps.edit?.(baselineScenario(leakyP), leakyP, DEFAULT_WINDOWS).windowsOpenHours).toEqual([7, 8, 17, 18]);
+
+    // carpool_shared_ride exact half-savings math for 10 km, 5 days/wk
+    expect(ACTION_BY_ID.carpool_shared_ride.co2e?.(baseClean)).toEqual({ kg: 408, range: [264, 576] });
+
+    // walk_or_cycle_short_trips exact 1.2 km walk vs 1.25 km cycle boundary
+    const p12 = { ...baseClean, commute: { mode: "car" as const, km: 1.2, daysPerWeek: 5 } };
+    const p125 = { ...baseClean, commute: { mode: "car" as const, km: 1.25, daysPerWeek: 5 } };
+    expect(ACTION_BY_ID.walk_or_cycle_short_trips.edit?.(baselineScenario(p12), p12, DEFAULT_WINDOWS).commuteMode).toBe("walk");
+    expect(ACTION_BY_ID.walk_or_cycle_short_trips.edit?.(baselineScenario(p125), p125, DEFAULT_WINDOWS).commuteMode).toBe("cycle");
+    expect(ACTION_BY_ID.walk_or_cycle_short_trips.co2e?.(p125)).toEqual({ kg: 102, range: [66, 144] });
+  });
+
+  it("impact handles clamped nowIndex, guidance CO2e, zero/negative deltas, and uncapped positive deltas", () => {
+    const baseClean: Profile = {
+      lang: "en",
+      place: { name: "Delhi", lat: 28.6, lon: 77.2, country: "IN" },
+      household: { adults: 1, children: 0, seniors: 0, conditions: [] },
+      home: { type: "apartment", windows: "normal", ac: false, purifier: "none", cooking: "lpg", roomAreaM2: 15 },
+      commute: { mode: "car", km: 10, daysPerWeek: 5 },
+      habits: { morningOutdoorExercise: false, schoolRun: false },
+      budget: "medium",
+    };
+    const ctx24 = makeCtx(Array.from({ length: 24 }, (_, i) => (i === 23 ? 280 : 120)));
+    expect(next24Series({ ...ctx24, nowIndex: 99 }).pm25).toEqual([280]);
+
+    const idling = evaluateActionImpact(ACTION_BY_ID.no_idling, baseClean, ctx24, baselineScenario(baseClean), DEFAULT_WINDOWS);
+    expect(idling.exposureRangeUgM3).toEqual([0, 0]);
+    expect(idling.co2eKgPerYear).toBeCloseTo(38.5, 1);
+    expect(idling.co2eRangeKgPerYear).toEqual([28.9, 48.1]);
+
+    // Uncapped positive delta (below 80% cap) with distinct conservative/base/optimistic range
+    const hepa = evaluateActionImpact(ACTION_BY_ID.buy_hepa_purifier, baseClean, ctx24, baselineScenario(baseClean), DEFAULT_WINDOWS);
+    expect(hepa.exposureDeltaPct).toBeGreaterThan(20);
+    expect(hepa.exposureDeltaPct).toBeLessThan(80);
+    expect(hepa.exposureRangeUgM3[0]).toBeLessThan(hepa.exposureDeltaUgM3);
+    expect(hepa.exposureDeltaUgM3).toBeLessThan(hepa.exposureRangeUgM3[1]);
+
+    // Zero rawDelta when before > 0 (exerciseIndoors edit with exerciseHour === null)
+    const noopEx = evaluateActionImpact(ACTION_BY_ID.exercise_indoors_when_poor, baseClean, ctx24, baselineScenario(baseClean), DEFAULT_WINDOWS);
+    expect(noopEx).toMatchObject({ exposureDeltaUgM3: 0, exposureDeltaPct: 0, exposureRangeUgM3: [0, 0] });
+
+    // Negative rawDelta (car -> bus on polluted day) stays negative without clamping
+    const bus = evaluateActionImpact(ACTION_BY_ID.commute_to_public_transport, baseClean, ctx24, baselineScenario(baseClean), DEFAULT_WINDOWS);
+    expect(bus.exposureDeltaUgM3).toBeLessThan(0);
+    expect(bus.exposureDeltaPct).toBeLessThan(0);
+  });
+
+  it("selectCandidates enforces sparse budget filtering, exact score & CO2e=300 boundaries, section guarantees, tradeoff retention, and tie-breaks", () => {
+    const uniform250 = makeCtx(Array.from({ length: 24 }, () => 250));
+    const sparse: Profile = {
+      lang: "en",
+      place: { name: "Delhi", lat: 28.6, lon: 77.2, country: "IN" },
+      household: { adults: 1, children: 0, seniors: 0, conditions: [] },
+      home: { type: "apartment", windows: "sealed", ac: false, purifier: "none", cooking: "lpg", roomAreaM2: 15 },
+      commute: { mode: "wfh", km: 0, daysPerWeek: 0 },
+      habits: { morningOutdoorExercise: false, schoolRun: false },
+      budget: "medium",
+    };
+
+    // Sparse profile has < 14 actions so cost=2 (induction_cooking) competes directly with cost=1 and cost=0
+    const medSparse = selectCandidates(sparse, uniform250, 5, baselineScenario(sparse), DEFAULT_WINDOWS);
+    const lowSparse = selectCandidates({ ...sparse, budget: "low" }, uniform250, 5, baselineScenario(sparse), DEFAULT_WINDOWS);
+    const zeroSparse = selectCandidates({ ...sparse, budget: "zero" }, uniform250, 5, baselineScenario(sparse), DEFAULT_WINDOWS);
+    expect(medSparse.some((c) => c.id === "induction_cooking")).toBe(true);
+    expect(lowSparse.some((c) => c.id === "induction_cooking")).toBe(false);
+    expect(lowSparse.some((c) => c.cost === 1)).toBe(true);
+    expect(zeroSparse.length).toBeGreaterThan(0);
+    expect(zeroSparse.every((c) => c.cost === 0)).toBe(true);
+
+    // Verify exact alphabetical tie-break on identical-score guidance actions in sparse zero-budget pool
+    for (let i = 1; i < zeroSparse.length; i++) {
+      const prev = zeroSparse[i - 1];
+      const curr = zeroSparse[i];
+      expect(prev.score > curr.score || (prev.score === curr.score && prev.id.localeCompare(curr.id) <= 0)).toBe(true);
+    }
+    const tiedPair = zeroSparse.filter((c) => c.id === "avoid_indoor_smoke_sources" || c.id === "community_no_burning");
+    expect(tiedPair.map((c) => c.id)).toEqual(["avoid_indoor_smoke_sources", "community_no_burning"]);
+    expect(tiedPair[0].score).toBe(tiedPair[1].score);
+
+    // Exact scoreCandidate & co2e === 300 boundary (6.25 km * 2 * 5 * 48 * 0.10 = 300.0 -> NO -0.2 penalty)
+    const multiGroupBase: Profile = {
+      ...sparse,
+      household: { adults: 1, children: 1, seniors: 0, conditions: [] },
+      home: { type: "apartment", windows: "normal", ac: false, purifier: "none", cooking: "lpg", roomAreaM2: 15 },
+      commute: { mode: "car", km: 6.25, daysPerWeek: 5 },
+      budget: "medium",
+    };
+    const at300 = selectCandidates(multiGroupBase, uniform250, 5, baselineScenario(multiGroupBase), DEFAULT_WINDOWS);
+    const below300P: Profile = { ...multiGroupBase, commute: { mode: "car", km: 6.2, daysPerWeek: 5 } };
+    const below300 = selectCandidates(below300P, uniform250, 5, baselineScenario(below300P), DEFAULT_WINDOWS);
+    const above500P: Profile = { ...multiGroupBase, commute: { mode: "car", km: 12, daysPerWeek: 5 } };
+    const above500 = selectCandidates(above500P, uniform250, 5, baselineScenario(above500P), DEFAULT_WINDOWS);
+
+    const busAt300 = at300.find((c) => c.id === "commute_to_public_transport");
+    const busBelow300 = below300.find((c) => c.id === "commute_to_public_transport");
+    const busAbove500 = above500.find((c) => c.id === "commute_to_public_transport");
+    const noIdle = at300.find((c) => c.id === "no_idling");
+    const hepaCand = at300.find((c) => c.id === "buy_hepa_purifier");
+
+    expect(busAt300?.tradeoff).toBe(true);
+    expect(busAt300?.score).toBe(0.21);
+    expect(busBelow300?.score).toBe(0.009);
+    expect(busAbove500?.score).toBe(0.29);
+    expect(noIdle?.tradeoff).toBe(false);
+    expect(noIdle?.score).toBe(0.1954);
+    expect(hepaCand?.score).toBe(0.6032);
+
+    // Rich profile (>16 applicable actions) where commute_to_public_transport scores lowest (-0.095)
+    // must keep >= 2 per section AND retain the flagged tradeoff item inside the 14-item cap
+    const richP: Profile = {
+      ...multiGroupBase,
+      home: { type: "apartment", windows: "leaky", ac: false, purifier: "none", cooking: "biomass", roomAreaM2: 15 },
+      commute: { mode: "car", km: 2, daysPerWeek: 3 },
+      habits: { morningOutdoorExercise: true, schoolRun: true },
+    };
+    const richCands = selectCandidates(richP, uniform250, 5, baselineScenario(richP), DEFAULT_WINDOWS);
+    expect(richCands).toHaveLength(14);
+    expect(richCands.filter((c) => c.section === "routine").length).toBeGreaterThanOrEqual(2);
+    expect(richCands.filter((c) => c.section === "indoor").length).toBeGreaterThanOrEqual(2);
+    expect(richCands.filter((c) => c.section === "swap").length).toBeGreaterThanOrEqual(2);
+    expect(richCands.some((c) => c.id === "commute_to_public_transport" && c.tradeoff)).toBe(true);
   });
 });

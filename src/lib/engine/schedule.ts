@@ -145,11 +145,9 @@ export function allHomePurifierHours(commuteMode: CommuteMode, commuteDaysPerWee
   const hasCommute = commuteMode !== "wfh" && commuteDaysPerWeek > 0;
   const hours: number[] = [];
   for (let h = 0; h < 24; h++) {
-    if (!hasCommute || h < 8 || h >= 18 || commuteDaysPerWeek < 7) {
-      // If commuting some days, running during sleeping/evening/morning hours covers home time;
-      // on WFH/weekend days all 24h are at home, so keeping [0..7, 18..23] or full 24h when home is clean.
-      if (!hasCommute || h < 8 || h >= 18) hours.push(h);
-    }
+    // If commuting some days, running during sleeping/evening/morning hours covers home time;
+    // on WFH/weekend days all 24h are at home.
+    if (!hasCommute || h < 8 || h >= 18) hours.push(h);
   }
   return hours;
 }

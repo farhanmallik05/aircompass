@@ -12,7 +12,7 @@
 *(≤ 1024 chars — currently 820 chars)*
 
 ```text
-AirCompass turns winter-smog data into a household plan. (1) Hourly PM2.5/PM10 from Open-Meteo/CAMS with US AQI and India NAQI, plus a labelled recorded severe-winter day so every visitor sees the full flow. (2) A tested engine models indoor air (mass balance), breathing-weighted exposure, CO2e and the best window to go out; every number shows a range and "How we calculated", and trade-offs are shown honestly. (3) Gemini selects and words a plan from 26 actions; a guard blocks any figure the engine did not supply, with a deterministic fallback. (4) What-if chat uses Gemini function calling on the engine. (5) Hindi/English, WCAG 2.2 AA, printable Community Brief. (6) Zod validation, rate limits, nonce CSP, no server-side profiles. 103 tests, 87.6% branch coverage, mutation score ≥ 85%, 12/12 AI evals pass. npm run verify runs lint + types + tests + evals + build.
+AirCompass turns winter-smog data into a household plan. (1) Hourly PM2.5/PM10 from Open-Meteo/CAMS with US AQI and India NAQI, plus a labelled recorded severe-winter day so every visitor sees the full flow. (2) A tested engine models indoor air (mass balance), breathing-weighted exposure, CO2e and the best window to go out; every number shows a range and "How we calculated", and trade-offs are shown honestly. (3) Gemini selects and words a plan from 26 actions; a guard blocks any figure the engine did not supply, with a deterministic fallback. (4) What-if chat uses Gemini function calling on the engine. (5) Hindi/English, WCAG 2.2 AA, printable Community Brief. (6) Zod validation, rate limits, nonce CSP, no server-side profiles. 143 tests, 88.26% branch coverage, 91.20% mutation score, 12/12 evals, 9/9 E2E+Axe pass. npm run verify runs lint+types+oracle+tests+evals+build.
 ```
 
 ## Text B — "Mention the Gen AI services utilized in the submission, and where did you utilize it?"
@@ -26,7 +26,7 @@ Google Gemini API (@google/genai, gemini-3.6-flash / gemini-3.5-flash fallback),
 
 ## LinkedIn Post Draft
 
-> Built AirCompass for PromptWars Challenge 06: a Gemini-powered assistant that turns Delhi-NCR winter smog into a plan a family can follow. What I learned: on a severe day, filtration and masks beat timing tweaks, and some "green" swaps raise your exposure unless you mask. The engine shows that, Gemini explains it. Code decides the numbers, the LLM words them. Hindi + English, WCAG 2.2 AA, 103 tests, mutation score ≥ 85%, and evals in CI. Live: https://aircompass.vercel.app · Repo: https://github.com/farhanmallik05/aircompass · Built with Google Antigravity. #PromptWars #GoogleForDevelopers #Hack2Skill #Gemini #AirQuality
+> Built AirCompass for PromptWars Challenge 06: a Gemini-powered assistant that turns Delhi-NCR winter smog into a plan a family can follow. What I learned: on a severe day, filtration and masks beat timing tweaks, and some "green" swaps raise your exposure unless you mask. The engine shows that, Gemini explains it. Code decides the numbers, the LLM words them. Hindi + English, WCAG 2.2 AA, 143 tests, 91.20% mutation score, and evals verified. Live: https://aircompass.vercel.app · Repo: https://github.com/farhanmallik05/aircompass · Built with Google Antigravity. #PromptWars #GoogleForDevelopers #Hack2Skill #Gemini #AirQuality
 
 ---
 

@@ -104,7 +104,7 @@ function makeCtx24(pm25 = 150): AirContext {
   return {
     place: SAMPLE_FAMILY_PROFILE.place,
     source: "demo",
-    dataNote: "",
+    dataNote: "recorded",
     recordedDate: "2026-11-20",
     fetchedAt: "2026-11-25T12:00:00Z",
     hours: makeHours24(pm25),
@@ -519,7 +519,7 @@ describe("impact.ts mutation killers", () => {
     return {
       place: SAMPLE_FAMILY_PROFILE.place,
       source: "demo",
-      dataNote: "",
+      dataNote: "recorded",
       recordedDate: "2026-11-20",
       fetchedAt: "2026-11-25T12:00:00Z",
       hours: Array.from({ length: 48 }, (_, i) => ({

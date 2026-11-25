@@ -1,14 +1,14 @@
 # Efficiency & Performance Measurements
 
-Measured on **2026-11-25T14:10:51.403Z** (Node v24.19.0, win32 x64).
+Measured on **2026-11-25T17:25:04.240Z** (Node v24.19.0, win32 x64).
 
 ## Measured Metrics
 
 | Metric | Result | Target / Budget |
 |---|---|---|
-| Deterministic engine (`buildPlanFacts`, 200 runs) | p50: **1.09 ms**, p95: **1.98 ms** | < 5 ms |
-| Fallback planner pipeline (20 runs) | p50: **1.09 ms**, p95: **1.77 ms** | < 10 ms |
-| Live Gemini `generatePlanJson` | **Skipped due to transient API error ({"error":{"code":429,"message":"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://aistudio.google.com/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.6-flash, description: Generate content requests per day limit exceeded on Free Tier. See https://aistudio.google.com/docs/rate-limits.\nPlease retry in 17h49m8.595200066s.","status":"RESOURCE_EXHAUSTED","details":[{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Learn more about Gemini API quotas","url":"https://aistudio.google.com/docs/rate-limits"}]},{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"description":"Generate content requests per day limit exceeded on Free Tier. See https://aistudio.google.com/docs/rate-limits.","quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_requests","quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier","quotaDimensions":{"location":"global","model":"gemini-3.6-flash"},"quotaValue":"20"}]},{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"64148s"}]}})** | 1 call (< 12 s timeout) |
+| Deterministic engine (`buildPlanFacts`, 200 runs) | p50: **1.13 ms**, p95: **2.1 ms** | < 5 ms |
+| Fallback planner pipeline (20 runs) | p50: **1.2 ms**, p95: **2.33 ms** | < 10 ms |
+| Live Gemini `generatePlanJson` | **Skipped due to transient API error (fetch failed)** | 1 call (< 12 s timeout) |
 | Compiled `.next/static` JS (total gzipped across all chunks) | **220.4 KB** | No chart lib, self-hosted fonts |
 | Compiled `.next/static` total (raw / gzip) | 896.4 KB / 357.1 KB | Compact asset footprint |
 
