@@ -3,9 +3,20 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { ModeToolbar, PrimaryNavBar } from "./shell/HeaderBars";
-import { getDict } from "@/lib/client/i18n";
+import { getDict, type Dictionary } from "@/lib/client/i18n";
 import type { DataMode } from "@/lib/client/storage";
 import type { Lang } from "@/lib/types";
+
+function routeDocumentTitle(pathname: string, dict: Dictionary): string {
+  const titles: Record<string, string> = {
+    "/": dict.app.pageTitles.today,
+    "/plan": dict.app.pageTitles.plan,
+    "/impact": dict.app.pageTitles.impact,
+    "/brief": dict.app.pageTitles.brief,
+  };
+  const routeTitle = titles[pathname];
+  return routeTitle ? `${routeTitle} — ${dict.app.name}` : dict.app.name;
+}
 
 /** Global landmark shell providing skip-to-main navigation, header controls, and footer attribution. */
 export function AppShell({
@@ -32,7 +43,8 @@ export function AppShell({
 
   useEffect(() => {
     document.documentElement.lang = lang;
-  }, [lang]);
+    document.title = routeDocumentTitle(pathname, dict);
+  }, [dict, lang, pathname]);
 
   useEffect(() => {
     if (prevPathnameRef.current === pathname) return;

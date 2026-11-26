@@ -92,7 +92,7 @@ export function ActionCard({ card, dict }: { card: PlanCard; dict: Dictionary })
       </div>
 
       <details className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs dark:border-slate-800 dark:bg-slate-950">
-        <summary className="cursor-pointer font-semibold text-slate-900 dark:text-slate-100">
+        <summary className="flex min-h-11 cursor-pointer items-center font-semibold text-slate-900 dark:text-slate-100">
           {dict.plan.howCalculated}
         </summary>
         <p className="mt-2 text-slate-700 dark:text-slate-300">{imp.method}</p>

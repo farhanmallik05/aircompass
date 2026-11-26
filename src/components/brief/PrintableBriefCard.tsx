@@ -1,6 +1,6 @@
 "use client";
 
-import type { Dictionary } from "@/lib/client/i18n";
+import { fmt, type Dictionary } from "@/lib/client/i18n";
 import type { PlanCard, WindowSummary } from "@/lib/types";
 
 /** Printable single-page household and RWA clean-air brief article. */
@@ -32,10 +32,10 @@ export function PrintableBriefCard({
           {dict.brief.title} — {placeName} ({country})
         </h2>
         <p className="mt-1 text-sm">
-          {dict.today.todayLevelChip}: <strong>{band}</strong> (US AQI {aqi}, 24h mean{" "}
-          {mean24.toFixed(1)} µg/m³) · {dict.today.goOutWindow}: {windows.best.startLabel}-
-          {windows.best.endLabel} · {dict.today.avoidWindow}: {windows.avoid.startLabel}-
-          {windows.avoid.endLabel}
+          {dict.today.todayLevelChip}: <strong>{band}</strong> (US AQI {aqi},{" "}
+          {fmt(dict.today.mean24Value, { mean: mean24.toFixed(1) })}) · {dict.today.goOutWindow}:{" "}
+          {windows.best.startLabel}-{windows.best.endLabel} · {dict.today.avoidWindow}:{" "}
+          {windows.avoid.startLabel}-{windows.avoid.endLabel}
         </p>
       </header>
 

@@ -1,15 +1,12 @@
 import { guidanceForLevel } from "../engine/bands";
 import type { baselineScenario } from "../engine/sensitivity";
+import { logServerError } from "../security/log";
 import type { AirContext, PlanFacts, Profile } from "../types";
 import type { LlmClient } from "./client";
-import { PROMPT_CANARY, unfaithfulNumbers } from "./guard";
+import { findChatSafetyIssue, unfaithfulNumbers } from "./guard";
 import { buildPlanFacts } from "./planner";
 import { getChatSystemPrompt } from "./prompt";
 import { executeSimulateScenario, SIMULATE_SCENARIO_DECLARATION } from "./tools";
-
-const MARKUP_OR_MEDICAL =
-  /<\/?[a-z!][^>]*>|https?:\/\/|www\.|javascript:|\b(?:cures?|diagnos\w*|prescri\w*|dosage|doses?|antibiotics?|steroids?)\b/i;
-const HI_MEDICAL = ["इलाज", "खुराक", "निदान", "नुस्खा"];
 
 export function collectAllowedChatNumbers(
   facts: PlanFacts,
@@ -97,12 +94,10 @@ function buildChatContextPayload(
 
 function isSafeChatReply(trimmed: string, facts: PlanFacts, toolNumbers: number[]): boolean {
   if (!trimmed) return false;
+  if (findChatSafetyIssue(trimmed) !== null) return false;
   const normText = trimmed.normalize("NFKC").replace(/\p{Cf}/gu, "");
   const allowedNumbers = collectAllowedChatNumbers(facts, toolNumbers);
-  if (unfaithfulNumbers(normText, allowedNumbers).length > 0) return false;
-  if (trimmed.includes(PROMPT_CANARY) || normText.includes(PROMPT_CANARY)) return false;
-  if (MARKUP_OR_MEDICAL.test(normText)) return false;
-  return !HI_MEDICAL.some((w) => normText.includes(w));
+  return unfaithfulNumbers(normText, allowedNumbers).length === 0;
 }
 
 /** Runs tool-assisted grounded chat with number faithfulness, medical/markup, and canary guards. */
@@ -169,7 +164,8 @@ export async function runGroundedChat(args: {
       fallback: false,
       toolCallsExecuted: res.toolCallsExecuted,
     };
-  } catch {
+  } catch (err) {
+    logServerError("llm/chat", err);
     const note =
       lang === "hi"
         ? "इंजन सारांश (मॉडल समय-सीमा/त्रुटि):"

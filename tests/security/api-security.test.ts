@@ -11,6 +11,7 @@ import {
   tryConsumeDailyLlmQuota,
 } from "@/lib/security/rateLimit";
 import { wrapUntrustedNote } from "@/lib/security/sanitize";
+import { ChatRequestSchema } from "@/lib/schemas";
 import { PROMPT_CANARY } from "@/lib/llm/guard";
 
 describe("API security controls (strict validation, size cap, rate limit, injection isolation)", () => {
@@ -53,12 +54,18 @@ describe("API security controls (strict validation, size cap, rate limit, inject
     const badQuery = await contextGet(new Request("http://localhost/api/context?lat=999&lon=0"));
     expect(badQuery.status).toBe(400);
 
+    const emptyLat = await contextGet(new Request("http://localhost/api/context?lat=&lon="));
+    expect(emptyLat.status).toBe(400);
+
+    const halfCoords = await contextGet(new Request("http://localhost/api/context?lat=28.6"));
+    expect(halfCoords.status).toBe(400);
+
     // Chunked stream without Content-Length exceeding 8 KB cancels early with 413
     const enc = new TextEncoder();
     const chunkedStream = new ReadableStream<Uint8Array>({
       start(controller) {
-        controller.enqueue(enc.encode('{"pad":"' + "a".repeat(5000)));
-        controller.enqueue(enc.encode("b".repeat(5000) + '"}'));
+        controller.enqueue(enc.encode(`{"pad":"${"a".repeat(5000)}`));
+        controller.enqueue(enc.encode(`${"b".repeat(5000)}"}`));
         controller.close();
       },
     });
@@ -107,6 +114,17 @@ describe("API security controls (strict validation, size cap, rate limit, inject
     expect(wrapped).not.toContain(PROMPT_CANARY);
     expect(wrapped).not.toContain("\u0007");
     expect(wrapped?.match(/<\/user_note>/g)).toHaveLength(1);
+    expect(wrapUntrustedNote("<user_note>\u0007</user_note>")).toBeUndefined();
+
+    const parsedChat = ChatRequestSchema.parse({
+      profile: SAMPLE_FAMILY_PROFILE,
+      context: getDemoContext(),
+      history: [{ role: "assistant", text: `Prior ${PROMPT_CANARY}\u0007 reply` }],
+      message: `Check ${PROMPT_CANARY} air`,
+    });
+    expect(parsedChat.history[0]?.text).not.toContain(PROMPT_CANARY);
+    expect(parsedChat.history[0]?.text).not.toContain("\u0007");
+    expect(parsedChat.message).not.toContain(PROMPT_CANARY);
   });
 
   it("caps rate-limit bucket growth under spoofed X-Forwarded-For floods and handles daily rollover", () => {

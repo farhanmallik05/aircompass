@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAirCompass } from "./AirCompassProvider";
 import { SimulatorControls } from "./impact/SimulatorControls";
 import { fmt, getDict } from "@/lib/client/i18n";
+import { clampNowIndex } from "@/lib/engine/bands";
 import { co2eSavedKgPerYear } from "@/lib/engine/emissions";
 import { cigaretteEquivalentPerDay, computeExposure } from "@/lib/engine/exposure";
 import { next24Series } from "@/lib/engine/impact";
@@ -138,10 +139,14 @@ function CommunityMultiplierCard({
         min={1}
         max={500}
         value={households}
+        aria-valuetext={`${households}`}
         onChange={(e) => onChangeHouseholds(Number(e.target.value))}
-        className="mt-2 w-full accent-teal-700"
+        className="mt-2 min-h-11 w-full accent-teal-700"
       />
-      <p className="mt-3 text-base font-semibold text-emerald-900 dark:text-emerald-300">
+      <p
+        aria-live="polite"
+        className="mt-2 text-base font-semibold text-emerald-900 dark:text-emerald-300"
+      >
         {resultText}
       </p>
     </section>
@@ -152,7 +157,7 @@ function CommunityMultiplierCard({
 export function ImpactView() {
   const { lang, activeProfile, context } = useAirCompass();
   const dict = getDict(lang);
-  const nowIdx = Math.max(0, Math.min(context.nowIndex, context.hours.length - 1));
+  const nowIdx = clampNowIndex(context.hours, context.nowIndex);
   const windows = findWindows(context.hours, nowIdx);
   const base = baselineScenario(activeProfile);
 

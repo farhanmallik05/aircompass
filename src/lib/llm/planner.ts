@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { aqiFromPm25, levelOfPm25, next24hMeanPm25 } from "../engine/bands";
+import { aqiFromPm25, clampNowIndex, levelOfPm25, next24hMeanPm25 } from "../engine/bands";
 import { computeExposure } from "../engine/exposure";
 import { buildCombinedScenario, next24Series } from "../engine/impact";
 import { trailingNaqi } from "../engine/naqi";
@@ -7,6 +7,7 @@ import { defsForCandidates, householdGroups, selectCandidates } from "../engine/
 import { baselineScenario } from "../engine/sensitivity";
 import { findWindows } from "../engine/window";
 import { PlanOutSchema } from "../schemas";
+import { logServerError } from "../security/log";
 import { wrapUntrustedNote } from "../security/sanitize";
 import type {
   AirContext,
@@ -31,7 +32,7 @@ export function buildPlanFacts(
   baselineScenario: ReturnType<typeof baselineScenario>;
   combinedScenario: ReturnType<typeof baselineScenario>;
 } {
-  const nowIdx = Math.max(0, Math.min(context.nowIndex, context.hours.length - 1));
+  const nowIdx = clampNowIndex(context.hours, context.nowIndex);
   const pm25Now = context.hours[nowIdx]?.pm25 ?? 0;
   const pm25TodayMean = next24hMeanPm25(context.hours, nowIdx);
   const levelNow = levelOfPm25(pm25Now);
@@ -156,7 +157,8 @@ export function validateAndRenderPlanOut(
   let parsedJson: unknown;
   try {
     parsedJson = JSON.parse(extractJsonText(rawText));
-  } catch {
+  } catch (err) {
+    logServerError("llm/planner:json", err);
     return { ok: false, violations: ["invalid json"] };
   }
 
@@ -279,7 +281,8 @@ export async function generatePlanWithFallback(
       tokens,
       reason: v2.violations[0] ?? "guard_failed_twice",
     };
-  } catch {
+  } catch (err) {
+    logServerError("llm/planner", err);
     return {
       outcome: "fallback",
       plan: buildFallbackPlan(facts),

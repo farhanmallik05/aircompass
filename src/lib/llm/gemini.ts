@@ -7,6 +7,7 @@ import {
   type Part,
   type ThinkingConfig,
 } from "@google/genai";
+import { logServerError } from "../security/log";
 import type {
   ChatToolRoundRequest,
   ChatToolRoundResponse,
@@ -205,6 +206,7 @@ export class GeminiClient implements LlmClient {
           outputTokens: res.usageMetadata?.candidatesTokenCount,
         };
       } catch (err) {
+        logServerError(`llm/gemini:plan:${model}`, err);
         lastError = err;
       }
     }
@@ -218,6 +220,7 @@ export class GeminiClient implements LlmClient {
       try {
         return await runSingleModelChat(this.ai, model, req);
       } catch (err) {
+        logServerError(`llm/gemini:chat:${model}`, err);
         lastError = err;
       }
     }

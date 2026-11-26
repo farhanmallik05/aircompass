@@ -1,6 +1,6 @@
 # Testing & Evaluation Strategy — AirCompass
 
-AirCompass budgets test effort by **user impact and mutation kill power**, not trivial test counts (`plan.md` §8).
+AirCompass budgets test effort by **user impact and mutation kill power**, not trivial test counts (`docs/TRD.md` §2).
 
 ## Test Weight Budget
 

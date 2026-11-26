@@ -1,5 +1,6 @@
 "use client";
 
+import { ToggleCheckbox } from "../setup/FormControls";
 import type { Dictionary } from "@/lib/client/i18n";
 import { COMMUTE_MODES, type CommuteMode, type Scenario } from "@/lib/types";
 
@@ -12,29 +13,6 @@ function parsePurifier(value: string): PurifierMode {
 
 function parseCommuteMode(value: string): CommuteMode {
   return COMMUTE_MODES.find((m) => m === value) ?? "car";
-}
-
-/** Accessible checkbox pill used in the what-if exposure simulator. */
-function SimCheckbox({
-  checked,
-  label,
-  onChange,
-}: {
-  checked: boolean;
-  label: string;
-  onChange: (next: boolean) => void;
-}) {
-  return (
-    <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="h-4 w-4 accent-teal-700"
-      />
-      <span>{label}</span>
-    </label>
-  );
 }
 
 export interface SimulatorControlsProps {
@@ -104,8 +82,9 @@ function SimulatorSelectGrid({ props }: { props: SimulatorControlsProps }) {
           min={0}
           max={7}
           value={props.commuteDays}
+          aria-valuetext={`${props.commuteDays}`}
           onChange={(e) => props.onCommuteDaysChange(Number(e.target.value))}
-          className="mt-3 w-full accent-teal-700"
+          className="mt-2 min-h-11 w-full accent-teal-700"
         />
       </div>
     </div>
@@ -156,7 +135,7 @@ export function SimulatorControls(props: SimulatorControlsProps) {
 
       <div className="mt-4 flex flex-wrap gap-3">
         {toggles.map((t) => (
-          <SimCheckbox key={t.label} checked={t.checked} label={t.label} onChange={t.onChange} />
+          <ToggleCheckbox key={t.label} checked={t.checked} label={t.label} onChange={t.onChange} />
         ))}
       </div>
     </section>

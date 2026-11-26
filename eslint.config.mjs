@@ -16,6 +16,9 @@ const eslintConfig = defineConfig([
       "prefer-const": "error",
       "no-var": "error",
       "object-shorthand": "error",
+      "no-useless-catch": "error",
+      "no-duplicate-imports": "error",
+      "prefer-template": "error",
     },
   },
   {
@@ -25,6 +28,12 @@ const eslintConfig = defineConfig([
         "error",
         { prefer: "type-imports", fixStyle: "inline-type-imports" },
       ],
+    },
+  },
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    rules: {
+      "no-console": ["error", { allow: ["warn", "error"] }],
     },
   },
   {

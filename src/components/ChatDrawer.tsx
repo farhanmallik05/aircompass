@@ -42,7 +42,12 @@ function ChatMessageList({
               : "mr-6 border border-teal-700/30 bg-teal-50/70 text-slate-950 dark:border-teal-400/30 dark:bg-teal-950/40 dark:text-slate-100"
           }`}
         >
-          <p className="whitespace-pre-wrap">{m.text || (sending ? dict.plan.chatSending : "")}</p>
+          <p className="whitespace-pre-wrap">
+            <span className="sr-only">
+              {m.role === "user" ? dict.plan.chatYouLabel : dict.plan.chatAssistantLabel}:{" "}
+            </span>
+            {m.text || (sending ? dict.plan.chatSending : "")}
+          </p>
           {m.toolUsed ? (
             <p className="mt-1.5 text-xs font-medium text-teal-900 dark:text-teal-200">
               {dict.plan.chatToolNote}
@@ -129,7 +134,11 @@ async function streamChatTurn(
         );
       },
     });
-  } catch {
+  } catch (err) {
+    console.warn(
+      "[ChatDrawer] streamChatTurn failed:",
+      err instanceof Error ? err.message : String(err),
+    );
     setMessages((prev) =>
       updateLastAssistant(prev, (m) => ({ ...m, text: m.text || networkErrorText })),
     );

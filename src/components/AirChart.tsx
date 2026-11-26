@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { AirBarChartSvg, AirHourlyTable } from "./today/AirChartViews";
-import type { Dictionary } from "@/lib/client/i18n";
+import { fmt, type Dictionary } from "@/lib/client/i18n";
+import { clampNowIndex } from "@/lib/engine/bands";
 import type { HourPoint, WindowSummary } from "@/lib/types";
 
 /** Toggleable 24-hour PM2.5 strip chart and accessible data table. */
@@ -18,8 +19,15 @@ export function AirChart({
   dict: Dictionary;
 }) {
   const [showTable, setShowTable] = useState(false);
-  const start = Math.max(0, Math.min(nowIndex, hours.length - 1));
+  const start = clampNowIndex(hours, nowIndex);
   const slice = hours.slice(start, start + 24);
+  const svgDesc = fmt(dict.today.svgDescTemplate, {
+    count: slice.length,
+    bestStart: windows.best.startLabel,
+    bestEnd: windows.best.endLabel,
+    avoidStart: windows.avoid.startLabel,
+    avoidEnd: windows.avoid.endLabel,
+  });
 
   return (
     <section
@@ -45,7 +53,12 @@ export function AirChart({
       {showTable ? (
         <AirHourlyTable slice={slice} dict={dict} />
       ) : (
-        <AirBarChartSvg slice={slice} windows={windows} chartTitle={dict.today.chartTitle} />
+        <AirBarChartSvg
+          slice={slice}
+          windows={windows}
+          chartTitle={dict.today.chartTitle}
+          svgDesc={svgDesc}
+        />
       )}
     </section>
   );

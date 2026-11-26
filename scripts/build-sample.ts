@@ -8,7 +8,7 @@ async function main() {
   const ctx = getDemoContext();
   const sample = await generatePlanWithFallback(SAMPLE_FAMILY_PROFILE, ctx, null);
   const outPath = fileURLToPath(new URL("../data/sample-plan.json", import.meta.url));
-  writeFileSync(outPath, JSON.stringify(sample, null, 2) + "\n", "utf8");
+  writeFileSync(outPath, `${JSON.stringify(sample, null, 2)}\n`, "utf8");
   console.log(`Wrote ${outPath} (${sample.plan.cards.length} cards)`);
 }
 

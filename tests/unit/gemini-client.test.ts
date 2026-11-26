@@ -183,8 +183,8 @@ describe("gemini.ts SDK adapter and model failover", () => {
     expect(toolEvents).toEqual(["simulate_scenario", "simulate_scenario"]);
     expect(streamedChunks).toEqual(["Exposure drops ", "to 45.2 ug/m3."]);
 
-    // Both models fail -> throws
-    generateContentMock.mockRejectedValue(new Error("chat outage"));
+    // Non-Error rejection falls back to wrapped Error message cleanly
+    generateContentMock.mockRejectedValue("raw failure");
     await expect(
       client.chatWithTools({
         systemPrompt: "sys",
@@ -194,6 +194,9 @@ describe("gemini.ts SDK adapter and model failover", () => {
         toolDeclaration: SIMULATE_SCENARIO_DECLARATION,
         executeTool: async () => ({}),
       }),
-    ).rejects.toThrow("chat outage");
+    ).rejects.toThrow("Gemini chat failed");
+    await expect(
+      client.generatePlanJson({ systemPrompt: "sys", userPrompt: "usr", schema: {} }),
+    ).rejects.toThrow("Gemini plan generation failed");
   });
 });

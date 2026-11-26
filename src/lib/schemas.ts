@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PROMPT_CANARY } from "./llm/guard";
 import { sanitizeUserText } from "./security/sanitize";
 import { ACTION_IDS, COMMUTE_MODES, GROUPS } from "./types";
 
@@ -66,20 +67,24 @@ export const AirContextSchema = z.strictObject({
   nowIndex: z.number().int().min(0).max(119),
 });
 
-export const ContextQuerySchema = z.strictObject({
-  q: z.string().trim().min(1).max(80).optional(),
-  lat: z.number().finite().min(-90).max(90).optional(),
-  lon: z.number().finite().min(-180).max(180).optional(),
-  name: z.string().trim().min(1).max(120).optional(),
-  country: z
-    .string()
-    .trim()
-    .toUpperCase()
-    .regex(/^[A-Z]{2}$/)
-    .optional(),
-  mode: z.enum(["live", "demo"]).optional(),
-  observedPm25: z.number().finite().min(0).max(2000).optional(),
-});
+export const ContextQuerySchema = z
+  .strictObject({
+    q: z.string().trim().min(1).max(80).optional(),
+    lat: z.number().finite().min(-90).max(90).optional(),
+    lon: z.number().finite().min(-180).max(180).optional(),
+    name: z.string().trim().min(1).max(120).optional(),
+    country: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(/^[A-Z]{2}$/)
+      .optional(),
+    mode: z.enum(["live", "demo"]).optional(),
+    observedPm25: z.number().finite().min(0).max(2000).optional(),
+  })
+  .refine((d) => (d.lat === undefined) === (d.lon === undefined), {
+    message: "Both lat and lon must be supplied together",
+  });
 
 export const PlanRequestSchema = z.strictObject({
   profile: ProfileSchema,
@@ -88,7 +93,12 @@ export const PlanRequestSchema = z.strictObject({
 
 export const ChatTurnSchema = z.strictObject({
   role: z.enum(["user", "assistant"]),
-  text: z.string().trim().min(1).max(1500),
+  text: z
+    .string()
+    .trim()
+    .min(1)
+    .max(1500)
+    .transform((s) => sanitizeUserText(s, 1500).replaceAll(PROMPT_CANARY, "[redacted]")),
 });
 
 export const ChatRequestSchema = z.strictObject({
@@ -100,7 +110,7 @@ export const ChatRequestSchema = z.strictObject({
     .trim()
     .min(1)
     .max(500)
-    .transform((s) => sanitizeUserText(s, 500)),
+    .transform((s) => sanitizeUserText(s, 500).replaceAll(PROMPT_CANARY, "[redacted]")),
 });
 
 export const SimulateScenarioArgsSchema = z.strictObject({

@@ -22,7 +22,11 @@ function dispatchSseBlock(
       text?: string;
       toolCallsExecuted?: number;
     };
-  } catch {
+  } catch (err) {
+    console.warn(
+      "[sseChat] Skipping malformed SSE frame:",
+      err instanceof Error ? err.message : String(err),
+    );
     return;
   }
 

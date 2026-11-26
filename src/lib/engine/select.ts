@@ -23,7 +23,8 @@ export function householdGroups(profile: Profile): Group[] {
   return [...groups];
 }
 
-function budgetAllows(budget: Profile["budget"], cost: 0 | 1 | 2): boolean {
+/** True if the household's configured budget permits the action's cost tier. */
+export function budgetAllows(budget: Profile["budget"], cost: 0 | 1 | 2): boolean {
   if (budget === "zero") return cost === 0;
   if (budget === "low") return cost <= 1;
   return true;

@@ -104,10 +104,10 @@ describe("LLM tools, fallback wording, planner extraction, and chat safety", () 
       tradeoffs: [],
     };
 
-    const fenced = "Here is JSON:\n```json\n" + JSON.stringify(validObj) + "\n```";
+    const fenced = `Here is JSON:\n\`\`\`json\n${JSON.stringify(validObj)}\n\`\`\``;
     expect(validateAndRenderPlanOut(fenced, facts.candidates, tokens, "en").ok).toBe(true);
 
-    const prefixed = "Leading note " + JSON.stringify(validObj) + " trailing";
+    const prefixed = `Leading note ${JSON.stringify(validObj)} trailing`;
     expect(validateAndRenderPlanOut(prefixed, facts.candidates, tokens, "en").ok).toBe(true);
 
     const dupIds = [ids[0]!, ids[0]!, ...ids.slice(2)];
@@ -178,5 +178,25 @@ describe("LLM tools, fallback wording, planner extraction, and chat safety", () 
     });
     expect(errRes.fallback).toBe(true);
     expect(errRes.text).toContain("इंजन सारांश");
+
+    // Hindi medical guarantee + data:text URI rejected via unified guard check
+    const hiGuaranteeClient: LlmClient = {
+      generatePlanJson: async () => ({ rawText: "", model: "mock" }),
+      chatWithTools: async () => ({
+        text: "यह बीमारी से सुरक्षा की गारंटी देता है [link](data:text/html,x)",
+        toolCallsExecuted: 0,
+        toolNumbers: [],
+        model: "mock",
+      }),
+    };
+    const hiCaught = await runGroundedChat({
+      profile: hiProfile,
+      context: ctx,
+      history: [],
+      message: "क्या यह सुरक्षित है?",
+      client: hiGuaranteeClient,
+    });
+    expect(hiCaught.faithful).toBe(false);
+    expect(hiCaught.fallback).toBe(true);
   });
 });

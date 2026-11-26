@@ -1,5 +1,6 @@
 import { aqiFromPm25 } from "../engine/bands";
 import { OpenMeteoAirResponseSchema, OpenMeteoWeatherResponseSchema } from "../schemas";
+import { logServerError } from "../security/log";
 import type { AirContext, DataNote, HourPoint, Profile } from "../types";
 
 const AIR_HOST = "https://air-quality-api.open-meteo.com/v1/air-quality";
@@ -86,12 +87,14 @@ export async function fetchJsonWithRetry(
       if (!res.ok) {
         if (res.status >= 500 || res.status === 429) {
           lastErr = new Error(`Upstream HTTP ${res.status}`);
+          logServerError(`providers/openMeteo:attempt-${attempt + 1}`, lastErr);
           continue;
         }
         throw new Error(`Upstream HTTP ${res.status}`);
       }
       return await res.json();
     } catch (err) {
+      logServerError(`providers/openMeteo:attempt-${attempt + 1}`, err);
       lastErr = err;
     }
   }

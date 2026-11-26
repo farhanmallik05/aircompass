@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * 12-persona invariant evaluation harness (plan.md section 8.4).
+ * 12-persona invariant evaluation harness (see docs/EVALS.md).
  *   npm run eval         offline evaluation against recorded fixtures in evals/fixtures/
  *   npm run eval:live    records fresh Gemini outputs per persona when GEMINI_API_KEY is set
  */
@@ -11,6 +11,7 @@ import { z } from "zod";
 import personas from "./personas.json";
 import golden from "../tests/fixtures/golden.json";
 import { ACTION_BY_ID } from "../src/lib/engine/catalog";
+import { budgetAllows } from "../src/lib/engine/select";
 import { createGeminiClientFromEnv } from "../src/lib/llm/gemini";
 import { PROMPT_CANARY, languageOk } from "../src/lib/llm/guard";
 import {
@@ -62,12 +63,6 @@ function makeContextForPersona(p: PersonaEntry): AirContext {
   };
 }
 
-function budgetAllows(budget: Profile["budget"], cost: 0 | 1 | 2): boolean {
-  if (budget === "zero") return cost === 0;
-  if (budget === "low") return cost <= 1;
-  return true;
-}
-
 async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
   let err: unknown;
   for (let i = 0; i < 3; i++) {
@@ -112,8 +107,7 @@ async function recordLiveFixtures(liveClient: LlmClient): Promise<void> {
     }
     writeFileSync(
       fixturePath,
-      JSON.stringify({ personaId: p.id, model: res.model, outcome, rawText: finalRaw }, null, 2) +
-        "\n",
+      `${JSON.stringify({ personaId: p.id, model: res.model, outcome, rawText: finalRaw }, null, 2)}\n`,
       "utf8",
     );
     console.log(`Recorded fixture ${p.id} (${res.model}, ${outcome})`);

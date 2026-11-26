@@ -29,7 +29,7 @@ For `Golden DAY` (outdoor PM2.5 `135–310 µg/m³`, mean `239`), `15 m²` LPG r
 
 ## Known Guard Gaps (`src/lib/llm/guard.ts`)
 
-As documented in `plan.md` §6.4:
+See `docs/PROMPTS.md` and `src/lib/llm/guard.ts` for guard enforcement details:
 1. Letter-spaced words (`"f o r t y"`).
 2. Languages outside English and Hindi.
 3. Roman numerals (`"XIV"`).

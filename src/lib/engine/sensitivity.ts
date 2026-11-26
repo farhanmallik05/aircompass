@@ -24,7 +24,7 @@ export interface ModelParamSet {
   cookingScale: number;
 }
 
-/** Three coherent parameter sets for uncertainty bounds [min, max] (plan.md section 5.5). */
+/** Three coherent parameter sets for uncertainty bounds [min, max] (docs/METHODOLOGY.md). */
 export const PARAMETER_SETS: readonly ModelParamSet[] = [
   {
     name: "conservative",
@@ -82,7 +82,7 @@ export const COOKING_SOURCE_UGM3H: Record<Profile["home"]["cooking"], number> = 
 
 export const COOKING_HOURS = new Set([7, 19]);
 
-/** Default baseline scenario derived from household profile habits (plan.md section 5.4). */
+/** Default baseline scenario derived from household profile habits (docs/METHODOLOGY.md). */
 export function baselineScenario(profile: Profile): Scenario {
   let windowsOpenHours: number[] = [];
   if (profile.home.windows === "normal") {

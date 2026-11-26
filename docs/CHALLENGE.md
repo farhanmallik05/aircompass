@@ -6,13 +6,13 @@
 
 > Create a GenAI-powered assistant that helps families and communities navigate severe winter smog and urban air pollution. The application should suggest low-emission daily routines, indoor air quality hacks, and sustainable alternatives tailored to their location and lifestyle, while clearly explaining the direct impact of their choices.
 
-## Confirmed & Baseline Rules (from `plan.md` §0)
+## Confirmed & Baseline Rules
 
 | Item | Status | Value / Rule |
 |---|---|---|
 | Event | Confirmed | Hack2skill PromptWars Virtual · Main Challenge 06 (Urban Air Quality Assistant) |
-| Format | Reported (Challenge 4 baseline) | India only · Individual only · Submit public GitHub repository + live production preview URL |
-| Attempt Policy | Baseline (`plan.md` §0) | Up to 3 attempts; **only the latest submitted attempt counts** toward the leaderboard (some community summaries cite 2 scored attempts — confirm on dashboard before burning an attempt) |
+| Format | Confirmed | India only · Individual only · Submit public GitHub repository + live production URL |
+| Attempt Policy | Confirmed | Up to 3 attempts; **only the latest submitted attempt counts** toward the leaderboard |
 | Judging Criteria | Reported | Six criteria: **Code Quality**, **Security**, **Efficiency**, **Testing**, **Accessibility**, **Problem Statement Alignment** |
 | GenAI Requirement | Confirmed | GenAI must contribute reasoning/generation (not a thin wrapper or decorative call) |
 | Submission Limits | Baseline (verify on form) | Texts A & B ≤ 1,024 chars (verified via `node scripts/check-chars.mjs`), GitHub repo < 10 MB (`node scripts/check-repo-size.mjs`), unlisted demo video ≤ 3 min, public LinkedIn post |

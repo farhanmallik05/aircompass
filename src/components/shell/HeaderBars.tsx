@@ -87,7 +87,7 @@ export function PrimaryNavBar({
         <LangToggleGroup dict={dict} lang={lang} onLangChange={onLangChange} />
       </div>
 
-      <nav aria-label="Primary navigation" className="flex flex-wrap items-center gap-1.5">
+      <nav aria-label={dict.app.primaryNavLabel} className="flex flex-wrap items-center gap-1.5">
         {navItems.map((item) => {
           const active = pathname === item.href;
           return (

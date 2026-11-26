@@ -2,10 +2,10 @@
 
 > **GenAI-powered urban air-quality planner for Indian families** — Hack2skill PromptWars Virtual Challenge 06
 
-[![Tests](https://img.shields.io/badge/tests-159%20passing-brightgreen)](#verification-evidence)
-[![Coverage](https://img.shields.io/badge/statements-98.87%25-brightgreen)](#verification-evidence)
+[![Tests](https://img.shields.io/badge/tests-161%20passing-brightgreen)](#verification-evidence)
+[![Coverage](https://img.shields.io/badge/statements-99.52%25-brightgreen)](#verification-evidence)
 [![Functions](https://img.shields.io/badge/functions-100%25-brightgreen)](#verification-evidence)
-[![Mutation](https://img.shields.io/badge/mutation-91.08%25-blue)](#verification-evidence)
+[![Mutation](https://img.shields.io/badge/mutation-91.79%25-blue)](#verification-evidence)
 [![WCAG](https://img.shields.io/badge/WCAG-2.2AA-blue)](#accessibility)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
@@ -20,9 +20,9 @@ git clone https://github.com/farhanmallik05/aircompass
 cd aircompass
 cp .env.example .env.local          # add your GEMINI_API_KEY (or leave blank for demo mode)
 npm ci
-npm run verify                       # format → lint → types → oracle → 159 tests → evals → build
+npm run verify                       # format → lint → types → oracle → 161 tests → evals → build
 npm run test:e2e                     # 10 Playwright tests incl. 6 CSP gates & WCAG 2.2 AA Axe audit
-npm run mutate                       # Stryker mutation score (measured: 91.08%)
+npm run mutate                       # Stryker mutation score (measured: 91.79%)
 ```
 
 **No key?** The app works without a `GEMINI_API_KEY` using the labelled recorded Greater Noida severe-day fixture (`2026-11-12`). Clicking **"Try a sample family"** opens the complete Today, Plan, Impact, and Community Brief flow; `/api/plan` degrades to the deterministic engine plan with an `"Engine plan"` badge.
@@ -91,20 +91,20 @@ All metrics below were measured locally on this repository (`npm run verify`, `n
 
 | Metric | Measured value | Command |
 |---|---|---|
-| Unit + integration tests | **159 / 159 pass** (13 files) | `npm run test:coverage` |
-| Statement / Line coverage | **98.87 %** (3177 / 3213 across `src/lib/**` + `src/app/api/**`) | `npm run test:coverage` |
-| Branch coverage | **92.95 %** (924 / 994) | `npm run test:coverage` |
-| Function coverage | **100 %** (216 / 216) | `npm run test:coverage` |
-| Mutation score (Stryker) | **91.08 %** overall / **91.27 %** covered (engine **90.84 %**, guard **93.91 %** total / **94.74 %** covered) | `npm run mutate` |
+| Unit + integration tests | **161 / 161 pass** (13 files) | `npm run test:coverage` |
+| Statement / Line coverage | **99.52 %** (3328 / 3344 across `src/lib/**` + `src/app/api/**`) | `npm run test:coverage` |
+| Branch coverage | **93.75 %** (976 / 1041) | `npm run test:coverage` |
+| Function coverage | **100 %** (221 / 221) | `npm run test:coverage` |
+| Mutation score (Stryker) | **91.79 %** overall / **91.98 %** covered (engine **91.52 %**, guard **94.57 %** total / **95.31 %** covered) | `npm run mutate` |
 | AI persona evals | **12 / 12 pass** (`I1–I12`, demo fixtures) | `npm run eval` |
 | E2E Playwright flows | **10 / 10 pass** (3 consecutive runs, 0 flakes) | `npm run test:e2e` |
 | CSP & security header gate | **6 / 6 pass** (production build & live Vercel) | `npm run csp:smoke` |
 | WCAG 2.2 AA Axe audit | **0 violations** (4 routes × 2 langs × 2 themes + populated states + 320 px reflow) | `npm run test:e2e` |
 | Golden oracle integrity | `golden.json matches oracle` | `npm run oracle:check` |
 | Production dependency audit | **0 vulnerabilities** (`--omit=dev --audit-level=high`) | `npm audit --omit=dev --audit-level=high` |
-| Engine p50 / p95 latency | **1.5 ms / 2.39 ms** (200 runs) | `npm run measure` |
-| Gzipped `.next/static` JS | **228.5 KB** (no chart library, self-hosted fonts) | `npm run measure` |
-| Tracked repository size | **2.73 MB** (`< 10 MB` limit) | `node scripts/check-repo-size.mjs` |
+| Engine p50 / p95 latency | **1.76 ms / 2.65 ms** (200 runs) | `npm run measure` |
+| Gzipped `.next/static` JS | **229.9 KB** (no chart library, self-hosted fonts) | `npm run measure` |
+| Tracked repository size | **2.74 MB** (`< 10 MB` limit) | `node scripts/check-repo-size.mjs` |
 | Secrets in built bundle | **0** | `npm run test:coverage` |
 
 ---
@@ -160,7 +160,7 @@ npm run test:e2e        # 10 Playwright tests on port 3217 (CSP + flows + WCAG 2
 npm run csp:smoke       # 6-check CSP/hydration/header gate on production build
 npm run eval            # 12-persona invariant evaluation (offline fixtures)
 npm run eval:live       # re-record eval fixtures against live Gemini API
-npm run mutate          # Stryker mutation testing (target ≥ 85 %; measured 91.08 %)
+npm run mutate          # Stryker mutation testing (target ≥ 85 %; measured 91.79 %)
 npm run oracle:check    # verify golden.json has not been hand-edited
 ```
 
@@ -170,10 +170,10 @@ npm run oracle:check    # verify golden.json has not been hand-edited
 | `tests/unit/mutation-killers.test.ts` | 61 | Targeted Stryker survivor kills wave 1 (guard, select, schedule, exposure, window, impact, catalog) |
 | `tests/unit/mutation-killers-2.test.ts` | 32 | Targeted Stryker survivor kills wave 2 (select scoring/picks/trade-off, schedule commute bounds) |
 | `tests/unit/gemini-client.test.ts` | 4 | Gemini client config, fallback model handling, retry behavior |
-| `tests/unit/providers-and-client.test.ts` | 7 | Geocoding, calibration, demo provider, `localStorage` validation, i18n, SSE chat helpers |
+| `tests/unit/providers-and-client.test.ts` | 8 | Geocoding, cache hits, allow-list, calibration, client fetchers, `localStorage`, SSE chat helpers |
 | `tests/unit/tools-and-fallback.test.ts` | 4 | `simulate_scenario` tool & deterministic fallback planner wording |
 | `tests/unit/i18n-parity.test.ts` | 2 | EN/HI key, placeholder, and Latin-digit parity |
-| `tests/security/guard.test.ts` | 9 | Adversarial + benign bypass corpus (`Object.hasOwn()` prototype safety), rule attribution, Hindi normalisation, numeric faithfulness |
+| `tests/security/guard.test.ts` | 10 | Adversarial + benign bypass corpus (`Object.hasOwn()` prototype safety), rule attribution, `findChatSafetyIssue`, Hindi normalisation, numeric faithfulness |
 | `tests/security/api-security.test.ts` | 4 | Request validation, streaming 8 KB body cap, trusted-proxy IP rate limiting, per-IP quota, injection isolation |
 | `tests/security/bundle-secrets.test.ts` | 2 | Verifies `GEMINI_API_KEY` / prompt canary never leak to client bundles |
 | `tests/property/invariants.test.ts` | 3 | `fast-check` properties: AQI/NAQI monotonicity, bounded exposure, severe ordering |

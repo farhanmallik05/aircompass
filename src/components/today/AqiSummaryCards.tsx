@@ -103,7 +103,7 @@ function CalibrationControl({
           type="button"
           onClick={() => {
             const n = Number(calInput);
-            if (Number.isFinite(n) && n > 0) onCalibrate(n);
+            if (Number.isFinite(n) && n >= 1 && n <= 1500) onCalibrate(n);
           }}
           className="min-h-11 rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-950"
         >
@@ -155,7 +155,10 @@ export function AqiSummaryCards({
   onCalibrate: (val: number | null) => void;
 }) {
   return (
-    <section aria-label="Air quality overview" className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <section
+      aria-label={dict.today.overviewAriaLabel}
+      className="grid grid-cols-1 gap-4 md:grid-cols-2"
+    >
       <div className={`rounded-2xl border-2 p-5 ${levelBadgeClasses(levelToday)}`}>
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -167,7 +170,7 @@ export function AqiSummaryCards({
               <span className="text-lg font-bold">{guidance.band}</span>
             </div>
             <p className="mt-1 text-sm">
-              {dict.today.usAqiLabel} · 24h mean {mean24.toFixed(1)} µg/m³
+              {dict.today.usAqiLabel} · {fmt(dict.today.mean24Value, { mean: mean24.toFixed(1) })}
             </p>
           </div>
           <LevelIcon level={levelToday} className="h-9 w-9 shrink-0" />
@@ -188,6 +191,7 @@ export function AqiSummaryCards({
       <div className="flex flex-col justify-between gap-4 rounded-2xl border border-slate-300 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
         <NaqiStatusBlock dict={dict} naqi={naqi} guidance={guidance} />
         <CalibrationControl
+          key={calibrationPm25 ?? "none"}
           dict={dict}
           pm25Now={pm25Now}
           calibrationPm25={calibrationPm25}

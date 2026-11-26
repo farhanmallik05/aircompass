@@ -1,6 +1,6 @@
 import type { CommuteMode, Scenario } from "../types";
 
-/** Assumed urban door-to-door commute speeds (km/h, plan.md section 5.5). */
+/** Assumed urban door-to-door commute speeds (km/h, see docs/METHODOLOGY.md). */
 export const COMMUTE_SPEED_KMH: Record<CommuteMode, number> = {
   walk: 4.5,
   cycle: 14,

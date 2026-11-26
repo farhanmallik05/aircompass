@@ -1,17 +1,8 @@
-import { levelOfPm25 } from "./bands";
+import { clampNowIndex, levelOfPm25, parseClockHour } from "./bands";
 import type { HourPoint, WindowRange, WindowSummary } from "../types";
 
 const formatHour = (h: number) => `${String(h % 24).padStart(2, "0")}:00`;
 const round6 = (x: number) => Math.round(x * 1e6) / 1e6;
-
-function parseClockHour(ts: string, fallback: number): number {
-  const m = /T(\d{2}):/.exec(ts);
-  if (m) {
-    const h = Number(m[1]);
-    if (h >= 0 && h <= 23) return h;
-  }
-  return fallback % 24;
-}
 
 function makeRange(start: number, length: number, mean: number): WindowRange {
   return {
@@ -97,7 +88,7 @@ export function findWindowsFromHours(
 /** Finds best and avoid windows from the next <= 24 hours starting at `nowIndex`. */
 export function findWindows(hours: readonly HourPoint[], nowIndex: number): WindowSummary {
   if (hours.length === 0) throw new RangeError("hours must be non-empty");
-  const start = Math.max(0, Math.min(nowIndex, hours.length - 1));
+  const start = clampNowIndex(hours, nowIndex);
   const slice = hours.slice(start, start + 24);
   const pm25 = slice.map((h) => h.pm25);
   const clockHours = slice.map((h, idx) => parseClockHour(h.t, idx));

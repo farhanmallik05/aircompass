@@ -22,7 +22,10 @@ const notoDevanagari = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "AirCompass — Urban Air Quality Assistant",
+  title: {
+    default: "AirCompass — Urban Air Quality Assistant",
+    template: "%s — AirCompass",
+  },
   description:
     "Science-backed, bilingual household air quality assistant powered by indoor physics and Google Gemini.",
 };

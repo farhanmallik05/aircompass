@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { Dictionary } from "@/lib/client/i18n";
+import { fmt, type Dictionary } from "@/lib/client/i18n";
 import type { guidanceForLevel } from "@/lib/engine/bands";
 import type { Group, WindowSummary } from "@/lib/types";
 
@@ -25,7 +25,7 @@ function WindowsSection({ dict, windows }: { dict: Dictionary; windows: WindowSu
             {windows.best.startLabel} - {windows.best.endLabel}
           </p>
           <p className="text-xs text-teal-900 dark:text-teal-200">
-            Mean {windows.best.mean.toFixed(1)} µg/m³
+            {fmt(dict.today.meanShortValue, { mean: windows.best.mean.toFixed(1) })}
           </p>
         </div>
         <div className="rounded-xl border border-rose-700/40 bg-rose-50 p-3.5 dark:border-rose-400/40 dark:bg-rose-950/50">
@@ -36,7 +36,7 @@ function WindowsSection({ dict, windows }: { dict: Dictionary; windows: WindowSu
             {windows.avoid.startLabel} - {windows.avoid.endLabel}
           </p>
           <p className="text-xs text-rose-900 dark:text-rose-200">
-            Mean {windows.avoid.mean.toFixed(1)} µg/m³
+            {fmt(dict.today.meanShortValue, { mean: windows.avoid.mean.toFixed(1) })}
           </p>
         </div>
       </div>

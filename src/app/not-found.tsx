@@ -3,10 +3,10 @@ import Link from "next/link";
 export default function NotFound() {
   return (
     <section className="mx-auto max-w-xl rounded-2xl border border-slate-300 bg-white p-6 text-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
-      <h1 className="text-2xl font-bold">Page not found (404)</h1>
+      <h1 className="text-2xl font-bold">Page not found (404) / पृष्ठ नहीं मिला</h1>
       <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
         That AirCompass route does not exist. Return to Today&apos;s air status or view your
-        household plan.
+        household plan. / यह AirCompass पृष्ठ उपलब्ध नहीं है।
       </p>
       <div className="mt-4 flex flex-wrap gap-3">
         <Link

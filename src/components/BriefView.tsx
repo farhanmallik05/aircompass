@@ -4,7 +4,13 @@ import { useState } from "react";
 import { useAirCompass } from "./AirCompassProvider";
 import { PrintableBriefCard } from "./brief/PrintableBriefCard";
 import { getDict } from "@/lib/client/i18n";
-import { aqiFromPm25, guidanceForLevel, levelOfPm25, next24hMeanPm25 } from "@/lib/engine/bands";
+import {
+  aqiFromPm25,
+  clampNowIndex,
+  guidanceForLevel,
+  levelOfPm25,
+  next24hMeanPm25,
+} from "@/lib/engine/bands";
 import { findWindows } from "@/lib/engine/window";
 
 function BriefToolbar({
@@ -13,6 +19,7 @@ function BriefToolbar({
   printBtn,
   copyShareBtn,
   whatsappBtn,
+  opensNewWindow,
   whatsappHref,
   onCopy,
 }: {
@@ -21,6 +28,7 @@ function BriefToolbar({
   printBtn: string;
   copyShareBtn: string;
   whatsappBtn: string;
+  opensNewWindow: string;
   whatsappHref: string;
   onCopy: () => void;
 }) {
@@ -52,6 +60,7 @@ function BriefToolbar({
           className="inline-flex min-h-11 items-center rounded-xl border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-900 hover:bg-emerald-50 dark:border-emerald-400 dark:text-emerald-200 dark:hover:bg-emerald-950"
         >
           {whatsappBtn}
+          <span className="sr-only"> {opensNewWindow}</span>
         </a>
       </div>
     </div>
@@ -65,7 +74,7 @@ export function BriefView() {
   const [copied, setCopied] = useState(false);
   const [copyErr, setCopyErr] = useState(false);
 
-  const nowIdx = Math.max(0, Math.min(context.nowIndex, context.hours.length - 1));
+  const nowIdx = clampNowIndex(context.hours, context.nowIndex);
   const mean24 = next24hMeanPm25(context.hours, nowIdx);
   const aqi = aqiFromPm25(mean24);
   const guidance = guidanceForLevel(levelOfPm25(mean24), lang);
@@ -88,7 +97,11 @@ export function BriefView() {
       }
       await navigator.clipboard.writeText(shareText);
       setCopied(true);
-    } catch {
+    } catch (err) {
+      console.warn(
+        "[BriefView] clipboard copy failed:",
+        err instanceof Error ? err.message : String(err),
+      );
       setCopyErr(true);
     }
   }
@@ -101,6 +114,7 @@ export function BriefView() {
         printBtn={dict.brief.printBtn}
         copyShareBtn={dict.brief.copyShareBtn}
         whatsappBtn={dict.brief.whatsappBtn}
+        opensNewWindow={dict.app.opensNewWindow}
         whatsappHref={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
         onCopy={handleCopy}
       />

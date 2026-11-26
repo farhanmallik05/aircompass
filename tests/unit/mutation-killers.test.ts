@@ -7,15 +7,29 @@
  * Each describe block is focused on the survivors from each module.
  */
 import { describe, it, expect } from "vitest";
-
-// ── guard.ts survivors ─────────────────────────────────────────────────────
+import { ACTION_BY_ID, ACTION_CATALOG } from "@/lib/engine/catalog";
+import { cigaretteEquivalentPerDay, computeExposure } from "@/lib/engine/exposure";
+import { buildCombinedScenario, evaluateActionImpact, next24Series } from "@/lib/engine/impact";
+import {
+  allHomePurifierHours,
+  buildDaySchedule,
+  COMMUTE_SPEED_KMH,
+  isHomeHour,
+} from "@/lib/engine/schedule";
+import { householdGroups, selectCandidates, selectFallbackOrder } from "@/lib/engine/select";
+import { baselineScenario, PARAMETER_SETS } from "@/lib/engine/sensitivity";
+import { findWindows, findWindowsFromHours } from "@/lib/engine/window";
 import {
   findViolations,
   languageOk,
-  unfaithfulNumbers,
-  render,
   PROMPT_CANARY,
+  render,
+  unfaithfulNumbers,
 } from "@/lib/llm/guard";
+import { SAMPLE_FAMILY_PROFILE } from "@/lib/providers/demo";
+import type { AirContext, HourPoint, Level, Profile, Scenario, WindowSummary } from "@/lib/types";
+
+// ── guard.ts survivors ─────────────────────────────────────────────────────
 
 describe("guard.ts mutation killers", () => {
   it("hiNorm uses toLowerCase (not toUpperCase) — chandrabindu normalisation", () => {
@@ -92,10 +106,6 @@ describe("guard.ts mutation killers", () => {
 });
 
 // ── select.ts survivors ────────────────────────────────────────────────────
-import { selectCandidates, selectFallbackOrder, householdGroups } from "@/lib/engine/select";
-import { baselineScenario } from "@/lib/engine/sensitivity";
-import { SAMPLE_FAMILY_PROFILE } from "@/lib/providers/demo";
-import type { AirContext, HourPoint, Level, Profile, WindowSummary } from "@/lib/types";
 
 function makeHours24(pm25 = 150): HourPoint[] {
   return Array.from({ length: 24 }, (_, i) => ({
@@ -256,13 +266,6 @@ describe("select.ts mutation killers", () => {
 });
 
 // ── schedule.ts survivors ──────────────────────────────────────────────────
-import {
-  buildDaySchedule,
-  isHomeHour,
-  allHomePurifierHours,
-  COMMUTE_SPEED_KMH,
-} from "@/lib/engine/schedule";
-import type { Scenario } from "@/lib/types";
 
 function makeScenario(overrides: Partial<Scenario> = {}): Scenario {
   return {
@@ -387,7 +390,6 @@ describe("schedule.ts mutation killers", () => {
 });
 
 // ── exposure.ts survivors ──────────────────────────────────────────────────
-import { computeExposure, cigaretteEquivalentPerDay } from "@/lib/engine/exposure";
 
 describe("exposure.ts mutation killers", () => {
   const baseSc: Scenario = {
@@ -485,7 +487,6 @@ describe("exposure.ts mutation killers", () => {
 });
 
 // ── window.ts survivors ────────────────────────────────────────────────────
-import { findWindows, findWindowsFromHours } from "@/lib/engine/window";
 
 describe("window.ts mutation killers", () => {
   it("parseClockHour fallback: T99:00 → fallback = idx % 24", () => {
@@ -571,9 +572,6 @@ describe("window.ts mutation killers", () => {
 });
 
 // ── impact.ts survivors ────────────────────────────────────────────────────
-import { evaluateActionImpact, next24Series, buildCombinedScenario } from "@/lib/engine/impact";
-import { ACTION_BY_ID } from "@/lib/engine/catalog";
-import { PARAMETER_SETS } from "@/lib/engine/sensitivity";
 
 describe("impact.ts mutation killers", () => {
   function makeCtxWith(pm25: number, nowIndex = 0): AirContext {
@@ -710,7 +708,6 @@ describe("impact.ts mutation killers", () => {
 });
 
 // ── catalog.ts survivors ───────────────────────────────────────────────────
-import { ACTION_CATALOG } from "@/lib/engine/catalog";
 
 describe("catalog.ts mutation killers — appliesIf boolean literals", () => {
   it("errands_in_best_window appliesIf returns exactly true (not false)", () => {

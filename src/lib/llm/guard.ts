@@ -98,6 +98,17 @@ export function languageOk(text: string, lang: "en" | "hi"): boolean {
   return lang === "hi" ? dev >= 0.5 : dev < 0.05;
 }
 
+/** Checks a normalized chat reply for prompt leaks, markup/links, or unsafe medical claims. */
+export function findChatSafetyIssue(text: string): string | null {
+  const normText = norm(text);
+  if (text.includes(PROMPT_CANARY) || normText.includes(PROMPT_CANARY)) return "prompt leak";
+  if (MARKUP.test(normText)) return "markup or link";
+  if (MEDICAL_EN.test(normText.toLowerCase()) || HI_MEDICAL.test(hiNorm(normText))) {
+    return "medical claim";
+  }
+  return null;
+}
+
 /** Chat: every number in the answer must match a number the engine supplied (facts or tool results). */
 export function unfaithfulNumbers(
   text: string,

@@ -16,7 +16,9 @@ function parseContextQuery(searchParams: URLSearchParams): Record<string, unknow
   const numericKeys = ["lat", "lon", "observedPm25"] as const;
   for (const key of numericKeys) {
     const val = searchParams.get(key);
-    if (val !== null) raw[key] = Number(val);
+    if (val !== null) {
+      raw[key] = val.trim() === "" ? Number.NaN : Number(val);
+    }
   }
   return raw;
 }
@@ -52,12 +54,20 @@ export async function GET(request: Request): Promise<Response> {
 
   const input = parsed.data;
   const place = resolvePlace(input);
-  try {
-    if (input.q && input.lat === undefined && input.lon === undefined) {
+  if (input.q && input.lat === undefined && input.lon === undefined) {
+    try {
       const places = await searchPlaces(input.q);
       return Response.json({ places }, { headers: { "Cache-Control": "no-store" } });
+    } catch (err) {
+      logServerError("api/context:geocode", err);
+      return Response.json(
+        { error: "Place search unavailable.", places: [] },
+        { status: 502, headers: { "Cache-Control": "no-store" } },
+      );
     }
+  }
 
+  try {
     const rawCtx =
       input.mode === "demo" ? getDemoContext(place) : await fetchOpenMeteoContext(place);
     const ctx =

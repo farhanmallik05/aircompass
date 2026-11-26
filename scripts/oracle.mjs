@@ -11,7 +11,7 @@
  *  - CPCB NAQI table: PM2.5 0-30/31-60/61-90/91-120/121-250/250+; PM10 0-50/51-100/101-250/251-350/351-430/430+.
  *    CPCB gives NO upper anchor for "Severe" (250+). 380 (PM2.5) and 510 (PM10) are CONVENTIONS from common
  *    implementations, flagged `assumption: true` below. CPCB worked example: PM2.5 = 150 -> ~323.
- *  - Indoor model, exposure identity, window finder, CO2e: this repo's METHODOLOGY (plan.md section 5).
+ *  - Indoor model, exposure identity, window finder, CO2e: this repo's METHODOLOGY (docs/METHODOLOGY.md).
  */
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
@@ -166,14 +166,12 @@ const golden = {
     a: 0.7,
     expected: r6((P * 0.7 * 200) / (0.7 + K)),
     with_hepa: r6((P * 0.7 * 200) / (0.7 + K + qH)),
-    todo_until: "T05 (exposure engine)",
   },
   best_window: {
     day: DAY,
     best: best(),
     avoid: avoid(),
     tie_rule: "earliest start",
-    todo_until: "T07 (window engine)",
   },
   co2e_kg_per_year: [
     { kmOneWay: 12, daysPerWeek: 5, from: "car", to: "metro" },
@@ -183,7 +181,7 @@ const golden = {
   co2e_formula: "kmOneWay * 2 trips/day * daysPerWeek * 48 weeks * (EF_from - EF_to)",
 };
 
-const out = JSON.stringify(golden, null, 2) + "\n";
+const out = `${JSON.stringify(golden, null, 2)}\n`;
 const path = fileURLToPath(new URL("../tests/fixtures/golden.json", import.meta.url));
 if (process.argv.includes("--check")) {
   const disk = readFileSync(path, "utf8").replace(/\r\n/g, "\n");

@@ -41,10 +41,26 @@ export function levelOfPm25(c: number): Level {
   return level as Level;
 }
 
+/** Clamps `nowIndex` to valid `[0, hours.length - 1]` array bounds. */
+export function clampNowIndex(hours: readonly unknown[], nowIndex: number): number {
+  if (hours.length === 0) return 0;
+  return Math.max(0, Math.min(nowIndex, hours.length - 1));
+}
+
+/** Extracts 0..23 clock hour from an ISO timestamp string, falling back modulo 24. */
+export function parseClockHour(ts: string, fallbackIndex: number): number {
+  const m = /T(\d{2}):/.exec(ts);
+  if (m) {
+    const h = Number(m[1]);
+    if (h >= 0 && h <= 23) return h;
+  }
+  return fallbackIndex % 24;
+}
+
 /** Mean PM2.5 across the next 24 hours starting at `nowIndex` (or available remaining hours). */
 export function next24hMeanPm25(hours: readonly HourPoint[], nowIndex: number): number {
   if (hours.length === 0) throw new RangeError("hours must be non-empty");
-  const start = Math.max(0, Math.min(nowIndex, hours.length - 1));
+  const start = clampNowIndex(hours, nowIndex);
   const slice = hours.slice(start, start + 24);
   const valid = slice.map((h) => h.pm25).filter((v) => Number.isFinite(v) && v >= 0);
   if (valid.length === 0) throw new RangeError("no valid PM2.5 values in forecast slice");

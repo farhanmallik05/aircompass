@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Dictionary } from "@/lib/client/i18n";
-import { fmt } from "@/lib/client/i18n";
+import { fmt, type Dictionary } from "@/lib/client/i18n";
 import type { GeoPlace, Profile } from "@/lib/types";
 
 function PlaceResultsList({
@@ -41,7 +40,11 @@ async function queryRemotePlaces(
     const data = (await res.json()) as { places?: GeoPlace[] };
     const found = data.places ?? [];
     return { places: found, status: found.length === 0 ? dict.setup.searchEmpty : null };
-  } catch {
+  } catch (err) {
+    console.warn(
+      "[PlaceSelector] queryRemotePlaces failed:",
+      err instanceof Error ? err.message : String(err),
+    );
     return { places: [], status: dict.setup.searchError };
   }
 }

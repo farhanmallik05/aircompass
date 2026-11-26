@@ -1,3 +1,4 @@
+import { parseClockHour } from "./bands";
 import { purifierQ, steadyState, stepIndoor } from "./indoor";
 import { buildDaySchedule } from "./schedule";
 import {
@@ -15,13 +16,20 @@ export interface ExposureBreakdown {
   hourlyOutdoor: number[];
 }
 
-function localHourOfTimestamp(ts: string, fallbackIndex: number): number {
-  const m = /T(\d{2}):/.exec(ts);
-  if (m) {
-    const h = Number(m[1]);
-    if (h >= 0 && h <= 23) return h;
-  }
-  return fallbackIndex % 24;
+function stepRoomHour(
+  cStart: number,
+  cOut: number,
+  clockHour: number,
+  scenario: Scenario,
+  qFull: number,
+  openSet: ReadonlySet<number>,
+  purSet: ReadonlySet<number>,
+  params: ModelParamSet,
+) {
+  const a = airExchangeForHour(scenario.envelope, openSet.has(clockHour), params);
+  const q = purSet.has(clockHour) ? qFull : 0;
+  const S = cookingSourceForHour(clockHour, scenario.cooking, scenario.cookVent, params);
+  return stepIndoor(cStart, cOut, a, { P: params.P, k: params.k, q, S });
 }
 
 function simulate24hIndoor(
@@ -44,20 +52,21 @@ function simulate24hIndoor(
   let c = steadyState(cOut24[0], a0, { P: params.P, k: params.k, q: q0, S: s0 });
 
   for (let i = 0; i < 24; i++) {
-    const ch = clockHours24[i];
-    const a = airExchangeForHour(scenario.envelope, openSet.has(ch), params);
-    const q = purSet.has(ch) ? qFull : 0;
-    const S = cookingSourceForHour(ch, scenario.cooking, scenario.cookVent, params);
-    c = stepIndoor(c, cOut24[i], a, { P: params.P, k: params.k, q, S }).cEnd;
+    c = stepRoomHour(c, cOut24[i], clockHours24[i], scenario, qFull, openSet, purSet, params).cEnd;
   }
 
   const means: number[] = [];
   for (let i = 0; i < 24; i++) {
-    const ch = clockHours24[i];
-    const a = airExchangeForHour(scenario.envelope, openSet.has(ch), params);
-    const q = purSet.has(ch) ? qFull : 0;
-    const S = cookingSourceForHour(ch, scenario.cooking, scenario.cookVent, params);
-    const step = stepIndoor(c, cOut24[i], a, { P: params.P, k: params.k, q, S });
+    const step = stepRoomHour(
+      c,
+      cOut24[i],
+      clockHours24[i],
+      scenario,
+      qFull,
+      openSet,
+      purSet,
+      params,
+    );
     means.push(step.cMean);
     c = step.cEnd;
   }
@@ -163,7 +172,7 @@ export function computeExposure(
   const params = options.params ?? BASE_PARAMS;
   const cOut24 = Array.from({ length: 24 }, (_, i) => hourlyPm25[i % hourlyPm25.length]);
   const clockHours24 = Array.from({ length: 24 }, (_, i) =>
-    options.timestamps?.[i] ? localHourOfTimestamp(options.timestamps[i], i) : i,
+    options.timestamps?.[i] ? parseClockHour(options.timestamps[i], i) : i,
   );
 
   const cHome24 = simulate24hIndoor(cOut24, clockHours24, scenario, options.roomAreaM2, params);

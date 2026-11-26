@@ -1,5 +1,8 @@
 import type { ZodType } from "zod";
+import { logServerError } from "./log";
 import { clientIpFromHeaders, takeIpToken } from "./rateLimit";
+
+export { logServerError };
 
 const MAX_BODY_BYTES = 8192;
 
@@ -77,15 +80,6 @@ export function jsonError(status: number, message: string): Response {
       headers: { "Cache-Control": "no-store" },
     },
   );
-}
-
-/** Logs server-side route errors cleanly while stripping potential query-string/API-key secrets. */
-export function logServerError(scope: string, err: unknown): void {
-  const raw = err instanceof Error ? err.message : String(err);
-  const redacted = raw
-    .replace(/([?&]key=)[^&\s]+/gi, "$1[REDACTED]")
-    .replace(/\bAIza[0-9A-Za-z_-]{16,}\b/g, "[REDACTED_KEY]");
-  console.warn(`[${scope}] ${redacted.slice(0, 240)}`);
 }
 
 /** Applies rate limiting, bounded JSON parsing, and Zod validation for POST routes. */

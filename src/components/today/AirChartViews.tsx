@@ -73,10 +73,12 @@ export function AirBarChartSvg({
   slice,
   windows,
   chartTitle,
+  svgDesc,
 }: {
   slice: readonly HourPoint[];
   windows: WindowSummary;
   chartTitle: string;
+  svgDesc: string;
 }) {
   const maxVal = Math.max(50, ...slice.map((h) => h.pm25));
   const chartW = 720;
@@ -99,9 +101,7 @@ export function AirBarChartSvg({
         className="h-auto w-full"
       >
         <title id="svg-chart-title">{chartTitle}</title>
-        <desc id="svg-chart-desc">
-          {`Next ${slice.length} hours PM2.5. Best window ${windows.best.startLabel}-${windows.best.endLabel}, avoid window ${windows.avoid.startLabel}-${windows.avoid.endLabel}. WHO 24h guideline line at 15 ug/m3.`}
-        </desc>
+        <desc id="svg-chart-desc">{svgDesc}</desc>
 
         <line
           x1={padL}

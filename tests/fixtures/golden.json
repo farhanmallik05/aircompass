@@ -383,8 +383,7 @@
     "cOut": 200,
     "a": 0.7,
     "expected": 112,
-    "with_hepa": 27.407853,
-    "todo_until": "T05 (exposure engine)"
+    "with_hepa": 27.407853
   },
   "best_window": {
     "day": [
@@ -423,8 +422,7 @@
       "end": 7,
       "mean": 303.333333
     },
-    "tie_rule": "earliest start",
-    "todo_until": "T07 (window engine)"
+    "tie_rule": "earliest start"
   },
   "co2e_kg_per_year": [
     {

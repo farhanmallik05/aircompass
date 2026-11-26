@@ -1,3 +1,4 @@
+import { clampNowIndex } from "./bands";
 import { computeExposure } from "./exposure";
 import { BASE_PARAMS, PARAMETER_SETS } from "./sensitivity";
 import type { ActionDef } from "./catalog";
@@ -6,7 +7,7 @@ import type { AirContext, Impact, Profile, Scenario, WindowSummary } from "../ty
 const round1 = (x: number) => Math.round(x * 10) / 10;
 
 export function next24Series(context: AirContext): { pm25: number[]; timestamps: string[] } {
-  const start = Math.max(0, Math.min(context.nowIndex, context.hours.length - 1));
+  const start = clampNowIndex(context.hours, context.nowIndex);
   const slice = context.hours.slice(start, start + 24);
   return {
     pm25: slice.map((h) => h.pm25),
@@ -17,7 +18,7 @@ export function next24Series(context: AirContext): { pm25: number[]; timestamps:
 /**
  * Evaluates an action's exposure impact across all three coherent parameter sets (Conservative, Base, Optimistic).
  * Keeps negative exposure deltas (exposure increases) intact and never hides them.
- * Caps displayed purifier-driven percentage reduction at 80% (plan.md section 5.4).
+ * Caps displayed purifier-driven percentage reduction at 80% (see docs/METHODOLOGY.md).
  */
 export function evaluateActionImpact(
   def: ActionDef,

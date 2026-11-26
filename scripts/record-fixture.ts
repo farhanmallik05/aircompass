@@ -113,7 +113,7 @@ async function main() {
       nowIndex,
       hours: slice,
     };
-    writeFileSync(outPath, JSON.stringify(payload, null, 2) + "\n", "utf8");
+    writeFileSync(outPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
     console.log(
       `Recorded Greater Noida 72h fixture (${recordedDate}, mean=${bestMean.toFixed(1)} ug/m3)`,
     );
@@ -126,7 +126,7 @@ async function main() {
       nowIndex: 24,
       hours: syntheticSevere72h(),
     };
-    writeFileSync(outPath, JSON.stringify(payload, null, 2) + "\n", "utf8");
+    writeFileSync(outPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
   }
 }
 

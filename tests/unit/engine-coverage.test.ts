@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { guidanceForLevel, next24hMeanPm25 } from "@/lib/engine/bands";
+import {
+  clampNowIndex,
+  guidanceForLevel,
+  next24hMeanPm25,
+  parseClockHour,
+} from "@/lib/engine/bands";
 import { ACTION_BY_ID, ACTION_CATALOG } from "@/lib/engine/catalog";
 import {
   co2eSavedKgPerYear,
@@ -1521,5 +1526,12 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
     expect(richCands.filter((c) => c.section === "indoor").length).toBeGreaterThanOrEqual(2);
     expect(richCands.filter((c) => c.section === "swap").length).toBeGreaterThanOrEqual(2);
     expect(richCands.some((c) => c.id === "commute_to_public_transport" && c.tradeoff)).toBe(true);
+
+    // bands.ts helper boundary checks: clampNowIndex empty/overflow & parseClockHour boundaries
+    expect(clampNowIndex([], 3)).toBe(0);
+    expect(clampNowIndex([1, 2], 5)).toBe(1);
+    expect(clampNowIndex([1, 2], -2)).toBe(0);
+    expect(parseClockHour("2026-11-20T00:00", 5)).toBe(0);
+    expect(parseClockHour("2026-11-20T24:00", 5)).toBe(5);
   });
 });

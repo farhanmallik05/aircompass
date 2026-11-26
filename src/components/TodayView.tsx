@@ -7,7 +7,13 @@ import { SetupForm } from "./SetupForm";
 import { AqiSummaryCards } from "./today/AqiSummaryCards";
 import { WindowsAndRisk } from "./today/WindowsAndRisk";
 import { fmt, getDict, type Dictionary } from "@/lib/client/i18n";
-import { aqiFromPm25, guidanceForLevel, levelOfPm25, next24hMeanPm25 } from "@/lib/engine/bands";
+import {
+  aqiFromPm25,
+  clampNowIndex,
+  guidanceForLevel,
+  levelOfPm25,
+  next24hMeanPm25,
+} from "@/lib/engine/bands";
 import { trailingNaqi } from "@/lib/engine/naqi";
 import { householdGroups } from "@/lib/engine/select";
 import { findWindows } from "@/lib/engine/window";
@@ -143,7 +149,7 @@ export function TodayView() {
   const dict = getDict(lang);
   const [showSetup, setShowSetup] = useState(false);
 
-  const nowIdx = Math.max(0, Math.min(context.nowIndex, context.hours.length - 1));
+  const nowIdx = clampNowIndex(context.hours, context.nowIndex);
   const nowPoint = context.hours[nowIdx];
   const pm25Now = nowPoint?.pm25 ?? 0;
   const mean24 = next24hMeanPm25(context.hours, nowIdx);

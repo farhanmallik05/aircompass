@@ -1,3 +1,4 @@
+import { clampNowIndex } from "./bands";
 import type { HourPoint, NaqiSummary } from "../types";
 
 /** CPCB National AQI, PM-based approximation (PM2.5 and PM10 sub-indices only; max rule). */
@@ -60,7 +61,7 @@ export function naqi(
 /** CPCB 24-hour trailing NAQI (PM-based). Requires >= 16 valid hours in the trailing 24h window. */
 export function trailingNaqi(hours: readonly HourPoint[], nowIndex: number): NaqiSummary {
   if (hours.length === 0) return { sufficient: false, validHours: 0 };
-  const end = Math.max(0, Math.min(nowIndex, hours.length - 1));
+  const end = clampNowIndex(hours, nowIndex);
   const start = Math.max(0, end - 23);
   const slice = hours.slice(start, end + 1);
   const valid25 = slice.map((h) => h.pm25).filter((v) => Number.isFinite(v) && v >= 0);

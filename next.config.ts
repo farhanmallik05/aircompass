@@ -9,7 +9,11 @@ import type { NextConfig } from "next";
 const staticSecurityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "geolocation=(self), camera=(), microphone=()" },
+  {
+    key: "Permissions-Policy",
+    value: "geolocation=(self), camera=(), microphone=(), payment=(), usb=()",
+  },
+  { key: "X-DNS-Prefetch-Control", value: "off" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
   { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
   { key: "X-Frame-Options", value: "DENY" },

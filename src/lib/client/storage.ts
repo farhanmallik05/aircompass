@@ -106,7 +106,11 @@ function safeReadItem(key: string): string | null {
   if (typeof window === "undefined") return null;
   try {
     return window.localStorage.getItem(key);
-  } catch {
+  } catch (err) {
+    console.warn(
+      "[storage] localStorage.getItem unavailable:",
+      err instanceof Error ? err.message : String(err),
+    );
     return null;
   }
 }
@@ -115,8 +119,11 @@ function safeWriteItem(key: string, value: string): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(key, value);
-  } catch {
-    // Ignore storage quota or privacy-mode errors cleanly
+  } catch (err) {
+    console.warn(
+      "[storage] localStorage.setItem skipped:",
+      err instanceof Error ? err.message : String(err),
+    );
   }
 }
 
@@ -124,8 +131,11 @@ function safeRemoveItem(key: string): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.removeItem(key);
-  } catch {
-    // Ignore privacy-mode errors cleanly
+  } catch (err) {
+    console.warn(
+      "[storage] localStorage.removeItem skipped:",
+      err instanceof Error ? err.message : String(err),
+    );
   }
 }
 
@@ -134,7 +144,11 @@ function safeReadJson(key: string): unknown {
   if (!raw) return null;
   try {
     return JSON.parse(raw);
-  } catch {
+  } catch (err) {
+    console.warn(
+      "[storage] Discarding corrupted stored JSON:",
+      err instanceof Error ? err.message : String(err),
+    );
     return null;
   }
 }

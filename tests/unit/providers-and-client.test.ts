@@ -2,7 +2,13 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { applyCalibration } from "@/lib/providers/calibrate";
 import { searchPlaces } from "@/lib/providers/geocode";
 import { getDemoContext, SAMPLE_FAMILY_PROFILE } from "@/lib/providers/demo";
-import { detectDataNote } from "@/lib/providers/openMeteo";
+import {
+  clearProviderCache,
+  detectDataNote,
+  fetchJsonWithRetry,
+  fetchOpenMeteoContext,
+} from "@/lib/providers/openMeteo";
+import { fetchPlanOrError, fetchRemoteContext } from "@/lib/client/contextFetchers";
 import { fmt, getDict } from "@/lib/client/i18n";
 import { MYTHS } from "@/lib/engine/myths";
 import {
@@ -108,6 +114,116 @@ describe("providers: calibrate, geocode, and demo regional helper", () => {
     expect(customCtx.place.name).toBe("Pune");
     expect(customCtx.source).toBe("demo");
   });
+
+  it("openMeteo enforces host allow-list, cache hits, zero-hour errors, and client contextFetchers", async () => {
+    clearProviderCache();
+    await expect(fetchJsonWithRetry("https://evil.example.com/aq")).rejects.toThrow(
+      /non-allowlisted/,
+    );
+
+    const mockOkFetch: typeof fetch = async (url) => {
+      const u = String(url);
+      if (u.includes("air-quality")) {
+        return Response.json({
+          hourly: {
+            time: ["2026-11-25T00:00"],
+            pm2_5: [120],
+            pm10: [180],
+            us_aqi: [185],
+          },
+        });
+      }
+      return Response.json({
+        hourly: {
+          time: ["2026-11-25T00:00"],
+          temperature_2m: [14],
+          relative_humidity_2m: [78],
+          wind_speed_10m: [4],
+        },
+      });
+    };
+    const fetchSpy = vi.fn(mockOkFetch);
+    await fetchOpenMeteoContext(SAMPLE_FAMILY_PROFILE.place, fetchSpy, 1000);
+    await fetchOpenMeteoContext(SAMPLE_FAMILY_PROFILE.place, fetchSpy, 2000);
+    expect(fetchSpy).toHaveBeenCalledTimes(2); // Second call served from cache
+
+    clearProviderCache();
+    const zeroHoursFetch: typeof fetch = async (url) => {
+      if (String(url).includes("air-quality")) {
+        return Response.json({
+          hourly: { time: ["2026-11-25T00:00"], pm2_5: [null], pm10: [10], us_aqi: [10] },
+        });
+      }
+      return Response.json({
+        hourly: {
+          time: ["2026-11-25T00:00"],
+          temperature_2m: [14],
+          relative_humidity_2m: [78],
+          wind_speed_10m: [4],
+        },
+      });
+    };
+    await expect(
+      fetchOpenMeteoContext(SAMPLE_FAMILY_PROFILE.place, zeroHoursFetch),
+    ).rejects.toThrow(/zero valid hourly/);
+
+    // Client contextFetchers: demo calibrated + live fallback + plan error/ok paths
+    const demoCal = await fetchRemoteContext(SAMPLE_FAMILY_PROFILE, "demo", 200);
+    expect(demoCal.fallbackFor).toBeNull();
+    expect(demoCal.ctx.calibrationFactor).toBeDefined();
+
+    const origFetch = globalThis.fetch;
+    globalThis.fetch = (async (input: string | URL) => {
+      const url = String(input);
+      if (url.includes("/api/context")) {
+        return Response.json({
+          context: getDemoContext(),
+          requestedPlace: { name: "Delhi" },
+          upstreamFallback: true,
+        });
+      }
+      return new Response("down", { status: 503 });
+    }) as typeof fetch;
+    try {
+      const demoRaw = await fetchRemoteContext(SAMPLE_FAMILY_PROFILE, "demo", null);
+      expect(demoRaw.fallbackFor).toBeNull();
+
+      const liveFb = await fetchRemoteContext(SAMPLE_FAMILY_PROFILE, "live", 180);
+      expect(liveFb.fallbackFor).toBe("Delhi");
+
+      globalThis.fetch = (async () => Response.json({ context: getDemoContext() })) as typeof fetch;
+      const liveClean = await fetchRemoteContext(SAMPLE_FAMILY_PROFILE, "live", null);
+      expect(liveClean.fallbackFor).toBeNull();
+
+      globalThis.fetch = (async () => new Response("down", { status: 503 })) as typeof fetch;
+      const liveHttpErr = await fetchRemoteContext(SAMPLE_FAMILY_PROFILE, "live", null);
+      expect(liveHttpErr.fallbackFor).toBe("Greater Noida");
+
+      const planErr = await fetchPlanOrError(SAMPLE_FAMILY_PROFILE, demoCal.ctx, "fp-err");
+      expect(planErr.data).toBeNull();
+      expect(planErr.error).toBeTruthy();
+
+      const mockPlan = {
+        outcome: "fallback",
+        plan: { headline: "Ok", summary: "Summary", cards: [], memberNotes: [], tradeoffs: [] },
+      };
+      globalThis.fetch = (async () => Response.json(mockPlan)) as typeof fetch;
+      const planOk = await fetchPlanOrError(SAMPLE_FAMILY_PROFILE, demoCal.ctx, "fp-ok");
+      expect(planOk.error).toBeNull();
+      expect(planOk.data?.outcome).toBe("fallback");
+
+      globalThis.fetch = (async () => {
+        throw new Error("offline");
+      }) as typeof fetch;
+      const netFb = await fetchRemoteContext(SAMPLE_FAMILY_PROFILE, "live", null);
+      expect(netFb.fallbackFor).toBe("Greater Noida");
+      const netPlanErr = await fetchPlanOrError(SAMPLE_FAMILY_PROFILE, demoCal.ctx, "fp-net");
+      expect(netPlanErr.data).toBeNull();
+      expect(netPlanErr.error).toBeTruthy();
+    } finally {
+      globalThis.fetch = origFetch;
+    }
+  });
 });
 
 describe("client: i18n, myths catalog, and validated localStorage wrapper", () => {
@@ -197,9 +313,11 @@ describe("client: i18n, myths catalog, and validated localStorage wrapper", () =
     window.localStorage.setItem("aircompass.plan.v1", "{bad json");
     expect(loadCachedPlan(fp)).toBeNull();
 
-    // Storage quota error on setItem does not throw
+    // Storage quota / SecurityError on getItem, setItem, and removeItem does not throw
     const throwingStorage = {
-      getItem: () => null,
+      getItem: () => {
+        throw new Error("SecurityError");
+      },
       setItem: () => {
         throw new Error("QuotaExceededError");
       },
@@ -208,6 +326,7 @@ describe("client: i18n, myths catalog, and validated localStorage wrapper", () =
       },
     };
     vi.stubGlobal("window", { localStorage: throwingStorage });
+    expect(loadStoredProfile()).toBeNull();
     expect(() => saveStoredProfile(SAMPLE_FAMILY_PROFILE)).not.toThrow();
     expect(() =>
       saveCachedPlan(fp, {

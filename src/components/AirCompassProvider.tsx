@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { AppShell } from "./AppShell";
+import { fetchPlanOrError, fetchRemoteContext } from "@/lib/client/contextFetchers";
 import { getDict } from "@/lib/client/i18n";
 import {
   clearAllAirCompassData,
@@ -11,7 +12,6 @@ import {
   loadStoredLang,
   loadStoredProfile,
   planFingerprint,
-  saveCachedPlan,
   saveCalibration,
   saveDataMode,
   saveStoredLang,
@@ -19,7 +19,6 @@ import {
   type DataMode,
 } from "@/lib/client/storage";
 import { getDemoContext, SAMPLE_FAMILY_PROFILE } from "@/lib/providers/demo";
-import { applyCalibration } from "@/lib/providers/calibrate";
 import type { AirContext, Lang, PlanResponse, Profile } from "@/lib/types";
 
 interface AirCompassState {
@@ -51,60 +50,6 @@ export function useAirCompass(): AirCompassState {
   return ctx;
 }
 
-async function fetchRemoteContext(
-  p: Profile,
-  nextMode: DataMode,
-  cal: number | null,
-): Promise<{ ctx: AirContext; fallbackFor: string | null }> {
-  if (nextMode === "demo") {
-    const demo = getDemoContext(p.place);
-    return { ctx: cal !== null ? applyCalibration(demo, cal) : demo, fallbackFor: null };
-  }
-  try {
-    const params = new URLSearchParams({
-      lat: String(p.place.lat),
-      lon: String(p.place.lon),
-      name: p.place.name,
-      country: p.place.country,
-      mode: "live",
-    });
-    if (cal !== null) params.set("observedPm25", String(cal));
-    const res = await fetch(`/api/context?${params.toString()}`);
-    if (!res.ok) throw new Error("Failed context fetch");
-    const data = (await res.json()) as {
-      context: AirContext;
-      upstreamFallback?: boolean;
-      requestedPlace?: { name: string };
-    };
-    return {
-      ctx: data.context,
-      fallbackFor: data.upstreamFallback ? (data.requestedPlace?.name ?? p.place.name) : null,
-    };
-  } catch {
-    return { ctx: getDemoContext(), fallbackFor: p.place.name };
-  }
-}
-
-async function fetchPlanOrError(
-  p: Profile,
-  ctx: AirContext,
-  fp: string,
-): Promise<{ data: PlanResponse | null; error: string | null }> {
-  try {
-    const res = await fetch("/api/plan", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ profile: p, context: ctx }),
-    });
-    if (!res.ok) return { data: null, error: getDict(p.lang).plan.planFetchError };
-    const data = (await res.json()) as PlanResponse;
-    saveCachedPlan(fp, data);
-    return { data, error: null };
-  } catch {
-    return { data: null, error: getDict(p.lang).plan.planFetchError };
-  }
-}
-
 function useContextPlanSync() {
   const [context, setContext] = useState<AirContext>(() => getDemoContext());
   const [planResponse, setPlanResponse] = useState<PlanResponse | null>(null);
@@ -112,18 +57,23 @@ function useContextPlanSync() {
   const [loadingPlan, setLoadingPlan] = useState(false);
   const [planError, setPlanError] = useState<string | null>(null);
   const [fallbackPlace, setFallbackPlace] = useState<string | null>(null);
+  const syncSeqRef = useRef(0);
+  const planSeqRef = useRef(0);
 
   const refreshPlan = useCallback(async (p: Profile, ctx: AirContext) => {
+    const seq = ++planSeqRef.current;
     const fp = planFingerprint(p, ctx);
     const cached = loadCachedPlan(fp);
     if (cached) {
       setPlanResponse(cached);
       setPlanError(null);
+      setLoadingPlan(false);
       return;
     }
     setLoadingPlan(true);
     setPlanError(null);
     const outcome = await fetchPlanOrError(p, ctx, fp);
+    if (seq !== planSeqRef.current) return;
     if (outcome.data) setPlanResponse(outcome.data);
     if (outcome.error) setPlanError(outcome.error);
     setLoadingPlan(false);
@@ -131,8 +81,10 @@ function useContextPlanSync() {
 
   const syncContextAndPlan = useCallback(
     async (p: Profile, nextMode: DataMode, cal: number | null) => {
+      const seq = ++syncSeqRef.current;
       setLoadingContext(true);
       const { ctx, fallbackFor } = await fetchRemoteContext(p, nextMode, cal);
+      if (seq !== syncSeqRef.current) return;
       setContext(ctx);
       setFallbackPlace(fallbackFor);
       setLoadingContext(false);

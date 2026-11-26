@@ -4,7 +4,7 @@ import { clearProviderCache, fetchOpenMeteoContext } from "@/lib/providers/openM
 import { getDemoContext, SAMPLE_FAMILY_PROFILE } from "@/lib/providers/demo";
 import * as geminiMod from "@/lib/llm/gemini";
 import { generatePlanWithFallback } from "@/lib/llm/planner";
-import { runGroundedChat } from "@/lib/llm/chat";
+import * as chatMod from "@/lib/llm/chat";
 import type { LlmClient } from "@/lib/llm/client";
 import { PROMPT_CANARY } from "@/lib/llm/guard";
 import { POST as planPost } from "@/app/api/plan/route";
@@ -237,7 +237,7 @@ describe("API contracts & provider resilience (mocked boundary)", () => {
         };
       },
     };
-    const ok = await runGroundedChat({
+    const ok = await chatMod.runGroundedChat({
       profile: SAMPLE_FAMILY_PROFILE,
       context: ctx,
       history: [],
@@ -257,7 +257,7 @@ describe("API contracts & provider resilience (mocked boundary)", () => {
         model: "mock",
       }),
     };
-    const caught = await runGroundedChat({
+    const caught = await chatMod.runGroundedChat({
       profile: SAMPLE_FAMILY_PROFILE,
       context: ctx,
       history: [],
@@ -332,6 +332,13 @@ describe("API contracts & provider resilience (mocked boundary)", () => {
       expect(fbBody.upstreamFallback).toBe(true);
       expect(fbBody.context.place.name).toBe("Greater Noida");
       expect(fbBody.requestedPlace?.name).toBe("Delhi");
+
+      // Geocode search failure returns HTTP 502 instead of silently returning forecast data
+      const geoFail = await contextGet(new Request("http://localhost/api/context?q=Delhi"));
+      expect(geoFail.status).toBe(502);
+      const geoBody = (await geoFail.json()) as { error?: string; places?: unknown[] };
+      expect(geoBody.places).toEqual([]);
+      expect(geoBody.error).toBeTruthy();
     } finally {
       globalThis.fetch = origFetch;
     }
@@ -449,16 +456,53 @@ describe("API contracts & provider resilience (mocked boundary)", () => {
       expect(streamText).toContain("event: chunk");
       expect(streamText).toContain("event: done");
 
+      const calibratedCtx = { ...getDemoContext(), calibrationFactor: 1.25 };
       const planAiRes = await planPost(
         new Request("http://localhost/api/plan", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ profile: SAMPLE_FAMILY_PROFILE, context: getDemoContext() }),
+          body: JSON.stringify({ profile: SAMPLE_FAMILY_PROFILE, context: calibratedCtx }),
         }),
       );
       expect(planAiRes.status).toBe(200);
     } finally {
       spy.mockRestore();
     }
+
+    // Stream start catch handles unexpected chat error gracefully with fallback done event
+    const errSpy = vi.spyOn(chatMod, "runGroundedChat").mockRejectedValueOnce(new Error("boom"));
+    try {
+      const errSse = await chatPost(
+        new Request("http://localhost/api/chat", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            profile: SAMPLE_FAMILY_PROFILE,
+            context: getDemoContext(),
+            history: [],
+            message: "What now?",
+          }),
+        }),
+      );
+      expect(errSse.status).toBe(200);
+      expect(await errSse.text()).toContain("Unable to process chat request");
+    } finally {
+      errSpy.mockRestore();
+    }
+
+    // GET /api/context enforces per-IP rate limit cleanly
+    let sawContext429 = false;
+    for (let i = 0; i < 45; i++) {
+      const r = await contextGet(
+        new Request("http://localhost/api/context?mode=demo", {
+          headers: { "x-forwarded-for": "198.51.100.44" },
+        }),
+      );
+      if (r.status === 429) {
+        sawContext429 = true;
+        break;
+      }
+    }
+    expect(sawContext429).toBe(true);
   });
 });

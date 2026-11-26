@@ -1,11 +1,17 @@
 "use client";
 
+import { useEffect } from "react";
+
 export default function RouteError({
+  error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    console.warn("[RouteError]", error.digest ?? error.message);
+  }, [error]);
   return (
     <section
       role="alert"

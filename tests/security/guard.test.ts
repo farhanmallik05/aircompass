@@ -1,7 +1,13 @@
 import { describe, it, expect } from "vitest";
 import corpus from "./guard.corpus.json";
 import hiWords from "../../data/number-words.hi.json";
-import { findViolations, languageOk, render, unfaithfulNumbers } from "@/lib/llm/guard";
+import {
+  findChatSafetyIssue,
+  findViolations,
+  languageOk,
+  render,
+  unfaithfulNumbers,
+} from "@/lib/llm/guard";
 
 const TOKENS = {
   "aqi.now": "312",
@@ -65,7 +71,7 @@ describe("output guard", () => {
     expect(languageOk("ok then", "hi")).toBe(true);
     const nineteen = "abcdefghijklmnopqrs";
     expect(languageOk(nineteen, "hi")).toBe(true);
-    expect(languageOk(nineteen + "t", "hi")).toBe(false);
+    expect(languageOk(`${nineteen}t`, "hi")).toBe(false);
     // Exact 0.50 and 0.05 Devanagari ratio boundaries on 20-letter strings
     expect(languageOk("कखगघङचछजझञabcdefghij", "hi")).toBe(true);
     expect(languageOk("कabcdefghijklmnopqrs", "en")).toBe(false);
@@ -93,5 +99,13 @@ describe("chat numeric faithfulness", () => {
   it("flags non-ASCII digits outright and ignores digits inside allowed terms", () => {
     expect(unfaithfulNumbers("AQI ३१२", allowed)).toEqual(["non-ascii digit"]);
     expect(unfaithfulNumbers("Wear an N95 or FFP2 mask", [])).toEqual([]);
+  });
+
+  it("findChatSafetyIssue identifies prompt leaks, markup/links, and EN/HI medical claims", () => {
+    expect(findChatSafetyIssue("Normal advice for air quality.")).toBeNull();
+    expect(findChatSafetyIssue("Leak: CANARY-\u200B7f3a91")).toBe("prompt leak");
+    expect(findChatSafetyIssue("See [guide](data:text/html,hi)")).toBe("markup or link");
+    expect(findChatSafetyIssue("This CURES asthma quickly")).toBe("medical claim");
+    expect(findChatSafetyIssue("यह बीमारी का इलाज है")).toBe("medical claim");
   });
 });
