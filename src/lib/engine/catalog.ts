@@ -1,3 +1,7 @@
+/**
+ * Cohesive 26-action recommendation registry (one domain concern: action eligibility, scenario
+ * edits, and evidence citations; kept in a single module intentionally rather than split arbitrarily).
+ */
 import actionMeta from "../../../data/action-meta.json";
 import {
   co2eSavedKgPerYear,

@@ -17,11 +17,11 @@
         "impact": {
           "actionId": "diy_box_fan_filter",
           "kind": "quantified",
-          "exposureDeltaUgM3": 41.2,
-          "exposureDeltaPct": 35.1,
+          "exposureDeltaUgM3": 42.3,
+          "exposureDeltaPct": 36,
           "exposureRangeUgM3": [
-            34.2,
-            41.2
+            35.3,
+            42.3
           ],
           "confidence": "low",
           "method": "Single-zone mass balance with DIY box-fan filter (200 m3/h CADR) across all home hours.",
@@ -281,7 +281,7 @@
       "hoursEvaluated": 24
     },
     "baselineExposureUgM3": 117.5,
-    "combinedExposureUgM3": 56,
+    "combinedExposureUgM3": 54.1,
     "candidates": [
       {
         "id": "diy_box_fan_filter",
@@ -296,15 +296,15 @@
           "cardiac",
           "pregnant"
         ],
-        "score": 0.5612,
+        "score": 0.572,
         "impact": {
           "actionId": "diy_box_fan_filter",
           "kind": "quantified",
-          "exposureDeltaUgM3": 41.2,
-          "exposureDeltaPct": 35.1,
+          "exposureDeltaUgM3": 42.3,
+          "exposureDeltaPct": 36,
           "exposureRangeUgM3": [
-            34.2,
-            41.2
+            35.3,
+            42.3
           ],
           "confidence": "low",
           "method": "Single-zone mass balance with DIY box-fan filter (200 m3/h CADR) across all home hours.",
@@ -765,6 +765,7 @@
       5,
       6,
       7,
+      17,
       18,
       19,
       20,
@@ -789,10 +790,10 @@
     "avoid.start": "21:00",
     "avoid.end": "00:00",
     "exposure.before": "118 µg/m³",
-    "exposure.after": "56 µg/m³",
-    "impact.diy_box_fan_filter.pct": "35 %",
-    "impact.diy_box_fan_filter.ugm3": "41.2 µg/m³",
-    "impact.diy_box_fan_filter.range": "34.2 to 41.2 µg/m³",
+    "exposure.after": "54 µg/m³",
+    "impact.diy_box_fan_filter.pct": "36 %",
+    "impact.diy_box_fan_filter.ugm3": "42.3 µg/m³",
+    "impact.diy_box_fan_filter.range": "35.3 to 42.3 µg/m³",
     "impact.carpool_shared_ride.pct": "0 %",
     "impact.carpool_shared_ride.ugm3": "0.0 µg/m³",
     "impact.carpool_shared_ride.range": "0.0 to 0.0 µg/m³",

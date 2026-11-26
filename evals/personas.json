@@ -1,13 +1,13 @@
 [
   {
     "id": "p01-greater-noida-family",
-    "description": "Greater Noida sample family (asthmatic child, grandparent, car, apartment, no purifier, budget low), L5 severe day",
+    "description": "Greater Noida sample family (asthmatic child, grandparent, car, no purifier, budget low), L5 severe day",
     "dayLevel": "severe",
     "profile": {
       "lang": "en",
       "place": { "name": "Greater Noida", "lat": 28.4744, "lon": 77.504, "country": "IN" },
       "household": { "adults": 2, "children": 1, "seniors": 1, "conditions": ["respiratory"] },
-      "home": { "type": "apartment", "windows": "normal", "ac": false, "purifier": "none", "cooking": "lpg", "roomAreaM2": 15 },
+      "home": { "windows": "normal", "purifier": "none", "cooking": "lpg", "roomAreaM2": 15 },
       "commute": { "mode": "car", "km": 12, "daysPerWeek": 5 },
       "habits": { "morningOutdoorExercise": true, "schoolRun": true },
       "budget": "low"
@@ -21,7 +21,7 @@
       "lang": "en",
       "place": { "name": "New Delhi", "lat": 28.6139, "lon": 77.209, "country": "IN" },
       "household": { "adults": 1, "children": 0, "seniors": 0, "conditions": [] },
-      "home": { "type": "apartment", "windows": "sealed", "ac": true, "purifier": "hepa", "cooking": "induction", "roomAreaM2": 20 },
+      "home": { "windows": "sealed", "purifier": "hepa", "cooking": "induction", "roomAreaM2": 20 },
       "commute": { "mode": "wfh", "km": 0, "daysPerWeek": 0 },
       "habits": { "morningOutdoorExercise": true, "schoolRun": false },
       "budget": "medium"
@@ -29,13 +29,13 @@
   },
   {
     "id": "p03-lucknow-biomass-hi",
-    "description": "Lucknow family, biomass cooking, leaky house, budget zero, Hindi",
+    "description": "Lucknow family, biomass cooking, leaky windows, budget zero, Hindi",
     "dayLevel": "severe",
     "profile": {
       "lang": "hi",
       "place": { "name": "Lucknow", "lat": 26.8467, "lon": 80.9462, "country": "IN" },
       "household": { "adults": 2, "children": 2, "seniors": 1, "conditions": [] },
-      "home": { "type": "house", "windows": "leaky", "ac": false, "purifier": "none", "cooking": "biomass", "roomAreaM2": 18 },
+      "home": { "windows": "leaky", "purifier": "none", "cooking": "biomass", "roomAreaM2": 18 },
       "commute": { "mode": "two_wheeler", "km": 8, "daysPerWeek": 6 },
       "habits": { "morningOutdoorExercise": false, "schoolRun": true },
       "budget": "zero"
@@ -49,7 +49,7 @@
       "lang": "en",
       "place": { "name": "Noida", "lat": 28.5355, "lon": 77.391, "country": "IN" },
       "household": { "adults": 2, "children": 0, "seniors": 0, "conditions": ["pregnant"] },
-      "home": { "type": "apartment", "windows": "normal", "ac": true, "purifier": "none", "cooking": "lpg", "roomAreaM2": 16 },
+      "home": { "windows": "normal", "purifier": "none", "cooking": "lpg", "roomAreaM2": 16 },
       "commute": { "mode": "metro", "km": 18, "daysPerWeek": 5 },
       "habits": { "morningOutdoorExercise": false, "schoolRun": false },
       "budget": "medium"
@@ -57,13 +57,13 @@
   },
   {
     "id": "p05-gurugram-cyclist",
-    "description": "Cyclist with morning outdoor exercise, house, normal windows",
+    "description": "Cyclist with morning outdoor exercise, normal windows",
     "dayLevel": "severe",
     "profile": {
       "lang": "en",
       "place": { "name": "Gurugram", "lat": 28.4595, "lon": 77.0266, "country": "IN" },
       "household": { "adults": 1, "children": 0, "seniors": 0, "conditions": [] },
-      "home": { "type": "house", "windows": "normal", "ac": false, "purifier": "none", "cooking": "lpg", "roomAreaM2": 14 },
+      "home": { "windows": "normal", "purifier": "none", "cooking": "lpg", "roomAreaM2": 14 },
       "commute": { "mode": "cycle", "km": 6, "daysPerWeek": 5 },
       "habits": { "morningOutdoorExercise": true, "schoolRun": false },
       "budget": "low"
@@ -71,13 +71,13 @@
   },
   {
     "id": "p06-kanpur-senior-cardiac",
-    "description": "Senior couple with cardiac condition, ground-floor house, leaky windows",
+    "description": "Senior couple with cardiac condition, leaky windows",
     "dayLevel": "severe",
     "profile": {
       "lang": "en",
       "place": { "name": "Kanpur", "lat": 26.4499, "lon": 80.3319, "country": "IN" },
       "household": { "adults": 0, "children": 0, "seniors": 2, "conditions": ["cardiac"] },
-      "home": { "type": "house", "windows": "leaky", "ac": false, "purifier": "diy", "cooking": "lpg", "roomAreaM2": 22 },
+      "home": { "windows": "leaky", "purifier": "diy", "cooking": "lpg", "roomAreaM2": 22 },
       "commute": { "mode": "wfh", "km": 0, "daysPerWeek": 0 },
       "habits": { "morningOutdoorExercise": true, "schoolRun": false },
       "budget": "low"
@@ -91,7 +91,7 @@
       "lang": "en",
       "place": { "name": "Ghaziabad", "lat": 28.6692, "lon": 77.4538, "country": "IN" },
       "household": { "adults": 2, "children": 2, "seniors": 0, "conditions": [] },
-      "home": { "type": "apartment", "windows": "normal", "ac": false, "purifier": "none", "cooking": "lpg", "roomAreaM2": 16 },
+      "home": { "windows": "normal", "purifier": "none", "cooking": "lpg", "roomAreaM2": 16 },
       "commute": { "mode": "two_wheeler", "km": 10, "daysPerWeek": 5 },
       "habits": { "morningOutdoorExercise": false, "schoolRun": true },
       "budget": "low"
@@ -105,7 +105,7 @@
       "lang": "en",
       "place": { "name": "Mumbai", "lat": 19.076, "lon": 72.8777, "country": "IN" },
       "household": { "adults": 2, "children": 1, "seniors": 0, "conditions": [] },
-      "home": { "type": "apartment", "windows": "normal", "ac": true, "purifier": "none", "cooking": "lpg", "roomAreaM2": 15 },
+      "home": { "windows": "normal", "purifier": "none", "cooking": "lpg", "roomAreaM2": 15 },
       "commute": { "mode": "car", "km": 2, "daysPerWeek": 5 },
       "habits": { "morningOutdoorExercise": false, "schoolRun": false },
       "budget": "medium"
@@ -119,7 +119,7 @@
       "lang": "en",
       "place": { "name": "London", "lat": 51.5072, "lon": -0.1276, "country": "GB" },
       "household": { "adults": 2, "children": 0, "seniors": 0, "conditions": [] },
-      "home": { "type": "apartment", "windows": "sealed", "ac": false, "purifier": "none", "cooking": "induction", "roomAreaM2": 18 },
+      "home": { "windows": "sealed", "purifier": "none", "cooking": "induction", "roomAreaM2": 18 },
       "commute": { "mode": "metro", "km": 8, "daysPerWeek": 5 },
       "habits": { "morningOutdoorExercise": true, "schoolRun": false },
       "budget": "low"
@@ -133,7 +133,7 @@
       "lang": "en",
       "place": { "name": "Delhi", "lat": 28.6139, "lon": 77.209, "country": "IN" },
       "household": { "adults": 2, "children": 1, "seniors": 0, "conditions": ["respiratory"] },
-      "home": { "type": "apartment", "windows": "normal", "ac": false, "purifier": "none", "cooking": "lpg", "roomAreaM2": 15 },
+      "home": { "windows": "normal", "purifier": "none", "cooking": "lpg", "roomAreaM2": 15 },
       "commute": { "mode": "car", "km": 12, "daysPerWeek": 5 },
       "habits": { "morningOutdoorExercise": true, "schoolRun": false },
       "budget": "low",
@@ -148,7 +148,7 @@
       "lang": "hi",
       "place": { "name": "Patna", "lat": 25.5941, "lon": 85.1376, "country": "IN" },
       "household": { "adults": 2, "children": 1, "seniors": 1, "conditions": ["respiratory"] },
-      "home": { "type": "apartment", "windows": "normal", "ac": false, "purifier": "none", "cooking": "lpg", "roomAreaM2": 14 },
+      "home": { "windows": "normal", "purifier": "none", "cooking": "lpg", "roomAreaM2": 14 },
       "commute": { "mode": "wfh", "km": 0, "daysPerWeek": 0 },
       "habits": { "morningOutdoorExercise": true, "schoolRun": false },
       "budget": "zero"
@@ -162,7 +162,7 @@
       "lang": "en",
       "place": { "name": "Faridabad", "lat": 28.4089, "lon": 77.3178, "country": "IN" },
       "household": { "adults": 1, "children": 0, "seniors": 0, "conditions": [] },
-      "home": { "type": "apartment", "windows": "leaky", "ac": false, "purifier": "none", "cooking": "other", "roomAreaM2": 6 },
+      "home": { "windows": "leaky", "purifier": "none", "cooking": "other", "roomAreaM2": 6 },
       "commute": { "mode": "walk", "km": 0, "daysPerWeek": 0 },
       "habits": { "morningOutdoorExercise": false, "schoolRun": false },
       "budget": "low"

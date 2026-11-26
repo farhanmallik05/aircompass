@@ -314,18 +314,24 @@ describe("API contracts & provider resilience (mocked boundary)", () => {
     const calBody = (await calDemoRes.json()) as { context: AirContext };
     expect(calBody.context.calibrationFactor).toBeDefined();
 
-    // Upstream outage on live context falls back cleanly to demo fixture
+    // Upstream outage on live context falls back cleanly to true Greater Noida demo fixture + requestedPlace
     const origFetch = globalThis.fetch;
     globalThis.fetch = (async () => {
       throw new Error("network down");
     }) as typeof fetch;
     try {
       const liveFallback = await contextGet(
-        new Request("http://localhost/api/context?lat=28.5&lon=77.3&mode=live"),
+        new Request("http://localhost/api/context?lat=28.61&lon=77.21&name=Delhi&mode=live"),
       );
       expect(liveFallback.status).toBe(200);
-      const fbBody = (await liveFallback.json()) as { upstreamFallback?: boolean };
+      const fbBody = (await liveFallback.json()) as {
+        context: AirContext;
+        requestedPlace?: { name: string };
+        upstreamFallback?: boolean;
+      };
       expect(fbBody.upstreamFallback).toBe(true);
+      expect(fbBody.context.place.name).toBe("Greater Noida");
+      expect(fbBody.requestedPlace?.name).toBe("Delhi");
     } finally {
       globalThis.fetch = origFetch;
     }

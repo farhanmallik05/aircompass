@@ -68,7 +68,8 @@
     "calibrationLabel": "वैकल्पिक: नज़दीकी मॉनिटर PM2.5 (µg/m³) से कैलिब्रेट करें",
     "calibrationApply": "कैलिब्रेट करें",
     "calibrationReset": "रीसेट",
-    "loadingContext": "प्रति घंटा वायु और मौसम डेटा लोड हो रहा है..."
+    "loadingContext": "प्रति घंटा वायु और मौसम डेटा लोड हो रहा है...",
+    "upstreamFallbackBanner": "{place} के लिए लाइव वायु डेटा अभी उपलब्ध नहीं है; रिकॉर्ड किया गया Greater Noida डेमो दिन दिखाया जा रहा है।"
   },
   "setup": {
     "title": "परिवार सेटअप (केवल आपके ब्राउज़र में सहेजा गया)",
@@ -84,9 +85,6 @@
     "condRespiratory": "अस्थमा या श्वसन संबंधी समस्या",
     "condCardiac": "हृदय संबंधी समस्या",
     "condPregnant": "गर्भावस्था",
-    "homeTypeLabel": "घर का प्रकार",
-    "homeApartment": "अपार्टमेंट",
-    "homeHouse": "स्वतंत्र मकान",
     "windowsLabel": "खिड़की की सीलिंग",
     "winSealed": "अच्छी तरह सील / AC",
     "winNormal": "सामान्य खिड़कियाँ",

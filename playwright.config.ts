@@ -36,6 +36,14 @@ function resolveLocalExecutable(): string | undefined {
   return existsSync(winChrome) ? winChrome : undefined;
 }
 
+function cleanEnv(overrides: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(process.env)) {
+    if (v !== undefined) out[k] = v;
+  }
+  return { ...out, ...overrides };
+}
+
 const executablePath = resolveLocalExecutable();
 
 export default defineConfig({
@@ -51,5 +59,14 @@ export default defineConfig({
         url: base,
         timeout: 240_000,
         reuseExistingServer: false,
+        ...(process.env.LIVE_E2E
+          ? {}
+          : {
+              env: cleanEnv({
+                GEMINI_API_KEY: "",
+                GOOGLE_API_KEY: "",
+                NEXT_PUBLIC_DEMO_MODE: "true",
+              }),
+            }),
       },
 });

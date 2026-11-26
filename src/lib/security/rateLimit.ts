@@ -7,6 +7,10 @@ interface Bucket {
 
 const ipBuckets = new Map<string, Bucket>();
 let dailyLlmState = { date: new Date().toISOString().slice(0, 10), count: 0 };
+let dailyIpLlmState = {
+  date: new Date().toISOString().slice(0, 10),
+  counts: new Map<string, number>(),
+};
 
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_TOKENS = 40;
@@ -16,23 +20,27 @@ export function hashIp(rawIp: string): string {
   return createHash("sha256").update(rawIp).digest("hex").slice(0, 16);
 }
 
-/** Extracts and normalizes a client IP identifier from reverse-proxy headers. */
+/**
+ * Extracts client IP preferring platform-verified headers (x-vercel-forwarded-for, x-real-ip)
+ * before client-modifiable x-forwarded-for.
+ */
 export function clientIpFromHeaders(headers: Headers): string {
+  const vercelIp = headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim().slice(0, 64);
+  if (vercelIp) return vercelIp;
+  const realIp = headers.get("x-real-ip")?.trim().slice(0, 64);
+  if (realIp) return realIp;
   const xff = headers.get("x-forwarded-for");
   if (xff) {
     const first = xff.split(",")[0]?.trim().slice(0, 64);
     if (first) return first;
   }
-  const realIp = headers.get("x-real-ip")?.trim().slice(0, 64);
-  return realIp || "127.0.0.1";
+  return "127.0.0.1";
 }
 
 function evictStaleOrOldestBuckets(nowMs: number, maxBuckets = MAX_BUCKETS): void {
   if (ipBuckets.size < maxBuckets) return;
   for (const [k, bucket] of ipBuckets) {
-    if (nowMs - bucket.lastRefillMs >= WINDOW_MS) {
-      ipBuckets.delete(k);
-    }
+    if (nowMs - bucket.lastRefillMs >= WINDOW_MS) ipBuckets.delete(k);
     if (ipBuckets.size < maxBuckets) return;
   }
   while (ipBuckets.size >= maxBuckets) {
@@ -71,15 +79,38 @@ export function takeIpToken(
   return true;
 }
 
-/** Global per-instance daily LLM call cap. Degrades gracefully to deterministic fallback when exhausted. */
-export function tryConsumeDailyLlmQuota(now = new Date()): boolean {
+function parsePositiveCap(envVal: string | undefined, fallback: number): number {
+  const parsed = Number(envVal ?? fallback);
+  return Number.isFinite(parsed) ? Math.max(0, parsed) : fallback;
+}
+
+/**
+ * Enforces both global daily LLM cap (DAILY_LLM_CAP) and per-IP daily quota (DAILY_IP_LLM_CAP).
+ * Degrades cleanly to deterministic fallback without throwing.
+ */
+export function tryConsumeDailyLlmQuota(nowOrIp?: Date | string, maybeNow?: Date): boolean {
+  const now = nowOrIp instanceof Date ? nowOrIp : (maybeNow ?? new Date());
+  const rawIp = typeof nowOrIp === "string" ? nowOrIp : "global";
   const today = now.toISOString().slice(0, 10);
-  if (dailyLlmState.date !== today) {
-    dailyLlmState = { date: today, count: 0 };
+
+  if (dailyLlmState.date !== today) dailyLlmState = { date: today, count: 0 };
+  if (dailyIpLlmState.date !== today) {
+    dailyIpLlmState = { date: today, counts: new Map() };
   }
-  const parsedCap = Number(process.env.DAILY_LLM_CAP ?? 200);
-  const cap = Number.isFinite(parsedCap) ? Math.max(0, parsedCap) : 200;
-  if (dailyLlmState.count >= cap) return false;
+
+  const globalCap = parsePositiveCap(process.env.DAILY_LLM_CAP, 200);
+  const ipCap = parsePositiveCap(process.env.DAILY_IP_LLM_CAP, 20);
+  if (dailyLlmState.count >= globalCap) return false;
+
+  const ipKey = hashIp(rawIp);
+  const ipUsed = dailyIpLlmState.counts.get(ipKey) ?? 0;
+  if (ipUsed >= ipCap) return false;
+
+  if (!dailyIpLlmState.counts.has(ipKey) && dailyIpLlmState.counts.size >= MAX_BUCKETS) {
+    const oldest = dailyIpLlmState.counts.keys().next().value;
+    if (oldest !== undefined) dailyIpLlmState.counts.delete(oldest);
+  }
+  dailyIpLlmState.counts.set(ipKey, ipUsed + 1);
   dailyLlmState.count += 1;
   return true;
 }
@@ -90,5 +121,7 @@ export function getBucketCountForTest(): number {
 
 export function resetRateLimitsForTest(): void {
   ipBuckets.clear();
-  dailyLlmState = { date: new Date().toISOString().slice(0, 10), count: 0 };
+  const today = new Date().toISOString().slice(0, 10);
+  dailyLlmState = { date: today, count: 0 };
+  dailyIpLlmState = { date: today, counts: new Map() };
 }

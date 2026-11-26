@@ -350,6 +350,31 @@
    "prompt canary split by zero width",
    "CANARY-7f3a​91",
    "prompt leak"
+  ],
+  [
+   "prototype constructor token",
+   "Today AQI is {{constructor}}",
+   "unknown token"
+  ],
+  [
+   "prototype __proto__ token",
+   "Today AQI is {{__proto__}}",
+   "unknown token"
+  ],
+  [
+   "prototype property token",
+   "Today AQI is {{prototype}}",
+   "unknown token"
+  ],
+  [
+   "prototype toString token",
+   "Today AQI is {{toString}}",
+   "unknown token"
+  ],
+  [
+   "prototype valueOf token",
+   "Today AQI is {{valueOf}}",
+   "unknown token"
   ]
  ],
  "accept": [

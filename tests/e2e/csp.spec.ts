@@ -35,6 +35,7 @@ test("page hydrates with no CSP violations or console errors", async ({ page }) 
   const w = await watch(page);
   const res = await page.goto("/");
   expect(res?.status()).toBe(200);
+  await expect(page.locator("html")).toHaveAttribute("data-hydrated", "true");
   const setupToggle = page.getByTestId("toggle-setup-btn");
   await expect(setupToggle).toHaveAttribute("aria-expanded", "false");
   await setupToggle.click();

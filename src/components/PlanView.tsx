@@ -173,8 +173,9 @@ export function PlanView() {
       <section
         id="plan-tabpanel"
         role="tabpanel"
+        tabIndex={0}
         aria-labelledby={`plan-tab-${tab}`}
-        className="grid grid-cols-1 gap-4 md:grid-cols-2"
+        className="grid grid-cols-1 gap-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 md:grid-cols-2"
       >
         {cards.map((card) => (
           <ActionCard key={card.actionId} card={card} dict={dict} />

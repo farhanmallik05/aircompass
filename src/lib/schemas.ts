@@ -23,9 +23,7 @@ export const ProfileSchema = z.strictObject({
     conditions: z.array(z.enum(["respiratory", "cardiac", "pregnant"])).max(3),
   }),
   home: z.strictObject({
-    type: z.enum(["apartment", "house"]),
     windows: z.enum(["sealed", "normal", "leaky"]),
-    ac: z.boolean(),
     purifier: z.enum(["none", "hepa", "diy"]),
     cooking: z.enum(["lpg", "induction", "biomass", "other"]),
     roomAreaM2: z.number().finite().min(4).max(500),

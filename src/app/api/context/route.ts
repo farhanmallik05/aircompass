@@ -2,7 +2,7 @@ import { ContextQuerySchema } from "@/lib/schemas";
 import { getDemoContext, SAMPLE_FAMILY_PROFILE } from "@/lib/providers/demo";
 import { searchPlaces } from "@/lib/providers/geocode";
 import { applyCalibration, fetchOpenMeteoContext } from "@/lib/providers/openMeteo";
-import { jsonError } from "@/lib/security/headers";
+import { jsonError, logServerError } from "@/lib/security/headers";
 import { clientIpFromHeaders, takeIpToken } from "@/lib/security/rateLimit";
 import type { Profile } from "@/lib/types";
 
@@ -51,21 +51,22 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   const input = parsed.data;
+  const place = resolvePlace(input);
   try {
     if (input.q && input.lat === undefined && input.lon === undefined) {
       const places = await searchPlaces(input.q);
       return Response.json({ places }, { headers: { "Cache-Control": "no-store" } });
     }
 
-    const place = resolvePlace(input);
     const rawCtx =
       input.mode === "demo" ? getDemoContext(place) : await fetchOpenMeteoContext(place);
     const ctx =
       input.observedPm25 !== undefined ? applyCalibration(rawCtx, input.observedPm25) : rawCtx;
     return Response.json({ context: ctx }, { headers: { "Cache-Control": "no-store" } });
-  } catch {
+  } catch (err) {
+    logServerError("api/context", err);
     return Response.json(
-      { context: getDemoContext(), upstreamFallback: true },
+      { context: getDemoContext(), requestedPlace: place, upstreamFallback: true },
       { headers: { "Cache-Control": "no-store" } },
     );
   }

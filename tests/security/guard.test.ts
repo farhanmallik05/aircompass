@@ -53,6 +53,7 @@ describe("output guard", () => {
       "Open at 13:00; level Hazardous.",
     );
     expect(render("a {{nope}} b", TOKENS)).toBe("a  b");
+    expect(render("{{constructor}}{{__proto__}}{{toString}}", TOKENS)).toBe("");
   });
 
   it("checks language at script level, and does not judge very short text", () => {

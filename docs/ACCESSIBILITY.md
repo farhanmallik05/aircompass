@@ -15,5 +15,6 @@
 
 ## Automated & Manual Verification Notes
 
-- **Automated Axe Matrix:** `tests/e2e/flows-and-a11y.spec.ts` runs `@axe-core/playwright` (`wcag2a`, `wcag2aa`, `wcag21aa`, `wcag22aa`) across all 4 routes (`/`, `/plan`, `/impact`, `/brief`) × 2 languages (`en`, `hi`) × 2 color schemes (`light`, `dark`) = **16 full-page audits**.
-- **Manual Screen Reader Check:** Full NVDA/VoiceOver manual audio narration verification is marked for pre-submission desktop/mobile pass; automated DOM semantics, focus order, live regions, and keyboard tab flow are verified in Playwright.
+- **Automated Axe Matrix + Populated States:** `tests/e2e/flows-and-a11y.spec.ts` runs `@axe-core/playwright` (`wcag2a`, `wcag2aa`, `wcag21aa`, `wcag22aa`) across all 4 routes (`/`, `/plan`, `/impact`, `/brief`) × 2 languages (`en`, `hi`) × 2 color schemes (`light`, `dark`) plus populated states (SetupForm error state and Plan + Chat reply).
+- **Keyboard Journey & Live Regions:** Playwright verifies the skip link, validation alert focus recovery, `h1` focus on navigation, WAI-ARIA `role="tablist"` keyboard controls, focusable `tabIndex={0}` tabpanel, `PlanView` `role="status"` announcements, and `ChatDrawer` `aria-live="polite"` updates.
+- **Manual Screen Reader Check:** Full spoken NVDA/VoiceOver audio pass remains a human manual step and is intentionally left un-claimed here.

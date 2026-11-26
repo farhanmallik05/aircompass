@@ -56,10 +56,8 @@ function isValidHousehold(hh: unknown): boolean {
 function isValidHome(home: unknown): boolean {
   return (
     isRecord(home) &&
-    (home.type === "apartment" || home.type === "house") &&
     typeof home.windows === "string" &&
     VALID_WINDOWS.has(home.windows) &&
-    typeof home.ac === "boolean" &&
     typeof home.purifier === "string" &&
     VALID_PURIFIERS.has(home.purifier) &&
     typeof home.cooking === "string" &&

@@ -16,9 +16,7 @@ export const SAMPLE_FAMILY_PROFILE: Profile = {
     conditions: ["respiratory"],
   },
   home: {
-    type: "apartment",
     windows: "normal",
-    ac: false,
     purifier: "none",
     cooking: "lpg",
     roomAreaM2: 15,

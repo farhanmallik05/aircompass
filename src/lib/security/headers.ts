@@ -6,7 +6,34 @@ const MAX_BODY_BYTES = 8192;
 export type JsonBodyResult =
   { ok: true; data: unknown } | { ok: false; status: 400 | 413 | 415; error: string };
 
-/** Enforces JSON content-type and <= 8 KB payload cap before parsing. */
+async function readStreamWithLimit(
+  body: ReadableStream<Uint8Array>,
+  maxBytes: number,
+): Promise<string | null> {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let total = 0;
+  let text = "";
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel().catch(() => undefined);
+        return null;
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+    text += decoder.decode();
+    return text;
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+/** Enforces JSON content-type and <= 8 KB streaming payload cap before parsing. */
 export async function readBoundedJson(
   request: Request,
   maxBytes = MAX_BODY_BYTES,
@@ -21,9 +48,18 @@ export async function readBoundedJson(
     return { ok: false, status: 413, error: "Request body exceeds 8 KB limit" };
   }
 
-  const text = await request.text();
-  if (Buffer.byteLength(text, "utf8") > maxBytes) {
-    return { ok: false, status: 413, error: "Request body exceeds 8 KB limit" };
+  let text: string;
+  if (request.body) {
+    const streamed = await readStreamWithLimit(request.body, maxBytes);
+    if (streamed === null) {
+      return { ok: false, status: 413, error: "Request body exceeds 8 KB limit" };
+    }
+    text = streamed;
+  } else {
+    text = await request.text();
+    if (Buffer.byteLength(text, "utf8") > maxBytes) {
+      return { ok: false, status: 413, error: "Request body exceeds 8 KB limit" };
+    }
   }
 
   try {
@@ -43,13 +79,22 @@ export function jsonError(status: number, message: string): Response {
   );
 }
 
+/** Logs server-side route errors cleanly while stripping potential query-string/API-key secrets. */
+export function logServerError(scope: string, err: unknown): void {
+  const raw = err instanceof Error ? err.message : String(err);
+  const redacted = raw
+    .replace(/([?&]key=)[^&\s]+/gi, "$1[REDACTED]")
+    .replace(/\bAIza[0-9A-Za-z_-]{16,}\b/g, "[REDACTED_KEY]");
+  console.warn(`[${scope}] ${redacted.slice(0, 240)}`);
+}
+
 /** Applies rate limiting, bounded JSON parsing, and Zod validation for POST routes. */
 export async function validateJsonPost<T>(
   request: Request,
   scope: string,
   schema: ZodType<T>,
   invalidMessage: string,
-): Promise<{ ok: true; data: T } | { ok: false; response: Response }> {
+): Promise<{ ok: true; data: T; ip: string } | { ok: false; response: Response }> {
   const ip = clientIpFromHeaders(request.headers);
   if (!takeIpToken(scope, ip)) {
     return { ok: false, response: jsonError(429, "Rate limit exceeded; please retry shortly.") };
@@ -65,5 +110,5 @@ export async function validateJsonPost<T>(
     return { ok: false, response: jsonError(400, invalidMessage) };
   }
 
-  return { ok: true, data: parsed.data };
+  return { ok: true, data: parsed.data, ip };
 }

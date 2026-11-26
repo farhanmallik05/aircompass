@@ -33,9 +33,7 @@ const SAMPLE_CAR_PROFILE: Profile = {
   place: { name: "Greater Noida", lat: 28.47, lon: 77.5, country: "IN" },
   household: { adults: 2, children: 1, seniors: 1, conditions: ["respiratory"] },
   home: {
-    type: "apartment",
     windows: "normal",
-    ac: false,
     purifier: "none",
     cooking: "lpg",
     roomAreaM2: 15,

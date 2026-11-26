@@ -8,9 +8,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-## AirCompass agent rules (read plan.md first)
+## AirCompass agent rules (read docs/PRD.md & ARCHITECTURE.md first)
 
-1. `plan.md` is the spec. `src/lib/types.ts` is frozen unless a ticket says otherwise.
+1. `docs/PRD.md`, `docs/TRD.md`, and `ARCHITECTURE.md` are the spec. `src/lib/types.ts` is stable unless a ticket updates the profile/engine contract cleanly.
 2. Every ticket ends with `npm run verify` green. Never commit red. Commit messages: conventional commits.
 3. **Numbers come from the engine, expectations come from the oracle.** Never compute an expected value in a test with product code. Never hand-edit `tests/fixtures/golden.json`; change `scripts/oracle.mjs`, regenerate, and explain the diff in the commit.
 4. **Test for behaviour that can break, not for count.** Do NOT write: tests that assert constants, getters or pass-through wrappers; snapshots of whole objects; tests that mock the unit under test; one `it()` per trivial input (use a table and one assertion that lists every failing row). Do write: golden vectors, invariants/properties, bypass corpora (add the new bypass to `tests/security/guard.corpus.json` first, then fix the guard), API contract tests with malformed upstream and model payloads, and a few end-to-end flows.

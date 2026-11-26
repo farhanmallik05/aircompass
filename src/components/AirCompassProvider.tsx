@@ -33,6 +33,7 @@ interface AirCompassState {
   loadingContext: boolean;
   loadingPlan: boolean;
   planError: string | null;
+  fallbackPlace: string | null;
   hasCustomHousehold: boolean;
   setLang: (lang: Lang) => void;
   setMode: (mode: DataMode) => void;
@@ -54,10 +55,10 @@ async function fetchRemoteContext(
   p: Profile,
   nextMode: DataMode,
   cal: number | null,
-): Promise<AirContext> {
+): Promise<{ ctx: AirContext; fallbackFor: string | null }> {
   if (nextMode === "demo") {
     const demo = getDemoContext(p.place);
-    return cal !== null ? applyCalibration(demo, cal) : demo;
+    return { ctx: cal !== null ? applyCalibration(demo, cal) : demo, fallbackFor: null };
   }
   try {
     const params = new URLSearchParams({
@@ -70,10 +71,17 @@ async function fetchRemoteContext(
     if (cal !== null) params.set("observedPm25", String(cal));
     const res = await fetch(`/api/context?${params.toString()}`);
     if (!res.ok) throw new Error("Failed context fetch");
-    const data = (await res.json()) as { context: AirContext };
-    return data.context;
+    const data = (await res.json()) as {
+      context: AirContext;
+      upstreamFallback?: boolean;
+      requestedPlace?: { name: string };
+    };
+    return {
+      ctx: data.context,
+      fallbackFor: data.upstreamFallback ? (data.requestedPlace?.name ?? p.place.name) : null,
+    };
   } catch {
-    return getDemoContext(p.place);
+    return { ctx: getDemoContext(), fallbackFor: p.place.name };
   }
 }
 
@@ -103,6 +111,7 @@ function useContextPlanSync() {
   const [loadingContext, setLoadingContext] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState(false);
   const [planError, setPlanError] = useState<string | null>(null);
+  const [fallbackPlace, setFallbackPlace] = useState<string | null>(null);
 
   const refreshPlan = useCallback(async (p: Profile, ctx: AirContext) => {
     const fp = planFingerprint(p, ctx);
@@ -123,8 +132,9 @@ function useContextPlanSync() {
   const syncContextAndPlan = useCallback(
     async (p: Profile, nextMode: DataMode, cal: number | null) => {
       setLoadingContext(true);
-      const ctx = await fetchRemoteContext(p, nextMode, cal);
+      const { ctx, fallbackFor } = await fetchRemoteContext(p, nextMode, cal);
       setContext(ctx);
+      setFallbackPlace(fallbackFor);
       setLoadingContext(false);
       await refreshPlan(p, ctx);
     },
@@ -137,6 +147,7 @@ function useContextPlanSync() {
     loadingContext,
     loadingPlan,
     planError,
+    fallbackPlace,
     refreshPlan,
     syncContextAndPlan,
   };
@@ -150,6 +161,7 @@ function useInitialStoredSession(
   setCalibrationState: (c: number | null) => void,
 ) {
   useEffect(() => {
+    document.documentElement.dataset.hydrated = "true";
     let active = true;
     void (async () => {
       await Promise.resolve();

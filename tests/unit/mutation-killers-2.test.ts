@@ -446,11 +446,11 @@ describe("schedule.ts allHomePurifierHours conditions (line 148)", () => {
     expect(hours).not.toContain(9);
   });
 
-  it("h >= 18 included (not h > 18 or h >= 19)", () => {
+  it("h >= 17 included (agrees with isHomeHour single boundary)", () => {
     const hours = allHomePurifierHours("car", 5);
-    expect(hours).toContain(18); // exactly 18 ✓
+    expect(hours).toContain(17);
     expect(hours).toContain(23);
-    expect(hours).not.toContain(17); // 17 < 18 → excluded
+    expect(hours).not.toContain(16);
   });
 
   it("commuteDaysPerWeek < 7 (not <= 7): 7 days → different hour set than 5 days", () => {

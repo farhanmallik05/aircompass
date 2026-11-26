@@ -156,7 +156,7 @@ export function isHomeHour(h: number, isCommuteDay: boolean, hasCommute: boolean
   return h < 8 || h >= 17;
 }
 
-/** Default all-home-hours purifier schedule for a household profile. */
+/** Default all-home-hours purifier schedule using isHomeHour as single source of truth. */
 export function allHomePurifierHours(
   commuteMode: CommuteMode,
   commuteDaysPerWeek: number,
@@ -164,9 +164,7 @@ export function allHomePurifierHours(
   const hasCommute = commuteMode !== "wfh" && commuteDaysPerWeek > 0;
   const hours: number[] = [];
   for (let h = 0; h < 24; h++) {
-    // If commuting some days, running during sleeping/evening/morning hours covers home time;
-    // on WFH/weekend days all 24h are at home.
-    if (!hasCommute || h < 8 || h >= 18) hours.push(h);
+    if (isHomeHour(h, true, hasCommute)) hours.push(h);
   }
   return hours;
 }

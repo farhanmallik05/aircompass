@@ -63,9 +63,7 @@ export interface Profile {
     conditions: ("respiratory" | "cardiac" | "pregnant")[];
   };
   home: {
-    type: "apartment" | "house";
     windows: "sealed" | "normal" | "leaky";
-    ac: boolean;
     purifier: "none" | "hepa" | "diy";
     cooking: "lpg" | "induction" | "biomass" | "other";
     roomAreaM2: number;

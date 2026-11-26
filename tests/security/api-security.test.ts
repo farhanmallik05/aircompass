@@ -52,6 +52,25 @@ describe("API security controls (strict validation, size cap, rate limit, inject
 
     const badQuery = await contextGet(new Request("http://localhost/api/context?lat=999&lon=0"));
     expect(badQuery.status).toBe(400);
+
+    // Chunked stream without Content-Length exceeding 8 KB cancels early with 413
+    const enc = new TextEncoder();
+    const chunkedStream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(enc.encode('{"pad":"' + "a".repeat(5000)));
+        controller.enqueue(enc.encode("b".repeat(5000) + '"}'));
+        controller.close();
+      },
+    });
+    const chunkedTooLarge = await planPost(
+      new Request("http://localhost/api/plan", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: chunkedStream,
+        duplex: "half",
+      } as RequestInit),
+    );
+    expect(chunkedTooLarge.status).toBe(413);
   });
 
   it("enforces per-IP token bucket and daily LLM quota cap", async () => {
@@ -101,19 +120,35 @@ describe("API security controls (strict validation, size cap, rate limit, inject
     expect(takeIpToken("plan", "203.0.113.99", 20 * 60 * 1000, 4)).toBe(true);
     expect(getBucketCountForTest()).toBeLessThanOrEqual(4);
 
-    // Header normalization trims lists and caps length
-    const h = new Headers({ "x-forwarded-for": ` 192.0.2.10, 10.0.0.1 ` });
+    // Trusted Vercel/real IP headers take precedence over client-modifiable XFF
+    const h = new Headers({ "x-forwarded-for": " 192.0.2.10, 10.0.0.1 " });
     expect(clientIpFromHeaders(h)).toBe("192.0.2.10");
+    const spoofedWithVercel = new Headers({
+      "x-forwarded-for": "198.51.100.77",
+      "x-vercel-forwarded-for": "203.0.113.9",
+    });
+    expect(clientIpFromHeaders(spoofedWithVercel)).toBe("203.0.113.9");
     const longHdr = new Headers({ "x-real-ip": "a".repeat(120) });
     expect(clientIpFromHeaders(longHdr)).toHaveLength(64);
 
-    // Daily quota resets cleanly across UTC midnight and rejects invalid DAILY_LLM_CAP cleanly
+    // Per-IP quota isolation + global daily quota + UTC midnight rollover
     const oldCap = process.env.DAILY_LLM_CAP;
+    const oldIpCap = process.env.DAILY_IP_LLM_CAP;
+    process.env.DAILY_LLM_CAP = "10";
+    process.env.DAILY_IP_LLM_CAP = "2";
+    resetRateLimitsForTest();
+    expect(tryConsumeDailyLlmQuota("198.51.100.1")).toBe(true);
+    expect(tryConsumeDailyLlmQuota("198.51.100.1")).toBe(true);
+    expect(tryConsumeDailyLlmQuota("198.51.100.1")).toBe(false);
+    expect(tryConsumeDailyLlmQuota("198.51.100.2")).toBe(true);
+
     process.env.DAILY_LLM_CAP = "1";
+    process.env.DAILY_IP_LLM_CAP = "5";
     resetRateLimitsForTest();
     expect(tryConsumeDailyLlmQuota(new Date("2026-11-25T23:59:00Z"))).toBe(true);
     expect(tryConsumeDailyLlmQuota(new Date("2026-11-25T23:59:30Z"))).toBe(false);
     expect(tryConsumeDailyLlmQuota(new Date("2026-11-26T00:00:05Z"))).toBe(true);
     process.env.DAILY_LLM_CAP = oldCap;
+    process.env.DAILY_IP_LLM_CAP = oldIpCap;
   });
 });

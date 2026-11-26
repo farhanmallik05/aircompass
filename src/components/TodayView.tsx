@@ -11,20 +11,54 @@ import { aqiFromPm25, guidanceForLevel, levelOfPm25, next24hMeanPm25 } from "@/l
 import { trailingNaqi } from "@/lib/engine/naqi";
 import { householdGroups } from "@/lib/engine/select";
 import { findWindows } from "@/lib/engine/window";
-import type { AirContext, Profile } from "@/lib/types";
+import type { AirContext } from "@/lib/types";
+
+function TodayHeroActions({
+  dict,
+  showSetup,
+  onSampleFamily,
+  onToggleSetup,
+}: {
+  dict: Dictionary;
+  showSetup: boolean;
+  onSampleFamily: () => void;
+  onToggleSetup: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <button
+        type="button"
+        data-testid="sample-family-btn"
+        onClick={onSampleFamily}
+        className="min-h-11 rounded-xl bg-teal-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 dark:bg-teal-300 dark:text-slate-950 dark:hover:bg-teal-200"
+      >
+        {dict.app.sampleFamilyBtn}
+      </button>
+      <button
+        type="button"
+        data-testid="toggle-setup-btn"
+        aria-expanded={showSetup}
+        onClick={onToggleSetup}
+        className="min-h-11 rounded-xl border border-slate-400 px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800"
+      >
+        {dict.app.setupBtn}
+      </button>
+    </div>
+  );
+}
 
 function TodayHeroBanner({
   dict,
-  activeProfile,
   context,
+  fallbackPlace,
   showSetup,
   loadingContext,
   onSampleFamily,
   onToggleSetup,
 }: {
   dict: Dictionary;
-  activeProfile: Profile;
   context: AirContext;
+  fallbackPlace: string | null;
   showSetup: boolean;
   loadingContext: boolean;
   onSampleFamily: () => void;
@@ -45,7 +79,7 @@ function TodayHeroBanner({
           <p className="text-sm text-slate-700 dark:text-slate-300">{dict.today.subtitle}</p>
           <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
             <span className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1 font-medium text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
-              {activeProfile.place.name} ({activeProfile.place.country})
+              {context.place.name} ({context.place.country})
             </span>
             <span
               data-testid="data-source-badge"
@@ -61,27 +95,24 @@ function TodayHeroBanner({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            data-testid="sample-family-btn"
-            onClick={onSampleFamily}
-            className="min-h-11 rounded-xl bg-teal-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 dark:bg-teal-300 dark:text-slate-950 dark:hover:bg-teal-200"
-          >
-            {dict.app.sampleFamilyBtn}
-          </button>
-          <button
-            type="button"
-            data-testid="toggle-setup-btn"
-            aria-expanded={showSetup}
-            onClick={onToggleSetup}
-            className="min-h-11 rounded-xl border border-slate-400 px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800"
-          >
-            {dict.app.setupBtn}
-          </button>
-        </div>
+        <TodayHeroActions
+          dict={dict}
+          showSetup={showSetup}
+          onSampleFamily={onSampleFamily}
+          onToggleSetup={onToggleSetup}
+        />
       </div>
 
+      {fallbackPlace ? (
+        <p
+          role="status"
+          aria-live="polite"
+          data-testid="upstream-fallback-banner"
+          className="mt-3 rounded-lg border border-amber-700/40 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-950 dark:border-amber-400/40 dark:bg-amber-950/50 dark:text-amber-100"
+        >
+          {fmt(dict.today.upstreamFallbackBanner, { place: fallbackPlace })}
+        </p>
+      ) : null}
       {loadingContext ? (
         <p
           role="status"
@@ -104,6 +135,7 @@ export function TodayView() {
     planResponse,
     calibrationPm25,
     loadingContext,
+    fallbackPlace,
     trySampleFamily,
     saveProfileAndPlan,
     setCalibrationPm25,
@@ -117,15 +149,15 @@ export function TodayView() {
   const mean24 = next24hMeanPm25(context.hours, nowIdx);
   const levelToday = levelOfPm25(mean24);
   const windows = findWindows(context.hours, nowIdx);
-  const naqi = activeProfile.place.country === "IN" ? trailingNaqi(context.hours, nowIdx) : null;
+  const naqi = context.place.country === "IN" ? trailingNaqi(context.hours, nowIdx) : null;
   const guidance = guidanceForLevel(levelToday, lang);
 
   return (
     <div className="space-y-6">
       <TodayHeroBanner
         dict={dict}
-        activeProfile={activeProfile}
         context={context}
+        fallbackPlace={fallbackPlace}
         showSetup={showSetup}
         loadingContext={loadingContext}
         onSampleFamily={() => {

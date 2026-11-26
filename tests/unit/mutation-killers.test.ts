@@ -362,14 +362,18 @@ describe("schedule.ts mutation killers", () => {
     expect(hours[23]).toBe(23);
   });
 
-  it("allHomePurifierHours: car commuter returns hours [0..7, 18..23]", () => {
+  it("allHomePurifierHours: car commuter returns hours [0..7, 17..23] and agrees with isHomeHour across 24h", () => {
     const hours = allHomePurifierHours("car", 5);
     expect(hours).not.toContain(8);
     expect(hours).not.toContain(12);
+    expect(hours).not.toContain(16);
     expect(hours).toContain(0);
     expect(hours).toContain(7);
-    expect(hours).toContain(18);
+    expect(hours).toContain(17);
     expect(hours).toContain(23);
+    for (let h = 0; h < 24; h++) {
+      expect(hours.includes(h)).toBe(isHomeHour(h, true, true));
+    }
   });
 
   it("sub-slot fractions sum to 1.0 for each hour", () => {

@@ -65,7 +65,7 @@ export function findViolations(raw: string, tokens: Tokens): string[] {
   const text = norm(raw);
 
   for (const m of text.matchAll(TOKEN)) {
-    if (!(m[1].toLowerCase() in tokens)) v.push(`unknown token: ${m[1]}`);
+    if (!Object.hasOwn(tokens, m[1].toLowerCase())) v.push(`unknown token: ${m[1]}`);
   }
 
   const bare = text.replace(TOKEN, " ").replace(ALLOWED_TERMS, " ");
@@ -81,9 +81,12 @@ export function findViolations(raw: string, tokens: Tokens): string[] {
   return v;
 }
 
-/** Substitute tokens after the guard passed. Unknown tokens never reach here. */
+/** Substitute tokens after the guard passed. Own-property lookup blocks prototype keys. */
 export const render = (t: string, k: Tokens): string =>
-  t.replace(TOKEN, (_m, key: string) => k[key.toLowerCase()] ?? "");
+  t.replace(TOKEN, (_m, key: string) => {
+    const low = key.toLowerCase();
+    return Object.hasOwn(k, low) ? (k[low] ?? "") : "";
+  });
 
 /** Script-level language check (not semantic): Hindi needs mostly Devanagari letters, English almost none. */
 export function languageOk(text: string, lang: "en" | "hi"): boolean {

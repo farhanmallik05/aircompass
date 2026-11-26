@@ -290,7 +290,7 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
     expect(allHomePurifierHours("wfh", 5)).toHaveLength(24);
     expect(allHomePurifierHours("car", 0)).toHaveLength(24);
     expect(allHomePurifierHours("car", 5)).toEqual([
-      0, 1, 2, 3, 4, 5, 6, 7, 18, 19, 20, 21, 22, 23,
+      0, 1, 2, 3, 4, 5, 6, 7, 17, 18, 19, 20, 21, 22, 23,
     ]);
 
     // Compare constant 200 ug/m3 exposure across car (0.6x) vs metro (0.7x) vs bus (1.0x) vs N95
@@ -430,9 +430,7 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
       place: { name: "Delhi", lat: 28.6, lon: 77.2, country: "IN" },
       household: { adults: 1, children: 0, seniors: 0, conditions: [] },
       home: {
-        type: "apartment",
         windows: "normal",
-        ac: false,
         purifier: "none",
         cooking: "lpg",
         roomAreaM2: 15,
@@ -948,7 +946,7 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
     }
 
     expect(allHomePurifierHours("car", 7)).toEqual([
-      0, 1, 2, 3, 4, 5, 6, 7, 18, 19, 20, 21, 22, 23,
+      0, 1, 2, 3, 4, 5, 6, 7, 17, 18, 19, 20, 21, 22, 23,
     ]);
 
     // Exposure: commuteDays=0 == wfh, commuteDays=10 clamped to 7, commuteDays=5 == (5*exp7 + 2*exp0)/7
@@ -1099,9 +1097,7 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
       place: { name: "Delhi", lat: 28.6, lon: 77.2, country: "IN" },
       household: { adults: 1, children: 0, seniors: 0, conditions: [] },
       home: {
-        type: "apartment",
         windows: "normal",
-        ac: false,
         purifier: "none",
         cooking: "lpg",
         roomAreaM2: 15,
@@ -1318,9 +1314,7 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
       place: { name: "Delhi", lat: 28.6, lon: 77.2, country: "IN" },
       household: { adults: 1, children: 0, seniors: 0, conditions: [] },
       home: {
-        type: "apartment",
         windows: "normal",
-        ac: false,
         purifier: "none",
         cooking: "lpg",
         roomAreaM2: 15,
@@ -1389,9 +1383,7 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
       place: { name: "Delhi", lat: 28.6, lon: 77.2, country: "IN" },
       household: { adults: 1, children: 0, seniors: 0, conditions: [] },
       home: {
-        type: "apartment",
         windows: "sealed",
-        ac: false,
         purifier: "none",
         cooking: "lpg",
         roomAreaM2: 15,
@@ -1452,9 +1444,7 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
       ...sparse,
       household: { adults: 1, children: 1, seniors: 0, conditions: [] },
       home: {
-        type: "apartment",
         windows: "normal",
-        ac: false,
         purifier: "none",
         cooking: "lpg",
         roomAreaM2: 15,
@@ -1504,16 +1494,14 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
     expect(busAbove500?.score).toBe(0.29);
     expect(noIdle?.tradeoff).toBe(false);
     expect(noIdle?.score).toBe(0.1954);
-    expect(hepaCand?.score).toBe(0.6032);
+    expect(hepaCand?.score).toBe(0.6236);
 
     // Rich profile (>16 applicable actions) where commute_to_public_transport scores lowest (-0.095)
     // must keep >= 2 per section AND retain the flagged tradeoff item inside the 14-item cap
     const richP: Profile = {
       ...multiGroupBase,
       home: {
-        type: "apartment",
         windows: "leaky",
-        ac: false,
         purifier: "none",
         cooking: "biomass",
         roomAreaM2: 15,

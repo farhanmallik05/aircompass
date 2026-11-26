@@ -15,7 +15,7 @@ export async function POST(request: Request): Promise<Response> {
   if (!validated.ok) return validated.response;
 
   const client = createGeminiClientFromEnv();
-  const quotaAllowed = client ? tryConsumeDailyLlmQuota() : true;
+  const quotaAllowed = client ? tryConsumeDailyLlmQuota(validated.ip) : true;
   const result = await generatePlanWithFallback(
     validated.data.profile,
     validated.data.context,

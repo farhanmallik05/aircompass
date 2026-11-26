@@ -68,7 +68,8 @@
     "calibrationLabel": "Optional: calibrate with a nearby monitor PM2.5 (µg/m³)",
     "calibrationApply": "Calibrate",
     "calibrationReset": "Reset",
-    "loadingContext": "Loading hourly air and weather context..."
+    "loadingContext": "Loading hourly air and weather context...",
+    "upstreamFallbackBanner": "Live air data for {place} is temporarily unavailable; showing the recorded Greater Noida demo day."
   },
   "setup": {
     "title": "Household Setup (stored only in your browser)",
@@ -84,9 +85,6 @@
     "condRespiratory": "Asthma or respiratory condition",
     "condCardiac": "Heart or cardiovascular condition",
     "condPregnant": "Pregnancy",
-    "homeTypeLabel": "Home type",
-    "homeApartment": "Apartment",
-    "homeHouse": "Independent house",
     "windowsLabel": "Window sealing",
     "winSealed": "Tightly sealed / AC",
     "winNormal": "Normal windows",

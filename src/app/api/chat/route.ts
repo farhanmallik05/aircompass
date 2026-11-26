@@ -1,7 +1,7 @@
 import { runGroundedChat } from "@/lib/llm/chat";
 import { createGeminiClientFromEnv } from "@/lib/llm/gemini";
 import { ChatRequestSchema } from "@/lib/schemas";
-import { validateJsonPost } from "@/lib/security/headers";
+import { validateJsonPost, logServerError } from "@/lib/security/headers";
 import { tryConsumeDailyLlmQuota } from "@/lib/security/rateLimit";
 
 function sseEvent(event: string, data: unknown): Uint8Array {
@@ -19,7 +19,7 @@ export async function POST(request: Request): Promise<Response> {
   if (!validated.ok) return validated.response;
 
   const client = createGeminiClientFromEnv();
-  const quotaAllowed = client ? tryConsumeDailyLlmQuota() : true;
+  const quotaAllowed = client ? tryConsumeDailyLlmQuota(validated.ip) : true;
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -39,7 +39,8 @@ export async function POST(request: Request): Promise<Response> {
           },
         });
         controller.enqueue(sseEvent("done", result));
-      } catch {
+      } catch (err) {
+        logServerError("api/chat", err);
         controller.enqueue(
           sseEvent("done", {
             text: "Unable to process chat request safely right now.",
