@@ -168,7 +168,8 @@
     "chatPlaceholder": "e.g. What if I run a DIY box-fan filter and switch commute days?",
     "chatSendBtn": "Ask",
     "chatSending": "Simulating with engine...",
-    "chatToolNote": "Numbers verified by live engine tool simulation."
+    "chatToolNote": "Numbers verified by live engine tool simulation.",
+    "chatNetworkError": "Could not reach chat service right now."
   },
   "impact": {
     "title": "Exposure & Community Impact Simulator",

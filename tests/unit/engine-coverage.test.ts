@@ -379,9 +379,10 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
     expect(() => findWindowsFromHours([Number.POSITIVE_INFINITY])).toThrow(RangeError);
 
     // Only hours 08..19 qualify when lower values exist at 00..07 or 20..23
-    const dayWithCleanNight = Array.from({ length: 24 }, (_, h) =>
-      h >= 8 && h <= 19 ? (h === 18 || h === 19 ? 60 : 120) : 10,
-    );
+    const dayWithCleanNight = Array.from({ length: 24 }, (_, h) => {
+      if (h < 8 || h > 19) return 10;
+      return h === 18 || h === 19 ? 60 : 120;
+    });
     const res = findWindowsFromHours(dayWithCleanNight);
     expect(res.best).toMatchObject({
       start: 18,
@@ -414,17 +415,12 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
     expect(w48.shortData).toBe(false);
     expect(w48.best.mean).toBe(40);
     expect(findWindows(h48, 99).shortData).toBe(true);
-    const badTsHours = Array.from({ length: 24 }, (_, i) => ({
-      t:
-        i === 0
-          ? "2026-11-20T99:00"
-          : i === 23
-            ? "bad-ts"
-            : `2026-11-20T${String(i).padStart(2, "0")}:00`,
-      pm25: i >= 8 && i <= 9 ? 20 : 120,
-      pm10: 150,
-      usAqi: 150,
-    }));
+    const badTsHours = Array.from({ length: 24 }, (_, i) => {
+      let t = `2026-11-20T${String(i).padStart(2, "0")}:00`;
+      if (i === 0) t = "2026-11-20T99:00";
+      else if (i === 23) t = "bad-ts";
+      return { t, pm25: i >= 8 && i <= 9 ? 20 : 120, pm10: 150, usAqi: 150 };
+    });
     expect(findWindows(badTsHours, 0).best).toMatchObject({ start: 8, end: 10, mean: 20 });
   });
 
@@ -1008,7 +1004,9 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
     // T00:00 and T23:00 parse as hours 0 and 23, while T24:00 falls back to index % 24
     const spikeAtIdx0 = Array.from({ length: 24 }, (_, i) => (i === 0 ? 400 : 40));
     const tsValidBounds = Array.from({ length: 24 }, (_, i) => {
-      const mappedHour = i === 0 ? 12 : i === 12 ? 0 : i === 23 ? 23 : i;
+      let mappedHour = i;
+      if (i === 0) mappedHour = 12;
+      else if (i === 12) mappedHour = 0;
       return `2026-11-20T${String(mappedHour).padStart(2, "0")}:00`;
     });
     const tsInvalid24 = Array.from({ length: 24 }, (_, i) =>
@@ -1052,17 +1050,12 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
     expect(findWindows(wrapPeak, 0).avoid).toMatchObject({ start: 23, end: 2, mean: 500 });
 
     // T24:00 and single-digit T8:00 are invalid and fall back to index % 24
-    const fallbackTs = Array.from({ length: 24 }, (_, i) => ({
-      t:
-        i === 0
-          ? "2026-11-20T24:00"
-          : i === 8
-            ? "2026-11-20T8:00"
-            : `2026-11-20T${String(i).padStart(2, "0")}:00`,
-      pm25: i === 8 || i === 9 ? 10 : 120,
-      pm10: 150,
-      usAqi: 150,
-    }));
+    const fallbackTs = Array.from({ length: 24 }, (_, i) => {
+      let t = `2026-11-20T${String(i).padStart(2, "0")}:00`;
+      if (i === 0) t = "2026-11-20T24:00";
+      else if (i === 8) t = "2026-11-20T8:00";
+      return { t, pm25: i === 8 || i === 9 ? 10 : 120, pm10: 150, usAqi: 150 };
+    });
     expect(findWindows(fallbackTs, 0).best).toMatchObject({ start: 8, end: 10, mean: 10 });
 
     // PM2.5 === 0 is valid and yields mean 0

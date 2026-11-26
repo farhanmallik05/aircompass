@@ -18,9 +18,17 @@ function resolveLocalExecutable(): string | undefined {
     ? path.join(process.env.LOCALAPPDATA, "ms-playwright")
     : undefined;
   if (msRoot && existsSync(msRoot)) {
-    const dirs = readdirSync(msRoot).filter((d) => d.startsWith("chromium_headless_shell-")).sort().reverse();
+    const dirs = readdirSync(msRoot)
+      .filter((d) => d.startsWith("chromium_headless_shell-"))
+      .sort()
+      .reverse();
     for (const d of dirs) {
-      const candidate = path.join(msRoot, d, "chrome-headless-shell-win64", "chrome-headless-shell.exe");
+      const candidate = path.join(
+        msRoot,
+        d,
+        "chrome-headless-shell-win64",
+        "chrome-headless-shell.exe",
+      );
       if (existsSync(candidate)) return candidate;
     }
   }

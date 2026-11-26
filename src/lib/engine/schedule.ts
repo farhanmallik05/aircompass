@@ -72,6 +72,65 @@ function commuteLocation(mode: Exclude<CommuteMode, "wfh">): {
   }
 }
 
+function commuteShareForHour(h: number, tripHours: number): number {
+  if (h === 8 || h === 17) return Math.min(1, tripHours);
+  if ((h === 9 || h === 18) && tripHours > 1) return tripHours - 1;
+  return 0;
+}
+
+function remainderSpecForHour(
+  h: number,
+  activeCommute: boolean,
+): { location: SlotLocation; v: number } {
+  if (h >= 22 || h < 6) return { location: "home", v: BREATHING_FACTORS.sleep };
+  if (activeCommute && h >= 9 && h < 17) {
+    return { location: "work_indoor", v: BREATHING_FACTORS.indoorRest };
+  }
+  return { location: "home", v: BREATHING_FACTORS.indoorRest };
+}
+
+function buildHourSubSlots(
+  h: number,
+  scenario: Scenario,
+  activeCommute: boolean,
+  tripHours: number,
+): SubSlot[] {
+  const slots: SubSlot[] = [];
+  let used = 0;
+  const addSlot = (f: number, location: SlotLocation, v: number, n95Eligible: boolean) => {
+    const clamped = Math.min(1 - used, Math.max(0, f));
+    if (clamped <= 1e-9) return;
+    slots.push({ f: clamped, location, v, n95Eligible });
+    used += clamped;
+  };
+
+  if (scenario.exerciseHour === h) {
+    addSlot(
+      0.5,
+      scenario.exerciseIndoors ? "indoor_exercise" : "outdoor_exercise",
+      scenario.exerciseIndoors
+        ? BREATHING_FACTORS.indoorExercise
+        : BREATHING_FACTORS.outdoorExercise,
+      !scenario.exerciseIndoors,
+    );
+  }
+
+  if (activeCommute && scenario.commuteMode !== "wfh") {
+    const share = commuteShareForHour(h, tripHours);
+    if (share > 0) {
+      const cSpec = commuteLocation(scenario.commuteMode);
+      addSlot(share, cSpec.location, cSpec.v, cSpec.n95Eligible);
+    }
+  }
+
+  const rem = 1 - used;
+  if (rem > 1e-9) {
+    const { location, v } = remainderSpecForHour(h, activeCommute);
+    addSlot(rem, location, v, false);
+  }
+  return slots;
+}
+
 /**
  * Builds 24 hourly sub-slot cells (sum of f = 1.0 per hour) for either a commute day or a home/WFH day.
  * Commute out begins at 08:00; return commute begins at 17:00; exercise is 0.5h during exerciseHour.
@@ -86,56 +145,9 @@ export function buildDaySchedule(
   const rawTripHours = activeCommute && speed > 0 ? commuteKm / speed : 0;
   const tripHours = Math.min(2, Math.max(0, rawTripHours));
 
-  const cells: SubSlot[][] = [];
-  for (let h = 0; h < 24; h++) {
-    const slots: SubSlot[] = [];
-    let used = 0;
-
-    const addSlot = (f: number, location: SlotLocation, v: number, n95Eligible: boolean) => {
-      const clamped = Math.min(1 - used, Math.max(0, f));
-      if (clamped <= 1e-9) return;
-      slots.push({ f: clamped, location, v, n95Eligible });
-      used += clamped;
-    };
-
-    // Exercise block: 30 minutes (0.5h) inside exerciseHour
-    if (scenario.exerciseHour === h) {
-      if (scenario.exerciseIndoors) {
-        addSlot(0.5, "indoor_exercise", BREATHING_FACTORS.indoorExercise, false);
-      } else {
-        addSlot(0.5, "outdoor_exercise", BREATHING_FACTORS.outdoorExercise, true);
-      }
-    }
-
-    // Outbound commute starting at 08:00 (spills into hour 9 if > 1h)
-    if (activeCommute && scenario.commuteMode !== "wfh") {
-      const cSpec = commuteLocation(scenario.commuteMode);
-      if (h === 8) {
-        addSlot(Math.min(1, tripHours), cSpec.location, cSpec.v, cSpec.n95Eligible);
-      } else if (h === 9 && tripHours > 1) {
-        addSlot(tripHours - 1, cSpec.location, cSpec.v, cSpec.n95Eligible);
-      } else if (h === 17) {
-        addSlot(Math.min(1, tripHours), cSpec.location, cSpec.v, cSpec.n95Eligible);
-      } else if (h === 18 && tripHours > 1) {
-        addSlot(tripHours - 1, cSpec.location, cSpec.v, cSpec.n95Eligible);
-      }
-    }
-
-    // Remainder of the hour: sleep (22..05), work/school indoors (09..16 on commute days), or home
-    const rem = 1 - used;
-    if (rem > 1e-9) {
-      if (h >= 22 || h < 6) {
-        addSlot(rem, "home", BREATHING_FACTORS.sleep, false);
-      } else if (activeCommute && h >= 9 && h < 17) {
-        addSlot(rem, "work_indoor", BREATHING_FACTORS.indoorRest, false);
-      } else {
-        addSlot(rem, "home", BREATHING_FACTORS.indoorRest, false);
-      }
-    }
-
-    cells.push(slots);
-  }
-  return cells;
+  return Array.from({ length: 24 }, (_, h) =>
+    buildHourSubSlots(h, scenario, activeCommute, tripHours),
+  );
 }
 
 /** True if clock hour h is a home-occupied hour (used when purifier runs "all hours at home"). */

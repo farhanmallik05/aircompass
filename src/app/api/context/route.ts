@@ -6,68 +6,66 @@ import { jsonError } from "@/lib/security/headers";
 import { clientIpFromHeaders, takeIpToken } from "@/lib/security/rateLimit";
 import type { Profile } from "@/lib/types";
 
+function parseContextQuery(searchParams: URLSearchParams): Record<string, unknown> {
+  const raw: Record<string, unknown> = {};
+  const textKeys = ["q", "name", "country", "mode"] as const;
+  for (const key of textKeys) {
+    const val = searchParams.get(key);
+    if (val !== null) raw[key] = val;
+  }
+  const numericKeys = ["lat", "lon", "observedPm25"] as const;
+  for (const key of numericKeys) {
+    const val = searchParams.get(key);
+    if (val !== null) raw[key] = Number(val);
+  }
+  return raw;
+}
+
+function resolvePlace(input: {
+  lat?: number;
+  lon?: number;
+  name?: string;
+  country?: string;
+}): Profile["place"] {
+  if (input.lat === undefined || input.lon === undefined) {
+    return SAMPLE_FAMILY_PROFILE.place;
+  }
+  return {
+    name: input.name ?? "Selected location",
+    lat: input.lat,
+    lon: input.lon,
+    country: input.country ?? "IN",
+  };
+}
+
+/** Serves geocoded places, demo severe-day air data, or calibrated live Open-Meteo data. */
 export async function GET(request: Request): Promise<Response> {
   const ip = clientIpFromHeaders(request.headers);
   if (!takeIpToken("context", ip)) {
     return jsonError(429, "Rate limit exceeded; please retry shortly.");
   }
 
-  const { searchParams } = new URL(request.url);
-  const raw: Record<string, unknown> = {};
-  const q = searchParams.get("q");
-  const latStr = searchParams.get("lat");
-  const lonStr = searchParams.get("lon");
-  const name = searchParams.get("name");
-  const country = searchParams.get("country");
-  const mode = searchParams.get("mode");
-  const observedStr = searchParams.get("observedPm25");
-
-  if (q !== null) raw.q = q;
-  if (latStr !== null) raw.lat = Number(latStr);
-  if (lonStr !== null) raw.lon = Number(lonStr);
-  if (name !== null) raw.name = name;
-  if (country !== null) raw.country = country;
-  if (mode !== null) raw.mode = mode;
-  if (observedStr !== null) raw.observedPm25 = Number(observedStr);
-
-  const parsed = ContextQuerySchema.safeParse(raw);
+  const parsed = ContextQuerySchema.safeParse(parseContextQuery(new URL(request.url).searchParams));
   if (!parsed.success) {
     return jsonError(400, "Invalid context query parameters.");
   }
 
   const input = parsed.data;
-
   try {
-    // Place search mode
     if (input.q && input.lat === undefined && input.lon === undefined) {
       const places = await searchPlaces(input.q);
       return Response.json({ places }, { headers: { "Cache-Control": "no-store" } });
     }
 
-    const place: Profile["place"] =
-      input.lat !== undefined && input.lon !== undefined
-        ? {
-            name: input.name ?? "Selected location",
-            lat: input.lat,
-            lon: input.lon,
-            country: input.country ?? "IN",
-          }
-        : SAMPLE_FAMILY_PROFILE.place;
-
-    if (input.mode === "demo") {
-      let ctx = getDemoContext(place);
-      if (input.observedPm25 !== undefined) ctx = applyCalibration(ctx, input.observedPm25);
-      return Response.json({ context: ctx }, { headers: { "Cache-Control": "no-store" } });
-    }
-
-    let ctx = await fetchOpenMeteoContext(place);
-    if (input.observedPm25 !== undefined) ctx = applyCalibration(ctx, input.observedPm25);
+    const place = resolvePlace(input);
+    const rawCtx =
+      input.mode === "demo" ? getDemoContext(place) : await fetchOpenMeteoContext(place);
+    const ctx =
+      input.observedPm25 !== undefined ? applyCalibration(rawCtx, input.observedPm25) : rawCtx;
     return Response.json({ context: ctx }, { headers: { "Cache-Control": "no-store" } });
   } catch {
-    // Graceful degradation to labelled demo fixture on upstream outage
-    const fallback = getDemoContext();
     return Response.json(
-      { context: fallback, upstreamFallback: true },
+      { context: getDemoContext(), upstreamFallback: true },
       { headers: { "Cache-Control": "no-store" } },
     );
   }

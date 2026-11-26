@@ -15,10 +15,11 @@ import { buildPlanFacts, generatePlanWithFallback } from "../src/lib/llm/planner
 import { buildPlannerUserPrompt, getPlannerSystemPrompt } from "../src/lib/llm/prompt";
 import { buildTokens } from "../src/lib/llm/tokens";
 import { PlanOutSchema } from "../src/lib/schemas";
+import type { AirContext } from "../src/lib/types";
 
 function percentile(sorted: number[], p: number): number {
   const idx = Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length));
-  return Math.round(sorted[idx] * 100) / 100;
+  return Math.round((sorted[idx] ?? 0) * 100) / 100;
 }
 
 function walkSizes(dir: string): { totalRaw: number; totalGzip: number; jsGzip: number } {
@@ -27,33 +28,66 @@ function walkSizes(dir: string): { totalRaw: number; totalGzip: number; jsGzip: 
   let totalGzip = 0;
   let jsGzip = 0;
   const stack = [dir];
-  while (stack.length > 0) {
-    const cur = stack.pop()!;
+  let cur = stack.pop();
+  while (cur) {
     for (const entry of readdirSync(cur, { withFileTypes: true })) {
       const full = path.join(cur, entry.name);
       if (entry.isDirectory()) {
         stack.push(full);
       } else {
-        const buf = readFileSync(full);
-        const gz = gzipSync(buf).length;
+        const gz = gzipSync(readFileSync(full)).length;
         totalRaw += statSync(full).size;
         totalGzip += gz;
         if (entry.name.endsWith(".js")) jsGzip += gz;
       }
     }
+    cur = stack.pop();
   }
   return { totalRaw, totalGzip, jsGzip };
 }
 
+function formatLiveError(err: unknown): string {
+  let reason = err instanceof Error ? err.message : "unknown";
+  try {
+    const parsed = JSON.parse(reason) as {
+      error?: { code?: number; status?: string; message?: string };
+    };
+    if (parsed.error) {
+      const shortMsg = parsed.error.message?.split("\n")[0] ?? parsed.error.status ?? "API error";
+      reason = `HTTP ${parsed.error.code ?? "?"} ${parsed.error.status ?? ""}: ${shortMsg}`.trim();
+    }
+  } catch {
+    // Non-JSON error string; keep truncated line
+  }
+  return `Skipped due to transient API error (${reason.slice(0, 180)})`;
+}
+
+async function measureLiveSummary(ctx: AirContext): Promise<string> {
+  const liveClient = createGeminiClientFromEnv();
+  if (!liveClient) return "Not measured (GEMINI_API_KEY not set)";
+  try {
+    const { facts } = buildPlanFacts(SAMPLE_FAMILY_PROFILE, ctx);
+    const tokens = buildTokens(facts);
+    const t0 = performance.now();
+    const res = await liveClient.generatePlanJson({
+      systemPrompt: getPlannerSystemPrompt(),
+      userPrompt: buildPlannerUserPrompt(SAMPLE_FAMILY_PROFILE, facts, tokens),
+      schema: z.toJSONSchema(PlanOutSchema),
+    });
+    const elapsed = Math.round(performance.now() - t0);
+    return `${elapsed} ms (${res.model}, inputTokens=${res.inputTokens ?? "n/a"}, outputTokens=${res.outputTokens ?? "n/a"})`;
+  } catch (err) {
+    return formatLiveError(err);
+  }
+}
+
 async function main() {
   const ctx = getDemoContext();
-  const engineTimes: number[] = [];
-  for (let i = 0; i < 200; i++) {
+  const engineTimes = Array.from({ length: 200 }, () => {
     const t0 = performance.now();
     buildPlanFacts(SAMPLE_FAMILY_PROFILE, ctx);
-    engineTimes.push(performance.now() - t0);
-  }
-  engineTimes.sort((a, b) => a - b);
+    return performance.now() - t0;
+  }).sort((a, b) => a - b);
 
   const mockTimes: number[] = [];
   for (let i = 0; i < 20; i++) {
@@ -63,35 +97,7 @@ async function main() {
   }
   mockTimes.sort((a, b) => a - b);
 
-  let liveSummary = "Not measured (GEMINI_API_KEY not set)";
-  const liveClient = createGeminiClientFromEnv();
-  if (liveClient) {
-    try {
-      const { facts } = buildPlanFacts(SAMPLE_FAMILY_PROFILE, ctx);
-      const tokens = buildTokens(facts);
-      const t0 = performance.now();
-      const res = await liveClient.generatePlanJson({
-        systemPrompt: getPlannerSystemPrompt(),
-        userPrompt: buildPlannerUserPrompt(SAMPLE_FAMILY_PROFILE, facts, tokens),
-        schema: z.toJSONSchema(PlanOutSchema),
-      });
-      const elapsed = Math.round(performance.now() - t0);
-      liveSummary = `${elapsed} ms (${res.model}, inputTokens=${res.inputTokens ?? "n/a"}, outputTokens=${res.outputTokens ?? "n/a"})`;
-    } catch (err) {
-      let reason = err instanceof Error ? err.message : "unknown";
-      try {
-        const parsed = JSON.parse(reason) as { error?: { code?: number; status?: string; message?: string } };
-        if (parsed.error) {
-          const shortMsg = parsed.error.message?.split("\n")[0] ?? parsed.error.status ?? "API error";
-          reason = `HTTP ${parsed.error.code ?? "?"} ${parsed.error.status ?? ""}: ${shortMsg}`.trim();
-        }
-      } catch {
-        // Not JSON; keep truncated single-line message
-      }
-      liveSummary = `Skipped due to transient API error (${reason.slice(0, 180)})`;
-    }
-  }
-
+  const liveSummary = await measureLiveSummary(ctx);
   const staticStats = walkSizes(path.resolve(process.cwd(), ".next", "static"));
   const dateStr = new Date().toISOString();
 

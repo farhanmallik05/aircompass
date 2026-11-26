@@ -68,6 +68,107 @@ export function thinkingConfigForModel(model: string): ThinkingConfig | undefine
   return undefined;
 }
 
+function buildChatContents(req: ChatToolRoundRequest): Content[] {
+  return [
+    { role: "user", parts: [{ text: req.userContextPrompt }] },
+    ...req.history.map((turn) => ({
+      role: turn.role === "assistant" ? ("model" as const) : ("user" as const),
+      parts: [{ text: turn.text }],
+    })),
+    { role: "user", parts: [{ text: req.message }] },
+  ];
+}
+
+async function runToolCallBatch(
+  calls: NonNullable<
+    Awaited<ReturnType<GoogleGenAI["models"]["generateContent"]>>["functionCalls"]
+  >,
+  round: number,
+  req: ChatToolRoundRequest,
+  toolNumbers: number[],
+): Promise<Part[]> {
+  const responseParts: Part[] = [];
+  for (const fc of calls) {
+    const name = fc.name ?? "simulate_scenario";
+    const result = await req.executeTool(name, fc.args ?? {});
+    extractNumbersFromRecord(result, toolNumbers);
+    req.onToolCall?.(name, fc.args ?? {}, result);
+    responseParts.push(createPartFromFunctionResponse(fc.id ?? `${name}-${round}`, name, result));
+  }
+  return responseParts;
+}
+
+async function streamFinalTurn(
+  ai: GoogleGenAI,
+  model: string,
+  contents: Content[],
+  thinkingConfig: ThinkingConfig | undefined,
+  req: ChatToolRoundRequest,
+): Promise<string> {
+  const stream = await ai.models.generateContentStream({
+    model,
+    contents,
+    config: {
+      systemInstruction: req.systemPrompt,
+      temperature: 0.2,
+      maxOutputTokens: 900,
+      ...(thinkingConfig ? { thinkingConfig } : {}),
+      abortSignal: AbortSignal.timeout(req.timeoutMs ?? CHAT_TIMEOUT_MS),
+    },
+  });
+
+  let fullText = "";
+  for await (const chunk of stream) {
+    const piece = chunk.text ?? "";
+    if (piece) {
+      fullText += piece;
+      req.onTextChunk?.(piece);
+    }
+  }
+  return fullText;
+}
+
+async function runSingleModelChat(
+  ai: GoogleGenAI,
+  model: string,
+  req: ChatToolRoundRequest,
+): Promise<ChatToolRoundResponse> {
+  const contents = buildChatContents(req);
+  const toolNumbers: number[] = [];
+  let toolCallsExecuted = 0;
+  const thinkingConfig = thinkingConfigForModel(model);
+
+  for (let round = 0; round < 2; round++) {
+    const res = await ai.models.generateContent({
+      model,
+      contents,
+      config: {
+        systemInstruction: req.systemPrompt,
+        temperature: 0.2,
+        maxOutputTokens: 900,
+        tools: [{ functionDeclarations: [req.toolDeclaration] }],
+        ...(thinkingConfig ? { thinkingConfig } : {}),
+        abortSignal: AbortSignal.timeout(req.timeoutMs ?? CHAT_TIMEOUT_MS),
+      },
+    });
+
+    const calls = res.functionCalls ?? [];
+    if (calls.length === 0) {
+      const text = res.text ?? "";
+      if (text && req.onTextChunk) req.onTextChunk(text);
+      return { text, toolCallsExecuted, toolNumbers, model };
+    }
+
+    contents.push({ role: "model", parts: calls.map((fc) => ({ functionCall: fc })) });
+    const responseParts = await runToolCallBatch(calls, round, req, toolNumbers);
+    toolCallsExecuted += calls.length;
+    contents.push({ role: "user", parts: responseParts });
+  }
+
+  const fullText = await streamFinalTurn(ai, model, contents, thinkingConfig, req);
+  return { text: fullText, toolCallsExecuted, toolNumbers, model };
+}
+
 export class GeminiClient implements LlmClient {
   private readonly ai: GoogleGenAI;
 
@@ -113,82 +214,9 @@ export class GeminiClient implements LlmClient {
   async chatWithTools(req: ChatToolRoundRequest): Promise<ChatToolRoundResponse> {
     const models = getGeminiModels();
     let lastError: unknown;
-
     for (const model of models) {
       try {
-        const contents: Content[] = [
-          { role: "user", parts: [{ text: req.userContextPrompt }] },
-          ...req.history.map((turn) => ({
-            role: turn.role === "assistant" ? ("model" as const) : ("user" as const),
-            parts: [{ text: turn.text }],
-          })),
-          { role: "user", parts: [{ text: req.message }] },
-        ];
-
-        const toolNumbers: number[] = [];
-        let toolCallsExecuted = 0;
-
-        const thinkingConfig = thinkingConfigForModel(model);
-        for (let round = 0; round < 2; round++) {
-          const res = await this.ai.models.generateContent({
-            model,
-            contents,
-            config: {
-              systemInstruction: req.systemPrompt,
-              temperature: 0.2,
-              maxOutputTokens: 900,
-              tools: [{ functionDeclarations: [req.toolDeclaration] }],
-              ...(thinkingConfig ? { thinkingConfig } : {}),
-              abortSignal: AbortSignal.timeout(req.timeoutMs ?? CHAT_TIMEOUT_MS),
-            },
-          });
-
-          const calls = res.functionCalls ?? [];
-          if (calls.length === 0) {
-            const text = res.text ?? "";
-            if (text && req.onTextChunk) req.onTextChunk(text);
-            return { text, toolCallsExecuted, toolNumbers, model };
-          }
-
-          const modelParts: Part[] = calls.map((fc) => ({ functionCall: fc }));
-          contents.push({ role: "model", parts: modelParts });
-
-          const responseParts: Part[] = [];
-          for (const fc of calls) {
-            const name = fc.name ?? "simulate_scenario";
-            const result = await req.executeTool(name, fc.args ?? {});
-            toolCallsExecuted += 1;
-            extractNumbersFromRecord(result, toolNumbers);
-            req.onToolCall?.(name, fc.args ?? {}, result);
-            responseParts.push(
-              createPartFromFunctionResponse(fc.id ?? `${name}-${round}`, name, result),
-            );
-          }
-          contents.push({ role: "user", parts: responseParts });
-        }
-
-        // Final streaming turn after max 2 tool rounds
-        const stream = await this.ai.models.generateContentStream({
-          model,
-          contents,
-          config: {
-            systemInstruction: req.systemPrompt,
-            temperature: 0.2,
-            maxOutputTokens: 900,
-            ...(thinkingConfig ? { thinkingConfig } : {}),
-            abortSignal: AbortSignal.timeout(req.timeoutMs ?? CHAT_TIMEOUT_MS),
-          },
-        });
-
-        let fullText = "";
-        for await (const chunk of stream) {
-          const piece = chunk.text ?? "";
-          if (piece) {
-            fullText += piece;
-            req.onTextChunk?.(piece);
-          }
-        }
-        return { text: fullText, toolCallsExecuted, toolNumbers, model };
+        return await runSingleModelChat(this.ai, model, req);
       } catch (err) {
         lastError = err;
       }

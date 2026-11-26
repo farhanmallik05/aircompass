@@ -105,6 +105,47 @@ function extractJsonText(rawText: string): string {
   return trimmed;
 }
 
+function collectPlanViolations(
+  out: z.infer<typeof PlanOutSchema>,
+  candidates: readonly CandidateAction[],
+  candidateMap: ReadonlyMap<string, CandidateAction>,
+  tokens: Record<string, string>,
+  lang: Lang,
+): string[] {
+  const violations: string[] = [];
+  const seenIds = new Set<string>();
+
+  for (const card of out.cards) {
+    if (!candidateMap.has(card.actionId))
+      violations.push(`unknown candidate actionId:${card.actionId}`);
+    if (seenIds.has(card.actionId)) violations.push(`duplicate actionId:${card.actionId}`);
+    seenIds.add(card.actionId);
+  }
+
+  const availableSections = new Set(candidates.map((c) => c.section));
+  const pickedSections = new Set(
+    out.cards.map((c) => candidateMap.get(c.actionId)?.section).filter(Boolean),
+  );
+  for (const sec of availableSections) {
+    if (!pickedSections.has(sec)) violations.push(`missing section:${sec}`);
+  }
+
+  const allTextSegments = [
+    out.headline,
+    out.summary,
+    ...out.cards.flatMap((c) => [c.title, c.why, c.when, ...c.steps]),
+    ...out.memberNotes.map((m) => m.note),
+    ...out.tradeoffs,
+  ];
+  for (const seg of allTextSegments) {
+    violations.push(...findViolations(seg, tokens));
+  }
+  if (!languageOk(allTextSegments.join(" "), lang)) {
+    violations.push(`language mismatch:${lang}`);
+  }
+  return violations;
+}
+
 /** Validates raw LLM JSON against schema, candidate allow-list, uniqueness, guard rules, and language. */
 export function validateAndRenderPlanOut(
   rawText: string,
@@ -131,57 +172,16 @@ export function validateAndRenderPlanOut(
 
   const out = zRes.data;
   const candidateMap = new Map(candidates.map((c) => [c.id, c]));
-  const violations: string[] = [];
-  const seenIds = new Set<string>();
-
-  for (const card of out.cards) {
-    if (!candidateMap.has(card.actionId)) {
-      violations.push(`unknown candidate actionId:${card.actionId}`);
-    }
-    if (seenIds.has(card.actionId)) {
-      violations.push(`duplicate actionId:${card.actionId}`);
-    }
-    seenIds.add(card.actionId);
-  }
-
-  const availableSections = new Set(candidates.map((c) => c.section));
-  const pickedSections = new Set(
-    out.cards.map((c) => candidateMap.get(c.actionId)?.section).filter(Boolean),
-  );
-  for (const sec of availableSections) {
-    if (!pickedSections.has(sec)) {
-      violations.push(`missing section:${sec}`);
-    }
-  }
-
-  const allTextSegments = [
-    out.headline,
-    out.summary,
-    ...out.cards.flatMap((c) => [c.title, c.why, c.when, ...c.steps]),
-    ...out.memberNotes.map((m) => m.note),
-    ...out.tradeoffs,
-  ];
-
-  for (const seg of allTextSegments) {
-    const v = findViolations(seg, tokens);
-    violations.push(...v);
-  }
-
-  const joined = allTextSegments.join(" ");
-  if (!languageOk(joined, lang)) {
-    violations.push(`language mismatch:${lang}`);
-  }
-
+  const violations = collectPlanViolations(out, candidates, candidateMap, tokens, lang);
   if (violations.length > 0) {
     return { ok: false, violations: [...new Set(violations)] };
   }
 
-  const plan: Plan = {
-    headline: render(out.headline, tokens),
-    summary: render(out.summary, tokens),
-    cards: out.cards.map((c) => {
-      const cand = candidateMap.get(c.actionId)!;
-      return {
+  const cards = out.cards.flatMap((c) => {
+    const cand = candidateMap.get(c.actionId);
+    if (!cand) return [];
+    return [
+      {
         actionId: c.actionId,
         section: cand.section,
         title: render(c.title, tokens),
@@ -192,16 +192,20 @@ export function validateAndRenderPlanOut(
         cost: cand.cost,
         effort: cand.effort,
         tradeoff: cand.tradeoff,
-      };
-    }),
-    memberNotes: out.memberNotes.map((m) => ({
-      group: m.group,
-      note: render(m.note, tokens),
-    })),
-    tradeoffs: out.tradeoffs.map((t) => render(t, tokens)),
-  };
+      },
+    ];
+  });
 
-  return { ok: true, plan };
+  return {
+    ok: true,
+    plan: {
+      headline: render(out.headline, tokens),
+      summary: render(out.summary, tokens),
+      cards,
+      memberNotes: out.memberNotes.map((m) => ({ group: m.group, note: render(m.note, tokens) })),
+      tradeoffs: out.tradeoffs.map((t) => render(t, tokens)),
+    },
+  };
 }
 
 export async function generatePlanWithFallback(

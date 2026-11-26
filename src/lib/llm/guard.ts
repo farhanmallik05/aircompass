@@ -48,13 +48,25 @@ const HI_WITH_UNIT = new RegExp(
 );
 const HI_MEDICAL = hiAny(MEDICAL_HI);
 
+function pushEnglishViolations(low: string, out: string[]): void {
+  if (EN_BIG.test(low) || EN_FRACTION.test(low)) out.push("number word (en)");
+  if (EN_WITH_UNIT.test(low) || EN_AT_TIME.test(low)) out.push("spelled time or count (en)");
+  if (MEDICAL_EN.test(low)) out.push("medical claim (en)");
+}
+
+function pushHindiViolations(hi: string, out: string[]): void {
+  if (HI_BLOCKED.test(hi) || HI_WITH_UNIT.test(hi)) out.push("number word (hi)");
+  if (HI_MEDICAL.test(hi)) out.push("medical claim (hi)");
+}
+
 /** Returns a list of violation labels; empty means the text is acceptable. `tokens` is the set of valid token keys. */
 export function findViolations(raw: string, tokens: Tokens): string[] {
   const v: string[] = [];
   const text = norm(raw);
 
-  for (const m of text.matchAll(TOKEN))
+  for (const m of text.matchAll(TOKEN)) {
     if (!(m[1].toLowerCase() in tokens)) v.push(`unknown token: ${m[1]}`);
+  }
 
   const bare = text.replace(TOKEN, " ").replace(ALLOWED_TERMS, " ");
   if (/\{|\}|\$\{|<%/.test(bare)) v.push("malformed placeholder");
@@ -62,14 +74,8 @@ export function findViolations(raw: string, tokens: Tokens): string[] {
   if (UNIT_OR_SIGN.test(bare.toLowerCase())) v.push("unit or percent sign");
   if (MARKUP.test(bare)) v.push("markup or link");
 
-  const low = bare.toLowerCase();
-  if (EN_BIG.test(low) || EN_FRACTION.test(low)) v.push("number word (en)");
-  if (EN_WITH_UNIT.test(low) || EN_AT_TIME.test(low)) v.push("spelled time or count (en)");
-  if (MEDICAL_EN.test(low)) v.push("medical claim (en)");
-
-  const hi = hiNorm(bare);
-  if (HI_BLOCKED.test(hi) || HI_WITH_UNIT.test(hi)) v.push("number word (hi)");
-  if (HI_MEDICAL.test(hi)) v.push("medical claim (hi)");
+  pushEnglishViolations(bare.toLowerCase(), v);
+  pushHindiViolations(hiNorm(bare), v);
 
   if (raw.includes(PROMPT_CANARY) || text.includes(PROMPT_CANARY)) v.push("prompt leak");
   return v;

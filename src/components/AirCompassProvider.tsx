@@ -50,53 +50,59 @@ export function useAirCompass(): AirCompassState {
   return ctx;
 }
 
-export function AirCompassProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("en");
-  const [mode, setModeState] = useState<DataMode>("demo");
-  const [profile, setProfile] = useState<Profile | null>(null);
+async function fetchRemoteContext(
+  p: Profile,
+  nextMode: DataMode,
+  cal: number | null,
+): Promise<AirContext> {
+  if (nextMode === "demo") {
+    const demo = getDemoContext(p.place);
+    return cal !== null ? applyCalibration(demo, cal) : demo;
+  }
+  try {
+    const params = new URLSearchParams({
+      lat: String(p.place.lat),
+      lon: String(p.place.lon),
+      name: p.place.name,
+      country: p.place.country,
+      mode: "live",
+    });
+    if (cal !== null) params.set("observedPm25", String(cal));
+    const res = await fetch(`/api/context?${params.toString()}`);
+    if (!res.ok) throw new Error("Failed context fetch");
+    const data = (await res.json()) as { context: AirContext };
+    return data.context;
+  } catch {
+    return getDemoContext(p.place);
+  }
+}
+
+async function fetchPlanOrError(
+  p: Profile,
+  ctx: AirContext,
+  fp: string,
+): Promise<{ data: PlanResponse | null; error: string | null }> {
+  try {
+    const res = await fetch("/api/plan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profile: p, context: ctx }),
+    });
+    if (!res.ok) return { data: null, error: getDict(p.lang).plan.planFetchError };
+    const data = (await res.json()) as PlanResponse;
+    saveCachedPlan(fp, data);
+    return { data, error: null };
+  } catch {
+    return { data: null, error: getDict(p.lang).plan.planFetchError };
+  }
+}
+
+function useContextPlanSync() {
   const [context, setContext] = useState<AirContext>(() => getDemoContext());
   const [planResponse, setPlanResponse] = useState<PlanResponse | null>(null);
-  const [calibrationPm25, setCalibrationState] = useState<number | null>(null);
   const [loadingContext, setLoadingContext] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState(false);
   const [planError, setPlanError] = useState<string | null>(null);
-  const [deletedMsg, setDeletedMsg] = useState<string | null>(null);
-
-  const activeProfile: Profile = profile ?? { ...SAMPLE_FAMILY_PROFILE, lang };
-
-  const fetchContextFor = useCallback(
-    async (p: Profile, nextMode: DataMode, cal: number | null): Promise<AirContext> => {
-      setLoadingContext(true);
-      try {
-        if (nextMode === "demo") {
-          let demo = getDemoContext(p.place);
-          if (cal !== null) demo = applyCalibration(demo, cal);
-          setContext(demo);
-          return demo;
-        }
-        const params = new URLSearchParams({
-          lat: String(p.place.lat),
-          lon: String(p.place.lon),
-          name: p.place.name,
-          country: p.place.country,
-          mode: "live",
-        });
-        if (cal !== null) params.set("observedPm25", String(cal));
-        const res = await fetch(`/api/context?${params.toString()}`);
-        if (!res.ok) throw new Error("Failed context fetch");
-        const data = (await res.json()) as { context: AirContext };
-        setContext(data.context);
-        return data.context;
-      } catch {
-        const fallback = getDemoContext(p.place);
-        setContext(fallback);
-        return fallback;
-      } finally {
-        setLoadingContext(false);
-      }
-    },
-    [],
-  );
 
   const refreshPlan = useCallback(async (p: Profile, ctx: AirContext) => {
     const fp = planFingerprint(p, ctx);
@@ -108,26 +114,41 @@ export function AirCompassProvider({ children }: { children: React.ReactNode }) 
     }
     setLoadingPlan(true);
     setPlanError(null);
-    try {
-      const res = await fetch("/api/plan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profile: p, context: ctx }),
-      });
-      if (!res.ok) {
-        setPlanError(getDict(p.lang).plan.planFetchError);
-        return;
-      }
-      const data = (await res.json()) as PlanResponse;
-      saveCachedPlan(fp, data);
-      setPlanResponse(data);
-    } catch {
-      setPlanError(getDict(p.lang).plan.planFetchError);
-    } finally {
-      setLoadingPlan(false);
-    }
+    const outcome = await fetchPlanOrError(p, ctx, fp);
+    if (outcome.data) setPlanResponse(outcome.data);
+    if (outcome.error) setPlanError(outcome.error);
+    setLoadingPlan(false);
   }, []);
 
+  const syncContextAndPlan = useCallback(
+    async (p: Profile, nextMode: DataMode, cal: number | null) => {
+      setLoadingContext(true);
+      const ctx = await fetchRemoteContext(p, nextMode, cal);
+      setContext(ctx);
+      setLoadingContext(false);
+      await refreshPlan(p, ctx);
+    },
+    [refreshPlan],
+  );
+
+  return {
+    context,
+    planResponse,
+    loadingContext,
+    loadingPlan,
+    planError,
+    refreshPlan,
+    syncContextAndPlan,
+  };
+}
+
+function useInitialStoredSession(
+  syncContextAndPlan: (p: Profile, nextMode: DataMode, cal: number | null) => Promise<void>,
+  setLangState: (l: Lang) => void,
+  setModeState: (m: DataMode) => void,
+  setProfile: (p: Profile | null) => void,
+  setCalibrationState: (c: number | null) => void,
+) {
   useEffect(() => {
     let active = true;
     void (async () => {
@@ -140,91 +161,106 @@ export function AirCompassProvider({ children }: { children: React.ReactNode }) 
       setLangState(storedLang);
       setModeState(storedMode);
       setCalibrationState(storedCal);
-      const initialProfile = storedProfile
+      const initial = storedProfile
         ? { ...storedProfile, lang: storedLang }
         : { ...SAMPLE_FAMILY_PROFILE, lang: storedLang };
-      if (storedProfile) setProfile(initialProfile);
-
-      const ctx = await fetchContextFor(initialProfile, storedMode, storedCal);
-      if (!active) return;
-      await refreshPlan(initialProfile, ctx);
+      if (storedProfile) setProfile(initial);
+      await syncContextAndPlan(initial, storedMode, storedCal);
     })();
     return () => {
       active = false;
     };
-  }, [fetchContextFor, refreshPlan]);
+  }, [setCalibrationState, setLangState, setModeState, setProfile, syncContextAndPlan]);
+}
 
-  const setLang = useCallback(
-    (nextLang: Lang) => {
-      setLangState(nextLang);
+function useProfileActions(
+  lang: Lang,
+  mode: DataMode,
+  profile: Profile | null,
+  calibrationPm25: number | null,
+  syncContextAndPlan: (p: Profile, nextMode: DataMode, cal: number | null) => Promise<void>,
+  refreshPlan: (p: Profile, ctx: AirContext) => Promise<void>,
+  context: AirContext,
+  setters: {
+    setLangState: (l: Lang) => void;
+    setModeState: (m: DataMode) => void;
+    setProfile: (p: Profile | null) => void;
+    setCalibrationState: (c: number | null) => void;
+    setDeletedMsg: (m: string | null) => void;
+  },
+) {
+  const activeProfile: Profile = profile ?? { ...SAMPLE_FAMILY_PROFILE, lang };
+  return {
+    activeProfile,
+    setLang: (nextLang: Lang) => {
+      setters.setLangState(nextLang);
       saveStoredLang(nextLang);
-      const nextProfile: Profile = { ...(profile ?? SAMPLE_FAMILY_PROFILE), lang: nextLang };
-      if (profile) setProfile(nextProfile);
-      void refreshPlan(nextProfile, context);
+      const nextP: Profile = { ...(profile ?? SAMPLE_FAMILY_PROFILE), lang: nextLang };
+      if (profile) setters.setProfile(nextP);
+      void refreshPlan(nextP, context);
     },
-    [context, profile, refreshPlan],
-  );
-
-  const setMode = useCallback(
-    (nextMode: DataMode) => {
-      setModeState(nextMode);
+    setMode: (nextMode: DataMode) => {
+      setters.setModeState(nextMode);
       saveDataMode(nextMode);
-      const p: Profile = { ...(profile ?? SAMPLE_FAMILY_PROFILE), lang };
-      void (async () => {
-        const ctx = await fetchContextFor(p, nextMode, calibrationPm25);
-        await refreshPlan(p, ctx);
-      })();
+      void syncContextAndPlan(activeProfile, nextMode, calibrationPm25);
     },
-    [calibrationPm25, fetchContextFor, lang, profile, refreshPlan],
-  );
-
-  const setCalibrationPm25 = useCallback(
-    (val: number | null) => {
-      setCalibrationState(val);
+    setCalibrationPm25: (val: number | null) => {
+      setters.setCalibrationState(val);
       saveCalibration(val);
-      const p: Profile = { ...(profile ?? SAMPLE_FAMILY_PROFILE), lang };
-      void (async () => {
-        const ctx = await fetchContextFor(p, mode, val);
-        await refreshPlan(p, ctx);
-      })();
+      void syncContextAndPlan(activeProfile, mode, val);
     },
-    [fetchContextFor, lang, mode, profile, refreshPlan],
-  );
-
-  const trySampleFamily = useCallback(async () => {
-    const sample: Profile = { ...SAMPLE_FAMILY_PROFILE, lang };
-    setProfile(sample);
-    saveStoredProfile(sample);
-    setDeletedMsg(null);
-    const ctx = await fetchContextFor(sample, mode, calibrationPm25);
-    await refreshPlan(sample, ctx);
-  }, [calibrationPm25, fetchContextFor, lang, mode, refreshPlan]);
-
-  const saveProfileAndPlan = useCallback(
-    async (nextProfile: Profile) => {
-      const normalized: Profile = { ...nextProfile, lang };
-      setProfile(normalized);
+    trySampleFamily: async () => {
+      const sample: Profile = { ...SAMPLE_FAMILY_PROFILE, lang };
+      setters.setProfile(sample);
+      saveStoredProfile(sample);
+      setters.setDeletedMsg(null);
+      await syncContextAndPlan(sample, mode, calibrationPm25);
+    },
+    saveProfileAndPlan: async (nextP: Profile) => {
+      const normalized: Profile = { ...nextP, lang };
+      setters.setProfile(normalized);
       saveStoredProfile(normalized);
-      setDeletedMsg(null);
-      const ctx = await fetchContextFor(normalized, mode, calibrationPm25);
-      await refreshPlan(normalized, ctx);
+      setters.setDeletedMsg(null);
+      await syncContextAndPlan(normalized, mode, calibrationPm25);
     },
-    [calibrationPm25, fetchContextFor, lang, mode, refreshPlan],
+    handleDeleteData: () => {
+      clearAllAirCompassData();
+      setters.setProfile(null);
+      setters.setCalibrationState(null);
+      setters.setModeState("demo");
+      setters.setDeletedMsg(getDict(lang).app.deletedToast);
+      void syncContextAndPlan({ ...SAMPLE_FAMILY_PROFILE, lang }, "demo", null);
+    },
+  };
+}
+
+/** Provides household profile, air context, bilingual dictionary, and cached plan state. */
+export function AirCompassProvider({ children }: { children: React.ReactNode }) {
+  const [lang, setLangState] = useState<Lang>("en");
+  const [mode, setModeState] = useState<DataMode>("demo");
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [calibrationPm25, setCalibrationState] = useState<number | null>(null);
+  const [deletedMsg, setDeletedMsg] = useState<string | null>(null);
+  const sync = useContextPlanSync();
+
+  useInitialStoredSession(
+    sync.syncContextAndPlan,
+    setLangState,
+    setModeState,
+    setProfile,
+    setCalibrationState,
   );
 
-  const handleDeleteData = useCallback(() => {
-    clearAllAirCompassData();
-    setProfile(null);
-    setCalibrationState(null);
-    setModeState("demo");
-    const dict = getDict(lang);
-    setDeletedMsg(dict.app.deletedToast);
-    const sample: Profile = { ...SAMPLE_FAMILY_PROFILE, lang };
-    void (async () => {
-      const ctx = await fetchContextFor(sample, "demo", null);
-      await refreshPlan(sample, ctx);
-    })();
-  }, [fetchContextFor, lang, refreshPlan]);
+  const actions = useProfileActions(
+    lang,
+    mode,
+    profile,
+    calibrationPm25,
+    sync.syncContextAndPlan,
+    sync.refreshPlan,
+    sync.context,
+    { setLangState, setModeState, setProfile, setCalibrationState, setDeletedMsg },
+  );
 
   return (
     <AirCompassCtx.Provider
@@ -232,28 +268,18 @@ export function AirCompassProvider({ children }: { children: React.ReactNode }) 
         lang,
         mode,
         profile,
-        activeProfile,
-        context,
-        planResponse,
+        ...sync,
+        ...actions,
         calibrationPm25,
-        loadingContext,
-        loadingPlan,
-        planError,
         hasCustomHousehold: profile !== null,
-        setLang,
-        setMode,
-        setCalibrationPm25,
-        trySampleFamily,
-        saveProfileAndPlan,
-        refreshPlan,
       }}
     >
       <AppShell
         lang={lang}
-        onLangChange={setLang}
+        onLangChange={actions.setLang}
         mode={mode}
-        onModeChange={setMode}
-        onDeleteData={handleDeleteData}
+        onModeChange={actions.setMode}
+        onDeleteData={actions.handleDeleteData}
         deletedMsg={deletedMsg}
       >
         {children}

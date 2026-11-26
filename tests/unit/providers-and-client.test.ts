@@ -23,6 +23,7 @@ import {
 } from "@/lib/client/storage";
 import { buildPlanFacts } from "@/lib/llm/planner";
 import { buildFallbackPlan } from "@/lib/llm/fallback";
+import { consumeChatSseStream } from "@/lib/client/sseChat";
 
 function makeMemoryStorage() {
   const store = new Map<string, string>();
@@ -238,5 +239,35 @@ describe("client: i18n, myths catalog, and validated localStorage wrapper", () =
     saveDataMode("demo");
     saveCalibration(100);
     clearAllAirCompassData();
+  });
+
+  it("consumeChatSseStream parses tool, chunk, done events and skips malformed blocks safely", async () => {
+    const enc = new TextEncoder();
+    const ssePayload =
+      "event: tool\ndata: {}\n\n" +
+      "invalid-line-without-data\n\n" +
+      "event: bad\ndata: {not-json\n\n" +
+      'event: chunk\ndata: {"text":"Hello "}\n\n' +
+      'event: done\ndata: {"text":"Hello world","toolCallsExecuted":1}\n\n';
+    const stream = new ReadableStream<Uint8Array>({
+      start(c) {
+        c.enqueue(enc.encode(ssePayload.slice(0, 25)));
+        c.enqueue(enc.encode(ssePayload.slice(25)));
+        c.close();
+      },
+    });
+    const tools = vi.fn();
+    const chunks: string[] = [];
+    let final: { text: string; used: boolean } | null = null;
+    await consumeChatSseStream(stream, {
+      onTool: tools,
+      onChunk: (d) => chunks.push(d),
+      onDone: (text, used) => {
+        final = { text, used };
+      },
+    });
+    expect(tools).toHaveBeenCalledTimes(1);
+    expect(chunks).toEqual(["Hello "]);
+    expect(final).toEqual({ text: "Hello world", used: true });
   });
 });

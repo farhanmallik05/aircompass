@@ -2,9 +2,7 @@
 import { execSync } from "node:child_process";
 import { statSync } from "node:fs";
 
-const files = execSync("git ls-files", { encoding: "utf8" })
-  .split(/\r?\n/)
-  .filter(Boolean);
+const files = execSync("git ls-files", { encoding: "utf8" }).split(/\r?\n/).filter(Boolean);
 
 let total = 0;
 for (const f of files) {

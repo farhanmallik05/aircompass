@@ -98,6 +98,67 @@ export async function fetchJsonWithRetry(
   throw lastErr instanceof Error ? lastErr : new Error("Upstream fetch failed");
 }
 
+function finiteOrUndefined(val: number | null | undefined): number | undefined {
+  return val !== null && val !== undefined && Number.isFinite(val) ? val : undefined;
+}
+
+function buildWeatherLookup(
+  weather: ReturnType<typeof OpenMeteoWeatherResponseSchema.parse>,
+): Map<string, { tempC?: number; rh?: number; windKmh?: number }> {
+  const byTime = new Map<string, { tempC?: number; rh?: number; windKmh?: number }>();
+  const wn = weather.hourly.time.length;
+  if (
+    weather.hourly.temperature_2m.length !== wn ||
+    weather.hourly.relative_humidity_2m.length !== wn ||
+    weather.hourly.wind_speed_10m.length !== wn
+  ) {
+    return byTime;
+  }
+
+  for (let i = 0; i < wn; i++) {
+    const t = weather.hourly.time[i];
+    if (!t) continue;
+    const tempC = finiteOrUndefined(weather.hourly.temperature_2m[i]);
+    const rh = finiteOrUndefined(weather.hourly.relative_humidity_2m[i]);
+    const windKmh = finiteOrUndefined(weather.hourly.wind_speed_10m[i]);
+    byTime.set(t, {
+      ...(tempC !== undefined ? { tempC } : {}),
+      ...(rh !== undefined ? { rh } : {}),
+      ...(windKmh !== undefined ? { windKmh } : {}),
+    });
+  }
+  return byTime;
+}
+
+function nonNegativeFinite(val: number | null | undefined, fallback: number): number {
+  return val !== null && val !== undefined && Number.isFinite(val) && val >= 0 ? val : fallback;
+}
+
+function buildHourPoint(
+  air: ReturnType<typeof OpenMeteoAirResponseSchema.parse>,
+  i: number,
+  wx: { tempC?: number; rh?: number; windKmh?: number } | undefined,
+): HourPoint | null {
+  const t = air.hourly.time[i];
+  const pm25 = finiteOrUndefined(air.hourly.pm2_5[i]);
+  if (!t || pm25 === undefined || pm25 < 0) return null;
+
+  const safePm10 = nonNegativeFinite(air.hourly.pm10[i], pm25);
+  const aqiRaw = air.hourly.us_aqi[i];
+  const safeAqi =
+    aqiRaw !== null && aqiRaw !== undefined && Number.isFinite(aqiRaw) && aqiRaw >= 0
+      ? Math.min(500, Math.round(aqiRaw))
+      : aqiFromPm25(pm25);
+
+  return {
+    t,
+    pm25: Math.round(pm25 * 10) / 10,
+    pm10: Math.round(safePm10 * 10) / 10,
+    usAqi: safeAqi,
+    ...(wx ?? {}),
+  };
+}
+
 function buildHours(
   air: ReturnType<typeof OpenMeteoAirResponseSchema.parse>,
   weather: ReturnType<typeof OpenMeteoWeatherResponseSchema.parse>,
@@ -111,46 +172,12 @@ function buildHours(
     throw new Error("Mismatched hourly array lengths from upstream air-quality API");
   }
 
-  const weatherByTime = new Map<string, { tempC?: number; rh?: number; windKmh?: number }>();
-  const wn = weather.hourly.time.length;
-  if (
-    weather.hourly.temperature_2m.length === wn &&
-    weather.hourly.relative_humidity_2m.length === wn &&
-    weather.hourly.wind_speed_10m.length === wn
-  ) {
-    for (let i = 0; i < wn; i++) {
-      const t = weather.hourly.time[i];
-      const tempC = weather.hourly.temperature_2m[i];
-      const rh = weather.hourly.relative_humidity_2m[i];
-      const windKmh = weather.hourly.wind_speed_10m[i];
-      weatherByTime.set(t, {
-        ...(tempC !== null && Number.isFinite(tempC) ? { tempC } : {}),
-        ...(rh !== null && Number.isFinite(rh) ? { rh } : {}),
-        ...(windKmh !== null && Number.isFinite(windKmh) ? { windKmh } : {}),
-      });
-    }
-  }
-
+  const weatherByTime = buildWeatherLookup(weather);
   const hours: HourPoint[] = [];
   for (let i = 0; i < n; i++) {
-    const pm25 = air.hourly.pm2_5[i];
-    const pm10 = air.hourly.pm10[i];
-    const usAqiRaw = air.hourly.us_aqi[i];
-    if (pm25 === null || !Number.isFinite(pm25) || pm25 < 0) continue;
-    const safePm10 = pm10 !== null && Number.isFinite(pm10) && pm10 >= 0 ? pm10 : pm25;
-    const safeAqi =
-      usAqiRaw !== null && Number.isFinite(usAqiRaw) && usAqiRaw >= 0
-        ? Math.min(500, Math.round(usAqiRaw))
-        : aqiFromPm25(pm25);
     const t = air.hourly.time[i];
-    const wx = weatherByTime.get(t);
-    hours.push({
-      t,
-      pm25: Math.round(pm25 * 10) / 10,
-      pm10: Math.round(safePm10 * 10) / 10,
-      usAqi: safeAqi,
-      ...(wx ?? {}),
-    });
+    const point = buildHourPoint(air, i, t ? weatherByTime.get(t) : undefined);
+    if (point) hours.push(point);
   }
 
   if (hours.length === 0) {

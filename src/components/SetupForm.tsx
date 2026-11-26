@@ -7,6 +7,16 @@ import { HomeCommuteFields } from "./setup/HomeCommuteFields";
 import { HouseholdFields } from "./setup/HouseholdFields";
 import { PlaceSelector } from "./setup/PlaceSelector";
 
+function validateProfileDraft(draft: Profile): string[] {
+  const errs: string[] = [];
+  if (draft.home.roomAreaM2 < 4 || draft.home.roomAreaM2 > 500) errs.push("roomArea");
+  if (draft.commute.km < 0 || draft.commute.km > 200) errs.push("commuteKm");
+  if (draft.household.adults + draft.household.children + draft.household.seniors < 1) {
+    errs.push("members");
+  }
+  return errs;
+}
+
 /** Accessible household setup form backed purely by localStorage. */
 export function SetupForm({
   initial,
@@ -25,26 +35,16 @@ export function SetupForm({
   function toggleCondition(cond: "respiratory" | "cardiac" | "pregnant") {
     setDraft((prev) => {
       const has = prev.household.conditions.includes(cond);
-      return {
-        ...prev,
-        household: {
-          ...prev.household,
-          conditions: has
-            ? prev.household.conditions.filter((c) => c !== cond)
-            : [...prev.household.conditions, cond],
-        },
-      };
+      const nextConditions = has
+        ? prev.household.conditions.filter((c) => c !== cond)
+        : [...prev.household.conditions, cond];
+      return { ...prev, household: { ...prev.household, conditions: nextConditions } };
     });
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const errs: string[] = [];
-    if (draft.home.roomAreaM2 < 4 || draft.home.roomAreaM2 > 500) errs.push("roomArea");
-    if (draft.commute.km < 0 || draft.commute.km > 200) errs.push("commuteKm");
-    if (draft.household.adults + draft.household.children + draft.household.seniors < 1) {
-      errs.push("members");
-    }
+    const errs = validateProfileDraft(draft);
     setErrors(errs);
     if (errs.length > 0) {
       requestAnimationFrame(() => alertRef.current?.focus());

@@ -12,7 +12,7 @@
 *(≤ 1024 chars — verified by `node scripts/check-chars.mjs`)*
 
 ```text
-AirCompass turns winter-smog data into a household plan. (1) Hourly PM2.5/PM10 from Open-Meteo/CAMS with US AQI and India NAQI, plus a labelled recorded severe-winter day so every visitor sees the full flow. (2) A tested engine models indoor air (mass balance), breathing-weighted exposure, CO2e and best go-out window; every figure shows a range, "How we calculated", and honest trade-offs. (3) Gemini selects and words 26 actions; a guard blocks un-tokenised numbers with deterministic fallback. (4) What-if chat uses Gemini function calling on the engine. (5) Hindi/English, WCAG 2.2 AA tabs/forms, printable Community Brief. (6) Zod + localStorage schema validation, bounded rate limits, HSTS/CORP + nonce CSP. 158 tests, 96.74% stmts / 90.89% branches / 98.33% fn, 91.20% mutation, 12/12 evals, 10/10 E2E+Axe pass. npm run verify runs format+lint+types+oracle+tests+evals+build.
+AirCompass turns winter-smog data into a household plan. (1) Hourly PM2.5/PM10 from Open-Meteo/CAMS with US AQI and India NAQI, plus a labelled recorded severe-winter day so every visitor sees the full flow. (2) A tested engine models indoor air (mass balance), breathing-weighted exposure, CO2e and best go-out window; every figure shows a range, "How we calculated", and honest trade-offs. (3) Gemini selects and words 26 actions; a guard blocks un-tokenised numbers with deterministic fallback. (4) What-if chat uses Gemini function calling on the engine. (5) Hindi/English, WCAG 2.2 AA tabs/forms, printable Brief. (6) Zod validation, bounded rate limits, HSTS/CORP + nonce CSP. Strictly linted (complexity <= 12, fn <= 80 lines, 0 warnings); 159 tests, 99.14% stmts / 93.16% branches / 100% fn, 91.20% mutation, 12/12 evals, 10/10 E2E+Axe pass. npm run verify runs format+lint+types+oracle+tests+evals+build.
 ```
 
 ## Text B — "Mention the Gen AI services utilized in the submission, and where did you utilize it?"
@@ -26,7 +26,7 @@ Google Gemini API (@google/genai, gemini-3.6-flash / gemini-3.5-flash fallback),
 
 ## LinkedIn Post Draft
 
-> Built AirCompass for PromptWars Challenge 06: a Gemini-powered assistant that turns Delhi-NCR winter smog into a plan a family can follow. What I learned: on a severe day, filtration and masks beat timing tweaks, and some "green" swaps raise your exposure unless you mask. The engine shows that, Gemini explains it. Code decides the numbers, the LLM words them. Hindi + English, WCAG 2.2 AA, 158 tests (96.74% statement coverage), 91.20% mutation score, and evals verified. Live: https://aircompass-delta.vercel.app · Repo: https://github.com/farhanmallik05/aircompass · Built with Google Antigravity. #PromptWars #GoogleForDevelopers #Hack2Skill #Gemini #AirQuality
+> Built AirCompass for PromptWars Challenge 06: a Gemini-powered assistant that turns Delhi-NCR winter smog into a plan a family can follow. What I learned: on a severe day, filtration and masks beat timing tweaks, and some "green" swaps raise your exposure unless you mask. The engine shows that, Gemini explains it. Code decides the numbers, the LLM words them. Hindi + English, WCAG 2.2 AA, 159 tests (99.14% stmts / 100% fn), 91.20% mutation score, 0 lint warnings, and evals verified. Live: https://aircompass-delta.vercel.app · Repo: https://github.com/farhanmallik05/aircompass · Built with Google Antigravity. #PromptWars #GoogleForDevelopers #Hack2Skill #Gemini #AirQuality
 
 ---
 

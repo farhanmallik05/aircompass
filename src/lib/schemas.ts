@@ -1,7 +1,6 @@
 import { z } from "zod";
+import { sanitizeUserText } from "./security/sanitize";
 import { ACTION_IDS, COMMUTE_MODES, GROUPS } from "./types";
-
-const CONTROL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
 
 export const PlaceSchema = z.strictObject({
   name: z.string().trim().min(1).max(120),
@@ -44,7 +43,7 @@ export const ProfileSchema = z.strictObject({
   notes: z
     .string()
     .max(300)
-    .transform((s) => s.replace(CONTROL_CHARS, "").trim())
+    .transform((s) => sanitizeUserText(s, 300))
     .optional(),
 });
 
@@ -103,7 +102,7 @@ export const ChatRequestSchema = z.strictObject({
     .trim()
     .min(1)
     .max(500)
-    .transform((s) => s.replace(CONTROL_CHARS, "").trim()),
+    .transform((s) => sanitizeUserText(s, 500)),
 });
 
 export const SimulateScenarioArgsSchema = z.strictObject({

@@ -7,6 +7,53 @@ import type { Group, WindowSummary } from "@/lib/types";
 
 type GuidanceText = ReturnType<typeof guidanceForLevel>;
 
+function WindowsSection({ dict, windows }: { dict: Dictionary; windows: WindowSummary }) {
+  return (
+    <section
+      aria-labelledby="windows-heading"
+      className="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+    >
+      <h2 id="windows-heading" className="text-base font-bold text-slate-950 dark:text-white">
+        {dict.today.windowsHeading}
+      </h2>
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="rounded-xl border border-teal-700/40 bg-teal-50 p-3.5 dark:border-teal-400/40 dark:bg-teal-950/50">
+          <p className="text-xs font-semibold uppercase text-teal-900 dark:text-teal-200">
+            {dict.today.goOutWindow}
+          </p>
+          <p className="mt-1 text-xl font-bold tabular-nums text-teal-950 dark:text-white">
+            {windows.best.startLabel} - {windows.best.endLabel}
+          </p>
+          <p className="text-xs text-teal-900 dark:text-teal-200">
+            Mean {windows.best.mean.toFixed(1)} µg/m³
+          </p>
+        </div>
+        <div className="rounded-xl border border-rose-700/40 bg-rose-50 p-3.5 dark:border-rose-400/40 dark:bg-rose-950/50">
+          <p className="text-xs font-semibold uppercase text-rose-900 dark:text-rose-200">
+            {dict.today.avoidWindow}
+          </p>
+          <p className="mt-1 text-xl font-bold tabular-nums text-rose-950 dark:text-white">
+            {windows.avoid.startLabel} - {windows.avoid.endLabel}
+          </p>
+          <p className="text-xs text-rose-900 dark:text-rose-200">
+            Mean {windows.avoid.mean.toFixed(1)} µg/m³
+          </p>
+        </div>
+      </div>
+      {windows.noGoodWindow ? (
+        <p className="mt-3 text-sm font-semibold text-rose-900 dark:text-rose-200">
+          {dict.today.noGoodWindow}
+        </p>
+      ) : null}
+      {windows.shortData ? (
+        <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
+          {dict.today.shortDataNote}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 /** Best/avoid time windows, household sensitivity guidance, and emergency care banner. */
 export function WindowsAndRisk({
   dict,
@@ -23,48 +70,7 @@ export function WindowsAndRisk({
 }) {
   return (
     <>
-      <section
-        aria-labelledby="windows-heading"
-        className="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
-      >
-        <h2 id="windows-heading" className="text-base font-bold text-slate-950 dark:text-white">
-          {dict.today.windowsHeading}
-        </h2>
-        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border border-teal-700/40 bg-teal-50 p-3.5 dark:border-teal-400/40 dark:bg-teal-950/50">
-            <p className="text-xs font-semibold uppercase text-teal-900 dark:text-teal-200">
-              {dict.today.goOutWindow}
-            </p>
-            <p className="mt-1 text-xl font-bold tabular-nums text-teal-950 dark:text-white">
-              {windows.best.startLabel} - {windows.best.endLabel}
-            </p>
-            <p className="text-xs text-teal-900 dark:text-teal-200">
-              Mean {windows.best.mean.toFixed(1)} µg/m³
-            </p>
-          </div>
-          <div className="rounded-xl border border-rose-700/40 bg-rose-50 p-3.5 dark:border-rose-400/40 dark:bg-rose-950/50">
-            <p className="text-xs font-semibold uppercase text-rose-900 dark:text-rose-200">
-              {dict.today.avoidWindow}
-            </p>
-            <p className="mt-1 text-xl font-bold tabular-nums text-rose-950 dark:text-white">
-              {windows.avoid.startLabel} - {windows.avoid.endLabel}
-            </p>
-            <p className="text-xs text-rose-900 dark:text-rose-200">
-              Mean {windows.avoid.mean.toFixed(1)} µg/m³
-            </p>
-          </div>
-        </div>
-        {windows.noGoodWindow ? (
-          <p className="mt-3 text-sm font-semibold text-rose-900 dark:text-rose-200">
-            {dict.today.noGoodWindow}
-          </p>
-        ) : null}
-        {windows.shortData ? (
-          <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
-            {dict.today.shortDataNote}
-          </p>
-        ) : null}
-      </section>
+      <WindowsSection dict={dict} windows={windows} />
 
       <section
         aria-labelledby="member-risk-heading"

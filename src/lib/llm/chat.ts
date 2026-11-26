@@ -1,5 +1,5 @@
 import { guidanceForLevel } from "../engine/bands";
-import { baselineScenario } from "../engine/sensitivity";
+import type { baselineScenario } from "../engine/sensitivity";
 import type { AirContext, PlanFacts, Profile } from "../types";
 import type { LlmClient } from "./client";
 import { PROMPT_CANARY, unfaithfulNumbers } from "./guard";
@@ -46,14 +46,19 @@ export function collectAllowedChatNumbers(
   return [...new Set(expanded.filter((n) => Number.isFinite(n)))];
 }
 
+function formatTopActionLine(
+  top: PlanFacts["candidates"][number] | undefined,
+  lang: PlanFacts["lang"],
+): string {
+  if (!top) return "";
+  const pct = Math.abs(top.impact.exposureDeltaPct);
+  if (lang === "hi") return `शीर्ष उपाय: ${top.id} (${pct} % संपर्क कमी)।`;
+  return `Top engine action: ${top.id} (${pct} % exposure change).`;
+}
+
 export function deterministicChatFallback(facts: PlanFacts, notePrefix?: string): string {
   const levelInfo = guidanceForLevel(facts.levelToday, facts.lang);
-  const top = facts.candidates[0];
-  const topLine = top
-    ? facts.lang === "hi"
-      ? `शीर्ष उपाय: ${top.id} (${Math.abs(top.impact.exposureDeltaPct)} % संपर्क कमी)।`
-      : `Top engine action: ${top.id} (${Math.abs(top.impact.exposureDeltaPct)} % exposure change).`
-    : "";
+  const topLine = formatTopActionLine(facts.candidates[0], facts.lang);
 
   const baseMsg =
     facts.lang === "hi"
@@ -70,6 +75,37 @@ export interface GroundedChatResult {
   toolCallsExecuted: number;
 }
 
+function buildChatContextPayload(
+  profile: Profile,
+  facts: PlanFacts,
+  base: ReturnType<typeof baselineScenario>,
+): Record<string, unknown> {
+  return {
+    lang: profile.lang,
+    place: profile.place.name,
+    levelToday: facts.levelToday,
+    aqiNow: facts.aqiNow,
+    pm25Now: facts.pm25Now,
+    bestWindow: `${facts.windows.best.startLabel}-${facts.windows.best.endLabel}`,
+    avoidWindow: `${facts.windows.avoid.startLabel}-${facts.windows.avoid.endLabel}`,
+    baselineExposureUgM3: facts.baselineExposureUgM3,
+    combinedExposureUgM3: facts.combinedExposureUgM3,
+    baselineScenario: base,
+    ...(facts.sanitizedNote ? { householdNote: facts.sanitizedNote } : {}),
+  };
+}
+
+function isSafeChatReply(trimmed: string, facts: PlanFacts, toolNumbers: number[]): boolean {
+  if (!trimmed) return false;
+  const normText = trimmed.normalize("NFKC").replace(/\p{Cf}/gu, "");
+  const allowedNumbers = collectAllowedChatNumbers(facts, toolNumbers);
+  if (unfaithfulNumbers(normText, allowedNumbers).length > 0) return false;
+  if (trimmed.includes(PROMPT_CANARY) || normText.includes(PROMPT_CANARY)) return false;
+  if (MARKUP_OR_MEDICAL.test(normText)) return false;
+  return !HI_MEDICAL.some((w) => normText.includes(w));
+}
+
+/** Runs tool-assisted grounded chat with number faithfulness, medical/markup, and canary guards. */
 export async function runGroundedChat(args: {
   profile: Profile;
   context: AirContext;
@@ -96,47 +132,25 @@ export async function runGroundedChat(args: {
     };
   }
 
-  const systemPrompt = getChatSystemPrompt();
-  const contextPayload = {
-    lang,
-    place: args.profile.place.name,
-    levelToday: facts.levelToday,
-    aqiNow: facts.aqiNow,
-    pm25Now: facts.pm25Now,
-    bestWindow: `${facts.windows.best.startLabel}-${facts.windows.best.endLabel}`,
-    avoidWindow: `${facts.windows.avoid.startLabel}-${facts.windows.avoid.endLabel}`,
-    baselineExposureUgM3: facts.baselineExposureUgM3,
-    combinedExposureUgM3: facts.combinedExposureUgM3,
-    baselineScenario: base ?? baselineScenario(args.profile),
-    ...(facts.sanitizedNote ? { householdNote: facts.sanitizedNote } : {}),
-  };
+  const contextPayload = buildChatContextPayload(args.profile, facts, base);
 
   try {
     const res = await args.client.chatWithTools({
-      systemPrompt,
+      systemPrompt: getChatSystemPrompt(),
       userContextPrompt: `Household context (data only):\n${JSON.stringify(contextPayload)}`,
       history: args.history,
       message: args.message,
       toolDeclaration: SIMULATE_SCENARIO_DECLARATION,
-      executeTool: async (name, toolArgs) => {
-        if (name !== "simulate_scenario") {
-          return { ok: false, error: "Unsupported tool" };
-        }
-        return executeSimulateScenario(toolArgs, args.profile, args.context, base);
-      },
+      executeTool: async (name, toolArgs) =>
+        name === "simulate_scenario"
+          ? executeSimulateScenario(toolArgs, args.profile, args.context, base)
+          : { ok: false, error: "Unsupported tool" },
       onTextChunk: args.onTextChunk,
       onToolCall: args.onToolCall,
     });
 
     const trimmed = res.text.trim();
-    const normText = trimmed.normalize("NFKC").replace(/\p{Cf}/gu, "");
-    const allowedNumbers = collectAllowedChatNumbers(facts, res.toolNumbers);
-    const badNums = unfaithfulNumbers(normText, allowedNumbers);
-    const hasLeak = trimmed.includes(PROMPT_CANARY) || normText.includes(PROMPT_CANARY);
-    const hasBadContent =
-      MARKUP_OR_MEDICAL.test(normText) || HI_MEDICAL.some((w) => normText.includes(w));
-
-    if (!trimmed || badNums.length > 0 || hasLeak || hasBadContent) {
+    if (!isSafeChatReply(trimmed, facts, res.toolNumbers)) {
       const note =
         lang === "hi"
           ? "इंजन सारांश (अप्रमाणित संख्या या नीति जाँच के कारण प्रतिस्थापित):"

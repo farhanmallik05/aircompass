@@ -5,6 +5,7 @@
  */
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import type { z } from "zod";
 import { aqiFromPm25 } from "../src/lib/engine/bands";
 import { OpenMeteoAirResponseSchema, OpenMeteoWeatherResponseSchema } from "../src/lib/schemas";
 import type { HourPoint } from "../src/lib/types";
@@ -21,7 +22,7 @@ function syntheticSevere72h(): HourPoint[] {
   for (let d = 0; d < 3; d++) {
     const dateStr = `2026-11-${String(18 + d).padStart(2, "0")}`;
     for (let h = 0; h < 24; h++) {
-      const pm25 = day[h];
+      const pm25 = day[h] ?? 200;
       hours.push({
         t: `${dateStr}T${String(h).padStart(2, "0")}:00`,
         pm25,
@@ -34,6 +35,55 @@ function syntheticSevere72h(): HourPoint[] {
     }
   }
   return hours;
+}
+
+function optionalMetric(val: number | null | undefined): number | undefined {
+  return val !== null && val !== undefined ? val : undefined;
+}
+
+function extractArchiveHours(
+  air: z.infer<typeof OpenMeteoAirResponseSchema>,
+  wx: z.infer<typeof OpenMeteoWeatherResponseSchema>,
+): HourPoint[] {
+  const hours: HourPoint[] = [];
+  for (let i = 0; i < air.hourly.time.length; i++) {
+    const pm25 = air.hourly.pm2_5[i];
+    if (pm25 === null || pm25 === undefined || !Number.isFinite(pm25)) continue;
+    const pm10 = air.hourly.pm10[i] ?? pm25 * 1.4;
+    const usAqi = air.hourly.us_aqi[i] ?? aqiFromPm25(pm25);
+    const tempC = optionalMetric(wx.hourly.temperature_2m[i]);
+    const rh = optionalMetric(wx.hourly.relative_humidity_2m[i]);
+    const windKmh = optionalMetric(wx.hourly.wind_speed_10m[i]);
+    hours.push({
+      t: air.hourly.time[i],
+      pm25: Math.round(pm25 * 10) / 10,
+      pm10: Math.round(pm10 * 10) / 10,
+      usAqi: Math.min(500, Math.round(usAqi)),
+      ...(tempC !== undefined ? { tempC } : {}),
+      ...(rh !== undefined ? { rh } : {}),
+      ...(windKmh !== undefined ? { windKmh } : {}),
+    });
+  }
+  return hours;
+}
+
+function pickHighestSmogWindow(hours: readonly HourPoint[]): {
+  slice: HourPoint[];
+  bestMean: number;
+} {
+  let bestStart = 0;
+  let bestMean = -1;
+  for (let s = 0; s <= hours.length - 72; s++) {
+    if (!hours[s].t.endsWith("T00:00")) continue;
+    let sum = 0;
+    for (let k = 0; k < 72; k++) sum += hours[s + k].pm25;
+    const m = sum / 72;
+    if (m > bestMean) {
+      bestMean = m;
+      bestStart = s;
+    }
+  }
+  return { slice: hours.slice(bestStart, bestStart + 72), bestMean };
 }
 
 async function main() {
@@ -50,41 +100,10 @@ async function main() {
 
     const air = OpenMeteoAirResponseSchema.parse(await airRes.json());
     const wx = OpenMeteoWeatherResponseSchema.parse(await wxRes.json());
-
-    const hours: HourPoint[] = [];
-    for (let i = 0; i < air.hourly.time.length; i++) {
-      const pm25 = air.hourly.pm2_5[i];
-      if (pm25 === null || !Number.isFinite(pm25)) continue;
-      const pm10 = air.hourly.pm10[i] ?? pm25 * 1.4;
-      const usAqi = air.hourly.us_aqi[i] ?? aqiFromPm25(pm25);
-      hours.push({
-        t: air.hourly.time[i],
-        pm25: Math.round(pm25 * 10) / 10,
-        pm10: Math.round(pm10 * 10) / 10,
-        usAqi: Math.min(500, Math.round(usAqi)),
-        ...(wx.hourly.temperature_2m[i] !== null ? { tempC: wx.hourly.temperature_2m[i]! } : {}),
-        ...(wx.hourly.relative_humidity_2m[i] !== null ? { rh: wx.hourly.relative_humidity_2m[i]! } : {}),
-        ...(wx.hourly.wind_speed_10m[i] !== null ? { windKmh: wx.hourly.wind_speed_10m[i]! } : {}),
-      });
-    }
-
+    const hours = extractArchiveHours(air, wx);
     if (hours.length < 72) throw new Error("Insufficient archive hours returned");
 
-    // Pick the 72-hour window starting at 00:00 with highest mean PM2.5
-    let bestStart = 0;
-    let bestMean = -1;
-    for (let s = 0; s <= hours.length - 72; s++) {
-      if (!hours[s].t.endsWith("T00:00")) continue;
-      let sum = 0;
-      for (let k = 0; k < 72; k++) sum += hours[s + k].pm25;
-      const m = sum / 72;
-      if (m > bestMean) {
-        bestMean = m;
-        bestStart = s;
-      }
-    }
-
-    const slice = hours.slice(bestStart, bestStart + 72);
+    const { slice, bestMean } = pickHighestSmogWindow(hours);
     const nowIndex = 24;
     const recordedDate = slice[nowIndex].t.slice(0, 10);
     const payload = {
@@ -95,7 +114,9 @@ async function main() {
       hours: slice,
     };
     writeFileSync(outPath, JSON.stringify(payload, null, 2) + "\n", "utf8");
-    console.log(`Recorded Greater Noida 72h fixture (${recordedDate}, mean=${bestMean.toFixed(1)} ug/m3)`);
+    console.log(
+      `Recorded Greater Noida 72h fixture (${recordedDate}, mean=${bestMean.toFixed(1)} ug/m3)`,
+    );
   } catch (err) {
     console.warn("Open-Meteo unreachable, writing illustrative synthetic fixture:", err);
     const payload = {
