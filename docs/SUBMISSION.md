@@ -4,7 +4,7 @@
 **https://github.com/farhanmallik05/aircompass** (public)
 
 ## Deployed URL
-**https://aircompass.vercel.app** *(update once Vercel deployment is complete)*
+**https://aircompass-delta.vercel.app**
 
 ---
 
@@ -26,7 +26,7 @@ Google Gemini API (@google/genai, gemini-3.6-flash / gemini-3.5-flash fallback),
 
 ## LinkedIn Post Draft
 
-> Built AirCompass for PromptWars Challenge 06: a Gemini-powered assistant that turns Delhi-NCR winter smog into a plan a family can follow. What I learned: on a severe day, filtration and masks beat timing tweaks, and some "green" swaps raise your exposure unless you mask. The engine shows that, Gemini explains it. Code decides the numbers, the LLM words them. Hindi + English, WCAG 2.2 AA, 158 tests (96.74% statement coverage), 91.20% mutation score, and evals verified. Live: https://aircompass.vercel.app · Repo: https://github.com/farhanmallik05/aircompass · Built with Google Antigravity. #PromptWars #GoogleForDevelopers #Hack2Skill #Gemini #AirQuality
+> Built AirCompass for PromptWars Challenge 06: a Gemini-powered assistant that turns Delhi-NCR winter smog into a plan a family can follow. What I learned: on a severe day, filtration and masks beat timing tweaks, and some "green" swaps raise your exposure unless you mask. The engine shows that, Gemini explains it. Code decides the numbers, the LLM words them. Hindi + English, WCAG 2.2 AA, 158 tests (96.74% statement coverage), 91.20% mutation score, and evals verified. Live: https://aircompass-delta.vercel.app · Repo: https://github.com/farhanmallik05/aircompass · Built with Google Antigravity. #PromptWars #GoogleForDevelopers #Hack2Skill #Gemini #AirQuality
 
 ---
 

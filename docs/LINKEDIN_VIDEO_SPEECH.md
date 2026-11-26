@@ -121,7 +121,7 @@
 > "AirCompass is live, open-source, and free to use.
 >
 > **GitHub:** github.com/farhanmallik05/aircompass
-> **Live Demo:** [your-vercel-url]
+> **Live Demo:** https://aircompass-delta.vercel.app
 >
 > Built with:
 > → **Next.js 16** + TypeScript
