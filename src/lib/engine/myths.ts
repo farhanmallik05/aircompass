@@ -1,4 +1,4 @@
-export interface MythDef {
+interface MythDef {
   id: "cloth_mask" | "indoor_plants" | "ozone_ionizer" | "air_freshener";
   source: string;
 }

@@ -14,47 +14,62 @@ function makeRange(start: number, length: number, mean: number): WindowRange {
   };
 }
 
-function findBestWindow2h(
-  pm25ByHour: readonly number[],
-  hours: readonly number[],
-): { idx: number; mean: number } {
-  const n = pm25ByHour.length;
-  let best: { idx: number; mean: number } | null = null;
-  for (let i = 0; i <= n - 2; i++) {
-    const h0 = hours[i];
-    const h1 = hours[i + 1];
-    if (h0 >= 8 && h0 <= 18 && h1 === (h0 + 1) % 24) {
-      const m = (pm25ByHour[i] + pm25ByHour[i + 1]) / 2;
-      if (!best || m < best.mean - 1e-12) best = { idx: i, mean: m };
-    }
-  }
-  if (best) return best;
+interface HourSlot {
+  pm25: number;
+  hour: number;
+}
 
-  if (n < 2) return { idx: 0, mean: pm25ByHour[0] };
-  let fallback: { idx: number; mean: number } = {
-    idx: 0,
-    mean: (pm25ByHour[0] + pm25ByHour[1]) / 2,
-  };
-  for (let i = 1; i <= n - 2; i++) {
-    const m = (pm25ByHour[i] + pm25ByHour[i + 1]) / 2;
-    if (m < fallback.mean - 1e-12) fallback = { idx: i, mean: m };
+function findFallbackBest2h(
+  slots: readonly HourSlot[],
+  firstSlot: HourSlot,
+): {
+  startHour: number;
+  mean: number;
+} {
+  if (slots.length < 2) return { startHour: firstSlot.hour, mean: firstSlot.pm25 };
+  let fallback: { startHour: number; mean: number } | null = null;
+  let prev: HourSlot | null = null;
+  for (const curr of slots) {
+    if (prev) {
+      const m = (prev.pm25 + curr.pm25) / 2;
+      if (!fallback || m < fallback.mean - 1e-12) fallback = { startHour: prev.hour, mean: m };
+    }
+    prev = curr;
   }
-  return fallback;
+  return fallback ?? { startHour: firstSlot.hour, mean: firstSlot.pm25 };
+}
+
+function findBestWindow2h(
+  slots: readonly HourSlot[],
+  firstSlot: HourSlot,
+): { startHour: number; mean: number } {
+  let best: { startHour: number; mean: number } | null = null;
+  let prev: HourSlot | null = null;
+  for (const curr of slots) {
+    if (prev && prev.hour >= 8 && prev.hour <= 18 && curr.hour === (prev.hour + 1) % 24) {
+      const m = (prev.pm25 + curr.pm25) / 2;
+      if (!best || m < best.mean - 1e-12) best = { startHour: prev.hour, mean: m };
+    }
+    prev = curr;
+  }
+  return best ?? findFallbackBest2h(slots, firstSlot);
 }
 
 function findAvoidWindow(
-  pm25ByHour: readonly number[],
+  slots: readonly HourSlot[],
   avoidLen: number,
-): { idx: number; mean: number } {
-  const n = pm25ByHour.length;
-  let avoid: { idx: number; mean: number } | null = null;
-  for (let i = 0; i <= n - avoidLen; i++) {
+  firstSlot: HourSlot,
+): { startHour: number; mean: number } {
+  const n = slots.length;
+  let avoid: { startHour: number; mean: number } | null = null;
+  for (const [i, head] of slots.entries()) {
+    if (i + avoidLen > n) break;
     let sum = 0;
-    for (let k = 0; k < avoidLen; k++) sum += pm25ByHour[i + k];
+    for (const item of slots.slice(i, i + avoidLen)) sum += item.pm25;
     const m = sum / avoidLen;
-    if (!avoid || m > avoid.mean + 1e-12) avoid = { idx: i, mean: m };
+    if (!avoid || m > avoid.mean + 1e-12) avoid = { startHour: head.hour, mean: m };
   }
-  return avoid ?? { idx: 0, mean: pm25ByHour[0] };
+  return avoid ?? { startHour: firstSlot.hour, mean: firstSlot.pm25 };
 }
 
 /**
@@ -65,20 +80,25 @@ export function findWindowsFromHours(
   pm25ByHour: readonly number[],
   clockHours?: readonly number[],
 ): WindowSummary {
-  if (pm25ByHour.length === 0) throw new RangeError("pm25ByHour must be non-empty");
   for (const v of pm25ByHour) {
     if (!Number.isFinite(v) || v < 0) throw new RangeError(`invalid PM2.5: ${v}`);
   }
 
-  const n = pm25ByHour.length;
-  const hours = clockHours ?? Array.from({ length: n }, (_, i) => i % 24);
+  const slots: HourSlot[] = pm25ByHour.map((pm25, i) => ({
+    pm25,
+    hour: clockHours?.[i] ?? i % 24,
+  }));
+  const firstSlot = slots[0];
+  if (!firstSlot) throw new RangeError("pm25ByHour must be non-empty");
+
+  const n = slots.length;
   const avoidLen = Math.min(3, n);
-  const resolvedBest = findBestWindow2h(pm25ByHour, hours);
-  const resolvedAvoid = findAvoidWindow(pm25ByHour, avoidLen);
+  const resolvedBest = findBestWindow2h(slots, firstSlot);
+  const resolvedAvoid = findAvoidWindow(slots, avoidLen, firstSlot);
 
   return {
-    best: makeRange(hours[resolvedBest.idx], Math.min(2, n), resolvedBest.mean),
-    avoid: makeRange(hours[resolvedAvoid.idx], avoidLen, resolvedAvoid.mean),
+    best: makeRange(resolvedBest.startHour, Math.min(2, n), resolvedBest.mean),
+    avoid: makeRange(resolvedAvoid.startHour, avoidLen, resolvedAvoid.mean),
     noGoodWindow: levelOfPm25(resolvedBest.mean) >= 4,
     shortData: n < 24,
     hoursEvaluated: n,

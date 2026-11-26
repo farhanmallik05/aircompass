@@ -21,7 +21,7 @@ const rules = (text: string) => findViolations(text, TOKENS);
 describe("output guard", () => {
   it("rejects every adversarial row, and by the SPECIFIC rule named in the corpus", () => {
     const wrong = (corpus.reject as string[][])
-      .filter(([, text, rule]) => !rules(text).some((v) => v.startsWith(rule)))
+      .filter(([, text = "", rule = ""]) => !rules(text).some((v) => v.startsWith(rule)))
       .map(([name, , rule]) => `${name} (expected: ${rule})`);
     expect(wrong).toEqual([]);
   });
@@ -49,7 +49,7 @@ describe("output guard", () => {
 
   it("accepts every benign row (false positives would cause needless repair calls and fallbacks)", () => {
     const wrong = (corpus.accept as string[][])
-      .map(([name, text]) => [name, rules(text)] as const)
+      .map(([name, text = ""]) => [name, rules(text)] as const)
       .filter(([, v]) => v.length > 0);
     expect(wrong).toEqual([]);
   });

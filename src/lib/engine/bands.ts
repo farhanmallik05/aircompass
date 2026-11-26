@@ -31,14 +31,22 @@ export function aqiFromPm25(c: number): number {
   return 500;
 }
 
+const LEVEL_THRESHOLDS: readonly [number, Level][] = [
+  [225.4, 5],
+  [125.4, 4],
+  [55.4, 3],
+  [35.4, 2],
+  [9.0, 1],
+];
+
 /** Health level L0..L5 from a PM2.5 concentration (same breakpoints as the AQI categories). */
 export function levelOfPm25(c: number): Level {
   assertConc(c);
   const t = truncate1(c);
-  const uppers = [9.0, 35.4, 55.4, 125.4, 225.4] as const;
-  let level = 0;
-  for (const u of uppers) if (t > u) level += 1;
-  return level as Level;
+  for (const [upper, level] of LEVEL_THRESHOLDS) {
+    if (t > upper) return level;
+  }
+  return 0;
 }
 
 /** Clamps `nowIndex` to valid `[0, hours.length - 1]` array bounds. */
@@ -67,7 +75,7 @@ export function next24hMeanPm25(hours: readonly HourPoint[], nowIndex: number): 
   return valid.reduce((acc, v) => acc + v, 0) / valid.length;
 }
 
-export interface LevelGuidance {
+interface LevelGuidance {
   level: Level;
   band: string;
   everyone: string;
@@ -77,6 +85,7 @@ export interface LevelGuidance {
 /** Guidance text for health level L0..L5 in the requested language. */
 export function guidanceForLevel(level: Level, lang: Lang): LevelGuidance {
   const row = guidanceData.levels[level];
+  if (!row) throw new RangeError(`invalid health level: ${level}`);
   return {
     level,
     band: row.band[lang],

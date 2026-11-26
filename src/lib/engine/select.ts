@@ -54,17 +54,16 @@ function scoreCandidate(
 export function selectCandidates(
   profile: Profile,
   context: AirContext,
-  level: Level,
-  baseScenario: Scenario,
-  windows: WindowSummary,
+  opts: { level: Level; baseScenario: Scenario; windows: WindowSummary },
 ): CandidateAction[] {
+  const { level, baseScenario, windows } = opts;
   const groups = householdGroups(profile);
   const scored: CandidateAction[] = [];
 
   for (const def of ACTION_CATALOG) {
     if (!budgetAllows(profile.budget, def.cost)) continue;
     if (!def.appliesIf(profile, level, windows)) continue;
-    const impact = evaluateActionImpact(def, profile, context, baseScenario, windows);
+    const impact = evaluateActionImpact(def, profile, context, { baseScenario, windows });
     const tradeoff = impact.exposureDeltaUgM3 < -0.05;
     scored.push({
       id: def.id,

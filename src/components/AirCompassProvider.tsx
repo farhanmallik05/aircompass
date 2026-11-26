@@ -105,13 +105,14 @@ function useContextPlanSync() {
   };
 }
 
-function useInitialStoredSession(
-  syncContextAndPlan: (p: Profile, nextMode: DataMode, cal: number | null) => Promise<void>,
-  setLangState: (l: Lang) => void,
-  setModeState: (m: DataMode) => void,
-  setProfile: (p: Profile | null) => void,
-  setCalibrationState: (c: number | null) => void,
-) {
+function useInitialStoredSession(opts: {
+  syncContextAndPlan: (p: Profile, nextMode: DataMode, cal: number | null) => Promise<void>;
+  setLangState: (l: Lang) => void;
+  setModeState: (m: DataMode) => void;
+  setProfile: (p: Profile | null) => void;
+  setCalibrationState: (c: number | null) => void;
+}) {
+  const { syncContextAndPlan, setLangState, setModeState, setProfile, setCalibrationState } = opts;
   useEffect(() => {
     document.documentElement.dataset.hydrated = "true";
     let active = true;
@@ -137,22 +138,32 @@ function useInitialStoredSession(
   }, [setCalibrationState, setLangState, setModeState, setProfile, syncContextAndPlan]);
 }
 
-function useProfileActions(
-  lang: Lang,
-  mode: DataMode,
-  profile: Profile | null,
-  calibrationPm25: number | null,
-  syncContextAndPlan: (p: Profile, nextMode: DataMode, cal: number | null) => Promise<void>,
-  refreshPlan: (p: Profile, ctx: AirContext) => Promise<void>,
-  context: AirContext,
+function useProfileActions(opts: {
+  lang: Lang;
+  mode: DataMode;
+  profile: Profile | null;
+  calibrationPm25: number | null;
+  syncContextAndPlan: (p: Profile, nextMode: DataMode, cal: number | null) => Promise<void>;
+  refreshPlan: (p: Profile, ctx: AirContext) => Promise<void>;
+  context: AirContext;
   setters: {
     setLangState: (l: Lang) => void;
     setModeState: (m: DataMode) => void;
     setProfile: (p: Profile | null) => void;
     setCalibrationState: (c: number | null) => void;
     setDeletedMsg: (m: string | null) => void;
-  },
-) {
+  };
+}) {
+  const {
+    lang,
+    mode,
+    profile,
+    calibrationPm25,
+    syncContextAndPlan,
+    refreshPlan,
+    context,
+    setters,
+  } = opts;
   const activeProfile: Profile = profile ?? { ...SAMPLE_FAMILY_PROFILE, lang };
   return {
     activeProfile,
@@ -207,24 +218,24 @@ export function AirCompassProvider({ children }: { children: React.ReactNode }) 
   const [deletedMsg, setDeletedMsg] = useState<string | null>(null);
   const sync = useContextPlanSync();
 
-  useInitialStoredSession(
-    sync.syncContextAndPlan,
+  useInitialStoredSession({
+    syncContextAndPlan: sync.syncContextAndPlan,
     setLangState,
     setModeState,
     setProfile,
     setCalibrationState,
-  );
+  });
 
-  const actions = useProfileActions(
+  const actions = useProfileActions({
     lang,
     mode,
     profile,
     calibrationPm25,
-    sync.syncContextAndPlan,
-    sync.refreshPlan,
-    sync.context,
-    { setLangState, setModeState, setProfile, setCalibrationState, setDeletedMsg },
-  );
+    syncContextAndPlan: sync.syncContextAndPlan,
+    refreshPlan: sync.refreshPlan,
+    context: sync.context,
+    setters: { setLangState, setModeState, setProfile, setCalibrationState, setDeletedMsg },
+  });
 
   return (
     <AirCompassCtx.Provider

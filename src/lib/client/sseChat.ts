@@ -1,9 +1,43 @@
 "use client";
 
-export interface SseEventCallbacks {
+import { isRecord } from "@/lib/client/storage";
+
+interface SseEventCallbacks {
   onTool: () => void;
   onChunk: (deltaText: string) => void;
   onDone: (finalText: string, usedTool: boolean) => void;
+}
+
+interface ParsedSsePayload {
+  text?: string;
+  toolCallsExecuted?: number;
+}
+
+function parseSsePayload(rawJson: string): ParsedSsePayload | null {
+  const parsed: unknown = JSON.parse(rawJson);
+  if (!isRecord(parsed)) return null;
+  return {
+    text: typeof parsed.text === "string" ? parsed.text : undefined,
+    toolCallsExecuted:
+      typeof parsed.toolCallsExecuted === "number" ? parsed.toolCallsExecuted : undefined,
+  };
+}
+
+function dispatchSseEvent(
+  evName: string,
+  payload: ParsedSsePayload,
+  state: { usedTool: boolean },
+  cb: SseEventCallbacks,
+): void {
+  if (evName === "tool") {
+    state.usedTool = true;
+    cb.onTool();
+  } else if (evName === "chunk" && payload.text) {
+    cb.onChunk(payload.text);
+  } else if (evName === "done" && payload.text !== undefined) {
+    const used = state.usedTool || (payload.toolCallsExecuted ?? 0) > 0;
+    cb.onDone(payload.text, used);
+  }
 }
 
 function dispatchSseBlock(
@@ -16,12 +50,9 @@ function dispatchSseBlock(
   const dataLine = lines.find((l) => l.startsWith("data:"));
   if (!evLine || !dataLine) return;
 
-  let payload: { text?: string; toolCallsExecuted?: number };
+  let payload: ParsedSsePayload | null;
   try {
-    payload = JSON.parse(dataLine.slice(5).trim()) as {
-      text?: string;
-      toolCallsExecuted?: number;
-    };
+    payload = parseSsePayload(dataLine.slice(5).trim());
   } catch (err) {
     console.warn(
       "[sseChat] Skipping malformed SSE frame:",
@@ -29,17 +60,8 @@ function dispatchSseBlock(
     );
     return;
   }
-
-  const evName = evLine.slice(6).trim();
-  if (evName === "tool") {
-    state.usedTool = true;
-    cb.onTool();
-  } else if (evName === "chunk" && payload.text) {
-    cb.onChunk(payload.text);
-  } else if (evName === "done" && payload.text !== undefined) {
-    const used = state.usedTool || (payload.toolCallsExecuted ?? 0) > 0;
-    cb.onDone(payload.text, used);
-  }
+  if (!payload) return;
+  dispatchSseEvent(evLine.slice(6).trim(), payload, state, cb);
 }
 
 /** Reads an SSE ReadableStream from /api/chat and dispatches tool, chunk, and done callbacks. */

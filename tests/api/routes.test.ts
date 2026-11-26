@@ -362,6 +362,30 @@ describe("API contracts & provider resilience (mocked boundary)", () => {
     );
     expect(bigHeader).toMatchObject({ ok: false, status: 413 });
 
+    const invalidHeader = await readBoundedJson(
+      new Request("http://localhost/api/plan", {
+        method: "POST",
+        headers: { "content-type": "application/json", "content-length": "not-a-number" },
+        body: "{}",
+      }),
+    );
+    expect(invalidHeader).toMatchObject({ ok: false, status: 400 });
+
+    // Bodyless Request fallback (.text()) handles both valid JSON and >8KB rejection
+    const noStreamOk = await readBoundedJson({
+      headers: new Headers({ "content-type": "application/json" }),
+      body: null,
+      text: async () => '{"ok":true}',
+    } as unknown as Request);
+    expect(noStreamOk).toEqual({ ok: true, data: { ok: true } });
+
+    const noStreamHuge = await readBoundedJson({
+      headers: new Headers({ "content-type": "application/json" }),
+      body: null,
+      text: async () => "x".repeat(9000),
+    } as unknown as Request);
+    expect(noStreamHuge).toMatchObject({ ok: false, status: 413 });
+
     // Place search (?q=...) and live Open-Meteo success + calibration via /api/context
     const origFetch2 = globalThis.fetch;
     globalThis.fetch = (async (url: string | URL) => {
@@ -469,6 +493,46 @@ describe("API contracts & provider resilience (mocked boundary)", () => {
       spy.mockRestore();
     }
 
+    // Unsafe streamed chunk must be buffered and withheld before reaching SSE wire
+    const unsafeStreamClient: LlmClient = {
+      generatePlanJson: async () => ({ rawText: "", model: "mock" }),
+      chatWithTools: async (req) => {
+        req.onTextChunk?.(`Unverified 999% exposure with ${PROMPT_CANARY}`);
+        return {
+          text: `Unverified 999% exposure with ${PROMPT_CANARY}`,
+          toolCallsExecuted: 0,
+          toolNumbers: [],
+          model: "mock",
+        };
+      },
+    };
+    const unsafeSpy = vi
+      .spyOn(geminiMod, "createGeminiClientFromEnv")
+      .mockReturnValue(unsafeStreamClient);
+    try {
+      const blockedRes = await chatPost(
+        new Request("http://localhost/api/chat", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            profile: SAMPLE_FAMILY_PROFILE,
+            context: getDemoContext(),
+            history: [],
+            message: "Unsafe reply test",
+          }),
+        }),
+      );
+      expect(blockedRes.status).toBe(200);
+      const blockedSse = await blockedRes.text();
+      expect(blockedSse).not.toContain("999%");
+      expect(blockedSse).not.toContain(PROMPT_CANARY);
+      expect(blockedSse).not.toContain("event: chunk");
+      expect(blockedSse).toContain("event: done");
+      expect(blockedSse).toContain('"faithful":false');
+    } finally {
+      unsafeSpy.mockRestore();
+    }
+
     // Stream start catch handles unexpected chat error gracefully with fallback done event
     const errSpy = vi.spyOn(chatMod, "runGroundedChat").mockRejectedValueOnce(new Error("boom"));
     try {
@@ -499,6 +563,7 @@ describe("API contracts & provider resilience (mocked boundary)", () => {
         }),
       );
       if (r.status === 429) {
+        expect(r.headers.get("retry-after")).toBe("60");
         sawContext429 = true;
         break;
       }

@@ -7,7 +7,7 @@ import hiWords from "../../../data/number-words.hi.json";
  * Known gaps are listed in docs/METHODOLOGY.md (letter-spaced numbers, non-EN/HI languages, Hindi words not in the list).
  */
 export const PROMPT_CANARY = "CANARY-7f3a91";
-export type Tokens = Record<string, string>;
+type Tokens = Record<string, string>;
 
 const TOKEN = /\{\{([a-z0-9_.]+)\}\}/gi;
 /** Terms that legitimately contain digits. Unicode-aware boundaries (\b is ASCII-only and fails next to Devanagari). */
@@ -64,11 +64,12 @@ export function findViolations(raw: string, tokens: Tokens): string[] {
   const v: string[] = [];
   const text = norm(raw);
 
-  for (const m of text.matchAll(TOKEN)) {
-    if (!Object.hasOwn(tokens, m[1].toLowerCase())) v.push(`unknown token: ${m[1]}`);
-  }
-
-  const bare = text.replace(TOKEN, " ").replace(ALLOWED_TERMS, " ");
+  const bare = text
+    .replace(TOKEN, (_m, rawKey: string) => {
+      if (!Object.hasOwn(tokens, rawKey.toLowerCase())) v.push(`unknown token: ${rawKey}`);
+      return " ";
+    })
+    .replace(ALLOWED_TERMS, " ");
   if (/\{|\}|\$\{|<%/.test(bare)) v.push("malformed placeholder");
   if (/\p{Nd}/u.test(bare)) v.push("raw digit");
   if (UNIT_OR_SIGN.test(bare.toLowerCase())) v.push("unit or percent sign");

@@ -78,10 +78,9 @@ function ExposureComparisonCard({
 function computeImpactMetrics(
   activeProfile: ReturnType<typeof useAirCompass>["activeProfile"],
   context: ReturnType<typeof useAirCompass>["context"],
-  base: Scenario,
-  simScenario: Scenario,
-  households: number,
+  sim: { base: Scenario; simScenario: Scenario; households: number },
 ) {
+  const { base, simScenario, households } = sim;
   const series = next24Series(context);
   const opts = {
     roomAreaM2: activeProfile.home.roomAreaM2,
@@ -181,7 +180,11 @@ export function ImpactView() {
     commuteMode,
     commuteDaysPerWeek: commuteDays,
   };
-  const metrics = computeImpactMetrics(activeProfile, context, base, simScenario, households);
+  const metrics = computeImpactMetrics(activeProfile, context, {
+    base,
+    simScenario,
+    households,
+  });
 
   function resetAll() {
     setPurifier(base.purifier);

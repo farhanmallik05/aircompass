@@ -29,6 +29,7 @@ function LangToggleGroup({
         <button
           key={code}
           type="button"
+          lang={code}
           onClick={() => onLangChange(code)}
           aria-pressed={lang === code}
           className={`min-h-11 min-w-11 rounded-md px-3 text-sm font-medium ${

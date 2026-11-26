@@ -3,7 +3,7 @@ import { connection } from "next/server";
 import { TodayView } from "@/components/TodayView";
 
 export const metadata: Metadata = {
-  title: "Today's Air & Household Plan",
+  title: { absolute: "Today's Air & Household Plan — AirCompass" },
 };
 
 export default async function HomePage() {

@@ -99,7 +99,7 @@ export function WindowsAndRisk({
               href="/plan"
               className="inline-flex min-h-11 items-center rounded-xl bg-teal-800 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-900 dark:bg-teal-300 dark:text-slate-950 dark:hover:bg-teal-200"
             >
-              {dict.app.nav.plan} ({planCardCount}) →
+              {dict.app.nav.plan} ({planCardCount}) <span aria-hidden="true">→</span>
             </Link>
           </div>
         </div>

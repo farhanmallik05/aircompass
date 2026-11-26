@@ -148,6 +148,77 @@ describe("providers: calibrate, geocode, and demo regional helper", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(2); // Second call served from cache
 
     clearProviderCache();
+    const mismatchWxFetch: typeof fetch = async (url) => {
+      const u = String(url);
+      if (u.includes("air-quality")) {
+        return Response.json({
+          hourly: {
+            time: ["2026-11-25T00:00", "2026-11-25T01:00"],
+            pm2_5: [120, 130],
+            pm10: [-1, Number.NaN],
+            us_aqi: [-10, Number.POSITIVE_INFINITY],
+          },
+        });
+      }
+      // Weather length mismatch + non-finite fallback -> safely ignored without crashing air series
+      return Response.json({
+        hourly: {
+          time: ["2026-11-25T00:00"],
+          temperature_2m: [14, 15],
+          relative_humidity_2m: [78],
+          wind_speed_10m: [4],
+        },
+      });
+    };
+    const mismatchRes = await fetchOpenMeteoContext(SAMPLE_FAMILY_PROFILE.place, mismatchWxFetch);
+    expect(mismatchRes.hours).toHaveLength(2);
+    expect(mismatchRes.hours[0]?.tempC).toBeUndefined();
+
+    clearProviderCache();
+    const sparseMetricsFetch: typeof fetch = async (url) => {
+      const u = String(url);
+      if (u.includes("air-quality")) {
+        return Response.json({
+          hourly: {
+            time: ["", "2026-11-25T01:00"],
+            pm2_5: [100, 120],
+            pm10: [140, 160],
+            us_aqi: [170, 180],
+          },
+        });
+      }
+      return Response.json({
+        hourly: {
+          time: ["", "2026-11-25T01:00"],
+          temperature_2m: [null, null],
+          relative_humidity_2m: [70, 75],
+          wind_speed_10m: [null, null],
+        },
+      });
+    };
+    const sparseMetricsRes = await fetchOpenMeteoContext(
+      SAMPLE_FAMILY_PROFILE.place,
+      sparseMetricsFetch,
+    );
+    expect(sparseMetricsRes.hours).toHaveLength(1);
+    expect(sparseMetricsRes.hours[0]?.rh).toBe(75);
+    expect(sparseMetricsRes.hours[0]?.windKmh).toBeUndefined();
+
+    clearProviderCache();
+    const bad404Fetch: typeof fetch = async () => new Response("missing", { status: 404 });
+    await expect(
+      fetchOpenMeteoContext(SAMPLE_FAMILY_PROFILE.place, bad404Fetch, 9000),
+    ).rejects.toThrow(/404/);
+
+    clearProviderCache();
+    const nonErrorFetch: typeof fetch = async () => {
+      throw "string failure";
+    };
+    await expect(
+      fetchOpenMeteoContext(SAMPLE_FAMILY_PROFILE.place, nonErrorFetch, 9500),
+    ).rejects.toThrow(/Upstream fetch failed/);
+
+    clearProviderCache();
     const zeroHoursFetch: typeof fetch = async (url) => {
       if (String(url).includes("air-quality")) {
         return Response.json({
@@ -211,6 +282,52 @@ describe("providers: calibrate, geocode, and demo regional helper", () => {
       const planOk = await fetchPlanOrError(SAMPLE_FAMILY_PROFILE, demoCal.ctx, "fp-ok");
       expect(planOk.error).toBeNull();
       expect(planOk.data?.outcome).toBe("fallback");
+
+      globalThis.fetch = (async () => Response.json({ invalid: true })) as typeof fetch;
+      const malformedCtx = await fetchRemoteContext(SAMPLE_FAMILY_PROFILE, "live", null);
+      expect(malformedCtx.fallbackFor).toBe("Greater Noida");
+
+      globalThis.fetch = (async () =>
+        Response.json({
+          context: { ...getDemoContext(), source: "cached" },
+        })) as typeof fetch;
+      const badSourceCtx = await fetchRemoteContext(SAMPLE_FAMILY_PROFILE, "live", null);
+      expect(badSourceCtx.fallbackFor).toBe("Greater Noida");
+
+      globalThis.fetch = (async () =>
+        Response.json({
+          context: { ...getDemoContext(), dataNote: 42 },
+        })) as typeof fetch;
+      const badNoteCtx = await fetchRemoteContext(SAMPLE_FAMILY_PROFILE, "live", null);
+      expect(badNoteCtx.fallbackFor).toBe("Greater Noida");
+
+      globalThis.fetch = (async () =>
+        Response.json({
+          context: { ...getDemoContext(), hours: [], nowIndex: 0 },
+        })) as typeof fetch;
+      const emptyHoursCtx = await fetchRemoteContext(SAMPLE_FAMILY_PROFILE, "live", null);
+      expect(emptyHoursCtx.fallbackFor).toBe("Greater Noida");
+
+      globalThis.fetch = (async () =>
+        Response.json({
+          context: getDemoContext(),
+          upstreamFallback: true,
+        })) as typeof fetch;
+      const fallbackDefaultName = await fetchRemoteContext(SAMPLE_FAMILY_PROFILE, "live", null);
+      expect(fallbackDefaultName.fallbackFor).toBe("Greater Noida");
+
+      globalThis.fetch = (async () => Response.json({ invalidPlan: true })) as typeof fetch;
+      const badPlanPayload = await fetchPlanOrError(SAMPLE_FAMILY_PROFILE, demoCal.ctx, "fp-bad");
+      expect(badPlanPayload.data).toBeNull();
+      expect(badPlanPayload.error).toBeTruthy();
+
+      globalThis.fetch = (async () => {
+        throw "non-error string";
+      }) as typeof fetch;
+      const nonErrFb = await fetchRemoteContext(SAMPLE_FAMILY_PROFILE, "live", null);
+      expect(nonErrFb.fallbackFor).toBe("Greater Noida");
+      const nonErrPlan = await fetchPlanOrError(SAMPLE_FAMILY_PROFILE, demoCal.ctx, "fp-nonerr");
+      expect(nonErrPlan.data).toBeNull();
 
       globalThis.fetch = (async () => {
         throw new Error("offline");
@@ -301,6 +418,24 @@ describe("client: i18n, myths catalog, and validated localStorage wrapper", () =
     );
     expect(loadStoredProfile()).toBeNull();
     expect(isValidStoredProfile(null)).toBe(false);
+    expect(
+      isValidStoredProfile({
+        ...SAMPLE_FAMILY_PROFILE,
+        home: { ...SAMPLE_FAMILY_PROFILE.home, windows: "open" },
+      }),
+    ).toBe(false);
+    expect(
+      isValidStoredProfile({
+        ...SAMPLE_FAMILY_PROFILE,
+        budget: "unlimited",
+      }),
+    ).toBe(false);
+    expect(
+      isValidStoredProfile({
+        ...SAMPLE_FAMILY_PROFILE,
+        household: { adults: 1, children: 0, seniors: 0, conditions: "none" },
+      }),
+    ).toBe(false);
     expect(isValidCachedPlanPayload({ fingerprint: "x", response: {} })).toBe(false);
 
     // Invalid lang / mode / calibration values fall back safely
@@ -340,6 +475,22 @@ describe("client: i18n, myths catalog, and validated localStorage wrapper", () =
     ).not.toThrow();
     expect(() => clearAllAirCompassData()).not.toThrow();
 
+    const strThrowStorage = {
+      getItem: () => {
+        throw "denied";
+      },
+      setItem: () => {
+        throw "quota";
+      },
+      removeItem: () => {
+        throw "denied";
+      },
+    };
+    vi.stubGlobal("window", { localStorage: strThrowStorage });
+    expect(loadStoredProfile()).toBeNull();
+    expect(() => saveStoredLang("en")).not.toThrow();
+    expect(() => clearAllAirCompassData()).not.toThrow();
+
     vi.stubGlobal("window", { localStorage: makeMemoryStorage() });
     clearAllAirCompassData();
     expect(loadStoredProfile()).toBeNull();
@@ -365,8 +516,11 @@ describe("client: i18n, myths catalog, and validated localStorage wrapper", () =
     const ssePayload =
       "event: tool\ndata: {}\n\n" +
       "invalid-line-without-data\n\n" +
+      "event: done\ndata: []\n\n" +
       "event: bad\ndata: {not-json\n\n" +
+      'event: chunk\ndata: {"text":""}\n\n' +
       'event: chunk\ndata: {"text":"Hello "}\n\n' +
+      'event: done\ndata: {"text":123}\n\n' +
       'event: done\ndata: {"text":"Hello world","toolCallsExecuted":1}\n\n';
     const stream = new ReadableStream<Uint8Array>({
       start(c) {

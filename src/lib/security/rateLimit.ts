@@ -14,9 +14,9 @@ let dailyIpLlmState = {
 
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_TOKENS = 40;
-export const MAX_BUCKETS = 10_000;
+const MAX_BUCKETS = 10_000;
 
-export function hashIp(rawIp: string): string {
+function hashIp(rawIp: string): string {
   return createHash("sha256").update(rawIp).digest("hex").slice(0, 16);
 }
 

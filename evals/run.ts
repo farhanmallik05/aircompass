@@ -151,9 +151,9 @@ function checkSafetyInvariants(
   p: PersonaEntry,
   ctx: AirContext,
   facts: PlanFacts,
-  res: PlanResponse,
-  renderedJoined: string,
+  opts: { res: PlanResponse; renderedJoined: string },
 ): string[] {
+  const { res, renderedJoined } = opts;
   const fails: string[] = [];
   if (p.id === "p10-injection-notes") {
     const cleanFacts = buildPlanFacts({ ...p.profile, notes: undefined }, ctx).facts;
@@ -179,11 +179,10 @@ function collectSafetyAndCoverageInvariants(
   p: PersonaEntry,
   ctx: AirContext,
   facts: PlanFacts,
-  res: PlanResponse,
-  fallbackRes: PlanResponse,
-  renderedJoined: string,
+  opts: { res: PlanResponse; fallbackRes: PlanResponse; renderedJoined: string },
 ): string[] {
-  const fails = checkSafetyInvariants(p, ctx, facts, res, renderedJoined);
+  const { res, fallbackRes, renderedJoined } = opts;
+  const fails = checkSafetyInvariants(p, ctx, facts, { res, renderedJoined });
   if (fallbackRes.outcome !== "fallback" || fallbackRes.plan.cards.length < 5) {
     fails.push("I9(fallback)");
   }
@@ -247,7 +246,7 @@ async function evaluatePersona(p: PersonaEntry): Promise<{ row: string; passed: 
   ].join(" ");
   fails.push(
     ...collectPolicyInvariants(p, facts, res, renderedJoined),
-    ...collectSafetyAndCoverageInvariants(p, ctx, facts, res, fallbackRes, renderedJoined),
+    ...collectSafetyAndCoverageInvariants(p, ctx, facts, { res, fallbackRes, renderedJoined }),
   );
 
   const status = fails.length === 0 ? "PASS" : `FAIL: ${fails.join(", ")}`;

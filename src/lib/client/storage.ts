@@ -25,7 +25,7 @@ const VALID_COMMUTES = new Set([
   "wfh",
 ]);
 
-function isRecord(v: unknown): v is Record<string, unknown> {
+export function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
@@ -33,7 +33,7 @@ function isFiniteInRange(v: unknown, min: number, max: number): v is number {
   return typeof v === "number" && Number.isFinite(v) && v >= min && v <= max;
 }
 
-function isValidPlace(place: unknown): boolean {
+export function isValidPlace(place: unknown): place is Profile["place"] {
   return (
     isRecord(place) &&
     typeof place.name === "string" &&
@@ -92,14 +92,17 @@ export function isValidStoredProfile(val: unknown): val is Profile {
   );
 }
 
+/** Validates plan payloads returned by `/api/plan` or restored from localStorage. */
+export function isValidPlanResponse(val: unknown): val is PlanResponse {
+  if (!isRecord(val) || !isRecord(val.plan) || !Array.isArray(val.plan.cards)) return false;
+  return typeof val.plan.headline === "string" && typeof val.outcome === "string";
+}
+
 /** Validates cached plan payloads stored in browser localStorage. */
 export function isValidCachedPlanPayload(
   val: unknown,
 ): val is { fingerprint: string; response: PlanResponse } {
-  if (!isRecord(val) || typeof val.fingerprint !== "string") return false;
-  const res = val.response;
-  if (!isRecord(res) || !isRecord(res.plan) || !Array.isArray(res.plan.cards)) return false;
-  return typeof res.plan.headline === "string" && typeof res.outcome === "string";
+  return isRecord(val) && typeof val.fingerprint === "string" && isValidPlanResponse(val.response);
 }
 
 function safeReadItem(key: string): string | null {

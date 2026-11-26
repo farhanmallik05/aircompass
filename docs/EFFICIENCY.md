@@ -1,16 +1,16 @@
 # Efficiency & Performance Measurements
 
-Measured on **2026-11-26T13:36:04.930Z** (Node v24.19.0, win32 x64).
+Measured on **2026-11-26T16:47:59.629Z** (Node v24.19.0, win32 x64).
 
 ## Measured Metrics
 
 | Metric | Result | Target / Budget |
 |---|---|---|
-| Deterministic engine (`buildPlanFacts`, 200 runs) | p50: **1.76 ms**, p95: **2.65 ms** | < 5 ms |
-| Fallback planner pipeline (20 runs) | p50: **2.1 ms**, p95: **3.41 ms** | < 10 ms |
-| Live Gemini `generatePlanJson` | **Skipped due to transient API error (HTTP 503 UNAVAILABLE: This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.)** | 1 call (< 12 s timeout) |
-| Compiled `.next/static` JS (total gzipped across all chunks) | **229.9 KB** | No chart lib, self-hosted fonts |
-| Compiled `.next/static` total (raw / gzip) | 923.2 KB / 366.7 KB | Compact asset footprint |
+| Deterministic engine (`buildPlanFacts`, 200 runs) | p50: **1.7 ms**, p95: **2.82 ms** | < 5 ms |
+| Fallback planner pipeline (20 runs) | p50: **2.11 ms**, p95: **2.89 ms** | < 10 ms |
+| Live Gemini `generatePlanJson` | **Skipped due to transient API error (This operation was aborted)** | 1 call (< 12 s timeout) |
+| Compiled `.next/static` JS (total gzipped across all chunks) | **231.6 KB** | No chart lib, self-hosted fonts |
+| Compiled `.next/static` total (raw / gzip) | 928.5 KB / 368.4 KB | Compact asset footprint |
 
 ## Architectural Efficiency Tactics
 

@@ -158,18 +158,29 @@ export function AirHourlyTable({ slice, dict }: { slice: readonly HourPoint[]; d
   return (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse text-left text-sm">
+        <caption className="sr-only">{dict.today.chartTitle}</caption>
         <thead>
           <tr className="border-b border-slate-300 dark:border-slate-700">
-            <th className="px-2 py-2 font-semibold">{dict.today.tableColHour}</th>
-            <th className="px-2 py-2 font-semibold">{dict.today.tableColPm25}</th>
-            <th className="px-2 py-2 font-semibold">{dict.today.tableColPm10}</th>
-            <th className="px-2 py-2 font-semibold">{dict.today.tableColAqi}</th>
+            <th scope="col" className="px-2 py-2 font-semibold">
+              {dict.today.tableColHour}
+            </th>
+            <th scope="col" className="px-2 py-2 font-semibold">
+              {dict.today.tableColPm25}
+            </th>
+            <th scope="col" className="px-2 py-2 font-semibold">
+              {dict.today.tableColPm10}
+            </th>
+            <th scope="col" className="px-2 py-2 font-semibold">
+              {dict.today.tableColAqi}
+            </th>
           </tr>
         </thead>
         <tbody>
           {slice.map((pt) => (
             <tr key={pt.t} className="border-b border-slate-200 dark:border-slate-800">
-              <td className="px-2 py-1.5 font-mono">{pt.t.slice(11, 16)}</td>
+              <th scope="row" className="px-2 py-1.5 font-mono font-normal">
+                {pt.t.slice(11, 16)}
+              </th>
               <td className="px-2 py-1.5">{pt.pm25.toFixed(1)}</td>
               <td className="px-2 py-1.5">{pt.pm10.toFixed(1)}</td>
               <td className="px-2 py-1.5">{aqiFromPm25(pt.pm25)}</td>

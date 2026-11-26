@@ -101,11 +101,14 @@ async function runToolCallBatch(
 
 async function streamFinalTurn(
   ai: GoogleGenAI,
-  model: string,
-  contents: Content[],
-  thinkingConfig: ThinkingConfig | undefined,
   req: ChatToolRoundRequest,
+  opts: {
+    model: string;
+    contents: Content[];
+    thinkingConfig?: ThinkingConfig;
+  },
 ): Promise<string> {
+  const { model, contents, thinkingConfig } = opts;
   const stream = await ai.models.generateContentStream({
     model,
     contents,
@@ -166,7 +169,7 @@ async function runSingleModelChat(
     contents.push({ role: "user", parts: responseParts });
   }
 
-  const fullText = await streamFinalTurn(ai, model, contents, thinkingConfig, req);
+  const fullText = await streamFinalTurn(ai, req, { model, contents, thinkingConfig });
   return { text: fullText, toolCallsExecuted, toolNumbers, model };
 }
 

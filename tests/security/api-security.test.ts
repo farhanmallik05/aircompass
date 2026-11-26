@@ -13,6 +13,7 @@ import {
 import { wrapUntrustedNote } from "@/lib/security/sanitize";
 import { ChatRequestSchema } from "@/lib/schemas";
 import { PROMPT_CANARY } from "@/lib/llm/guard";
+import robots from "@/app/robots";
 
 describe("API security controls (strict validation, size cap, rate limit, injection isolation)", () => {
   beforeEach(() => {
@@ -92,11 +93,33 @@ describe("API security controls (strict validation, size cap, rate limit, inject
         }),
       );
       if (res.status === 429) {
+        expect(res.headers.get("retry-after")).toBe("60");
         saw429 = true;
         break;
       }
     }
     expect(saw429).toBe(true);
+
+    // Invalid Content-Length and default place name + robots disallow /api/
+    const badLenRes = await planPost(
+      new Request("http://localhost/api/plan", {
+        method: "POST",
+        headers: { "content-type": "application/json", "content-length": "bad" },
+        body: "{}",
+      }),
+    );
+    expect(badLenRes.status).toBe(400);
+
+    const anonCoordRes = await contextGet(
+      new Request("http://localhost/api/context?lat=28.5&lon=77.3&mode=demo"),
+    );
+    expect(anonCoordRes.status).toBe(200);
+    const anonBody = (await anonCoordRes.json()) as { context: { place: { name: string } } };
+    expect(anonBody.context.place.name).toBe("Selected location");
+
+    expect(robots()).toEqual({
+      rules: [{ userAgent: "*", allow: "/", disallow: "/api/" }],
+    });
 
     const oldCap = process.env.DAILY_LLM_CAP;
     process.env.DAILY_LLM_CAP = "2";

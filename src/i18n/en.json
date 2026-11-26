@@ -125,6 +125,7 @@
     "errorSummary": "Please check the highlighted fields before continuing.",
     "searchError": "Could not search places right now. Keeping saved place.",
     "searchEmpty": "No matching places found. Try a broader city name.",
+    "searchCount": "{count} matching places shown",
     "geoError": "Location permission unavailable or denied; please search by city name.",
     "membersError": "Include at least 1 adult, child, or senior member.",
     "roomAreaError": "Main room area must be between 4 and 500 m².",

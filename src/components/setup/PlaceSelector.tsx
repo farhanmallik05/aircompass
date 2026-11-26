@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { fmt, type Dictionary } from "@/lib/client/i18n";
+import { isRecord, isValidPlace } from "@/lib/client/storage";
 import type { GeoPlace, Profile } from "@/lib/types";
 
 function PlaceResultsList({
@@ -30,6 +31,19 @@ function PlaceResultsList({
   );
 }
 
+function parseGeoPlace(item: unknown): GeoPlace | null {
+  if (!isRecord(item)) return null;
+  const admin1 = typeof item.admin1 === "string" ? item.admin1 : undefined;
+  if (!isValidPlace(item)) return null;
+  return {
+    name: item.name,
+    country: item.country,
+    lat: item.lat,
+    lon: item.lon,
+    ...(admin1 ? { admin1 } : {}),
+  };
+}
+
 async function queryRemotePlaces(
   query: string,
   dict: Dictionary,
@@ -37,9 +51,18 @@ async function queryRemotePlaces(
   try {
     const res = await fetch(`/api/context?q=${encodeURIComponent(query)}`);
     if (!res.ok) return { places: [], status: dict.setup.searchError };
-    const data = (await res.json()) as { places?: GeoPlace[] };
-    const found = data.places ?? [];
-    return { places: found, status: found.length === 0 ? dict.setup.searchEmpty : null };
+    const raw: unknown = await res.json();
+    if (!isRecord(raw) || !Array.isArray(raw.places)) {
+      return { places: [], status: dict.setup.searchError };
+    }
+    const found = raw.places.map(parseGeoPlace).filter((p): p is GeoPlace => p !== null);
+    return {
+      places: found,
+      status:
+        found.length === 0
+          ? dict.setup.searchEmpty
+          : fmt(dict.setup.searchCount, { count: String(found.length) }),
+    };
   } catch (err) {
     console.warn(
       "[PlaceSelector] queryRemotePlaces failed:",
@@ -73,6 +96,12 @@ function PlaceSearchInputs({
         autoComplete="address-level2"
         placeholder={dict.setup.placeSearchPlaceholder}
         onChange={(e) => onQueryChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            onSearch();
+          }
+        }}
         className="min-h-11 flex-1 rounded-lg border border-slate-400 bg-white px-3 py-2 text-base text-slate-900 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100"
       />
       <button

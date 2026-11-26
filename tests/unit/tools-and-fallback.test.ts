@@ -14,6 +14,7 @@ import {
   runGroundedChat,
 } from "@/lib/llm/chat";
 import { buildTokens } from "@/lib/llm/tokens";
+import { buildPlannerUserPrompt } from "@/lib/llm/prompt";
 import { PROMPT_CANARY } from "@/lib/llm/guard";
 import type { LlmClient } from "@/lib/llm/client";
 
@@ -21,6 +22,9 @@ describe("LLM tools, fallback wording, planner extraction, and chat safety", () 
   it("executeSimulateScenario rejects invalid arguments and handles full scenario patches", () => {
     const ctx = getDemoContext();
     const base = baselineScenario(SAMPLE_FAMILY_PROFILE);
+
+    const invalidNull = executeSimulateScenario(null, SAMPLE_FAMILY_PROFILE, ctx, base);
+    expect(invalidNull.ok).toBe(true);
 
     const invalid = executeSimulateScenario(
       { commuteDaysPerWeek: 99 },
@@ -53,9 +57,18 @@ describe("LLM tools, fallback wording, planner extraction, and chat safety", () 
     expect(patched.rangeUgM3).toHaveLength(2);
     expect(patched.assumptions?.length).toBeGreaterThan(0);
 
-    // Zero PM2.5 edge case produces 0% delta cleanly without division error
+    // Zero PM2.5 + induction (zero cooking source) produces 0% delta cleanly without division error
+    const inductionProfile = {
+      ...SAMPLE_FAMILY_PROFILE,
+      home: { ...SAMPLE_FAMILY_PROFILE.home, cooking: "induction" as const },
+    };
     const zeroCtx = { ...ctx, hours: ctx.hours.map((h) => ({ ...h, pm25: 0 })) };
-    const zeroRes = executeSimulateScenario({}, SAMPLE_FAMILY_PROFILE, zeroCtx, base);
+    const zeroRes = executeSimulateScenario(
+      {},
+      inductionProfile,
+      zeroCtx,
+      baselineScenario(inductionProfile),
+    );
     expect(zeroRes.ok).toBe(true);
     expect(zeroRes.deltaPct).toBe(0);
   });
@@ -67,12 +80,32 @@ describe("LLM tools, fallback wording, planner extraction, and chat safety", () 
     expect(hiPlan.cards.length).toBeGreaterThanOrEqual(5);
     expect(hiPlan.tradeoffs.length).toBeGreaterThan(0);
     expect(hiPlan.memberNotes.some((m) => m.group === "child")).toBe(true);
+
+    const cleanCtx = {
+      ...ctx,
+      hours: ctx.hours.map((h) => ({ ...h, pm25: 5, pm10: 10, usAqi: 21 })),
+    };
+    const cleanFacts = buildPlanFacts(SAMPLE_FAMILY_PROFILE, cleanCtx).facts;
+    const cleanPlan = buildFallbackPlan(cleanFacts);
+    expect(cleanPlan.cards.length).toBeGreaterThanOrEqual(5);
   });
 
   it("planner handles daily quota exhaustion and extracts fenced/prefixed JSON cleanly", async () => {
     const ctx = getDemoContext();
     const { facts } = buildPlanFacts(SAMPLE_FAMILY_PROFILE, ctx);
     const tokens = buildTokens(facts);
+    const hiFacts = buildPlanFacts(
+      { ...SAMPLE_FAMILY_PROFILE, lang: "hi", notes: "Asthma" },
+      ctx,
+    ).facts;
+    const hiTokens = buildTokens(hiFacts);
+    expect(hiTokens).toHaveProperty("aqi.now");
+    expect(buildPlannerUserPrompt(SAMPLE_FAMILY_PROFILE, hiFacts, hiTokens)).toContain(
+      "householdNote",
+    );
+    expect(buildPlannerUserPrompt(SAMPLE_FAMILY_PROFILE, facts, tokens)).not.toContain(
+      "householdNote",
+    );
     const dummyClient: LlmClient = {
       generatePlanJson: async () => ({ rawText: "", model: "mock" }),
       chatWithTools: async () => ({
@@ -198,5 +231,56 @@ describe("LLM tools, fallback wording, planner extraction, and chat safety", () 
     });
     expect(hiCaught.faithful).toBe(false);
     expect(hiCaught.fallback).toBe(true);
+
+    // EN error fallback + non-streaming safe chunk delivery from trimmed reply
+    const enErr = await runGroundedChat({
+      profile: SAMPLE_FAMILY_PROFILE,
+      context: ctx,
+      history: [],
+      message: "Help",
+      client: throwClient,
+    });
+    expect(enErr.text).toContain("Engine summary (model error or timeout)");
+
+    const nonStreamOkClient: LlmClient = {
+      generatePlanJson: async () => ({ rawText: "", model: "mock" }),
+      chatWithTools: async () => ({
+        text: "  Keep windows closed during peak smog hours.  ",
+        toolCallsExecuted: 0,
+        toolNumbers: [],
+        model: "mock",
+      }),
+    };
+    const deliveredChunks: string[] = [];
+    const safeReply = await runGroundedChat({
+      profile: SAMPLE_FAMILY_PROFILE,
+      context: ctx,
+      history: [],
+      message: "Window advice",
+      client: nonStreamOkClient,
+      onTextChunk: (c) => deliveredChunks.push(c),
+    });
+    expect(safeReply.faithful).toBe(true);
+    expect(deliveredChunks).toEqual(["Keep windows closed during peak smog hours."]);
+
+    // Empty reply and sanitizedNote context payload branch
+    const emptyReplyClient: LlmClient = {
+      generatePlanJson: async () => ({ rawText: "", model: "mock" }),
+      chatWithTools: async () => ({
+        text: "   ",
+        toolCallsExecuted: 0,
+        toolNumbers: [],
+        model: "mock",
+      }),
+    };
+    const emptyCaught = await runGroundedChat({
+      profile: { ...SAMPLE_FAMILY_PROFILE, notes: "Elder has asthma" },
+      context: ctx,
+      history: [],
+      message: "Advice",
+      client: emptyReplyClient,
+    });
+    expect(emptyCaught.faithful).toBe(false);
+    expect(emptyCaught.fallback).toBe(true);
   });
 });

@@ -15,7 +15,7 @@ function parseCommuteMode(value: string): CommuteMode {
   return COMMUTE_MODES.find((m) => m === value) ?? "car";
 }
 
-export interface SimulatorControlsProps {
+interface SimulatorControlsProps {
   dict: Dictionary;
   purifier: PurifierMode;
   bestWindowsOnly: boolean;

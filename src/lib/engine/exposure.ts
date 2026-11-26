@@ -10,92 +10,96 @@ import {
 } from "./sensitivity";
 import type { Scenario } from "../types";
 
-export interface ExposureBreakdown {
+interface ExposureBreakdown {
   exposureUgM3: number;
   hourlyIndoorMean: number[];
   hourlyOutdoor: number[];
 }
 
-function stepRoomHour(
-  cStart: number,
-  cOut: number,
-  clockHour: number,
-  scenario: Scenario,
-  qFull: number,
-  openSet: ReadonlySet<number>,
-  purSet: ReadonlySet<number>,
-  params: ModelParamSet,
-) {
-  const a = airExchangeForHour(scenario.envelope, openSet.has(clockHour), params);
-  const q = purSet.has(clockHour) ? qFull : 0;
-  const S = cookingSourceForHour(clockHour, scenario.cooking, scenario.cookVent, params);
-  return stepIndoor(cStart, cOut, a, { P: params.P, k: params.k, q, S });
+interface RoomStepCtx {
+  scenario: Scenario;
+  qFull: number;
+  openSet: ReadonlySet<number>;
+  purSet: ReadonlySet<number>;
+  params: ModelParamSet;
+}
+
+interface DaySlotInput {
+  cOut: number;
+  clockHour: number;
+}
+
+interface DayHourConcentrations extends DaySlotInput {
+  cHome: number;
+  cWork: number;
+}
+
+function stepRoomHour(cStart: number, slot: DaySlotInput, ctx: RoomStepCtx) {
+  const { scenario, qFull, openSet, purSet, params } = ctx;
+  const a = airExchangeForHour(scenario.envelope, openSet.has(slot.clockHour), params);
+  const q = purSet.has(slot.clockHour) ? qFull : 0;
+  const S = cookingSourceForHour(slot.clockHour, scenario.cooking, scenario.cookVent, params);
+  return stepIndoor(cStart, slot.cOut, a, { P: params.P, k: params.k, q, S });
 }
 
 function simulate24hIndoor(
-  cOut24: readonly number[],
-  clockHours24: readonly number[],
-  scenario: Scenario,
-  roomAreaM2: number,
-  params: ModelParamSet,
-): number[] {
+  daySlots: readonly DaySlotInput[],
+  firstSlot: DaySlotInput,
+  ctx: { scenario: Scenario; roomAreaM2: number; params: ModelParamSet },
+): { cHome: number; clockHour: number; cOut: number }[] {
+  const { scenario, roomAreaM2, params } = ctx;
   const openSet = new Set(scenario.windowsOpenHours);
   const purSet = new Set(scenario.purifierHours);
   const cadr = PURIFIER_CADR_M3H[scenario.purifier];
   const qFull = cadr > 0 ? purifierQ(cadr, roomAreaM2, params.purifierDerate) : 0;
+  const stepCtx: RoomStepCtx = { scenario, qFull, openSet, purSet, params };
 
   // Initialize at hour-0 steady state so constant Cout matches the steady-state identity exactly,
   // then run one 24h cyclic pass to settle diurnal carryover.
-  const a0 = airExchangeForHour(scenario.envelope, openSet.has(clockHours24[0]), params);
-  const q0 = purSet.has(clockHours24[0]) ? qFull : 0;
-  const s0 = cookingSourceForHour(clockHours24[0], scenario.cooking, scenario.cookVent, params);
-  let c = steadyState(cOut24[0], a0, { P: params.P, k: params.k, q: q0, S: s0 });
+  const a0 = airExchangeForHour(scenario.envelope, openSet.has(firstSlot.clockHour), params);
+  const q0 = purSet.has(firstSlot.clockHour) ? qFull : 0;
+  const s0 = cookingSourceForHour(firstSlot.clockHour, scenario.cooking, scenario.cookVent, params);
+  let c = steadyState(firstSlot.cOut, a0, { P: params.P, k: params.k, q: q0, S: s0 });
 
-  for (let i = 0; i < 24; i++) {
-    c = stepRoomHour(c, cOut24[i], clockHours24[i], scenario, qFull, openSet, purSet, params).cEnd;
+  for (const slot of daySlots) {
+    c = stepRoomHour(c, slot, stepCtx).cEnd;
   }
 
-  const means: number[] = [];
-  for (let i = 0; i < 24; i++) {
-    const step = stepRoomHour(
-      c,
-      cOut24[i],
-      clockHours24[i],
-      scenario,
-      qFull,
-      openSet,
-      purSet,
-      params,
-    );
-    means.push(step.cMean);
+  return daySlots.map((slot) => {
+    const step = stepRoomHour(c, slot, stepCtx);
     c = step.cEnd;
-  }
-  return means;
+    return { ...slot, cHome: step.cMean };
+  });
 }
 
-function simulateWorkIndoor(cOut24: readonly number[], params: ModelParamSet): number[] {
+function simulateWorkIndoor(
+  homeSlots: readonly { cOut: number; clockHour: number; cHome: number }[],
+  firstCOut: number,
+  params: ModelParamSet,
+): DayHourConcentrations[] {
   const aWork = params.aNormalClosed;
-  let c = steadyState(cOut24[0], aWork, { P: params.P, k: params.k, q: 0, S: 0 });
-  for (let i = 0; i < 24; i++) {
-    c = stepIndoor(c, cOut24[i], aWork, { P: params.P, k: params.k, q: 0, S: 0 }).cEnd;
+  let c = steadyState(firstCOut, aWork, { P: params.P, k: params.k, q: 0, S: 0 });
+  for (const slot of homeSlots) {
+    c = stepIndoor(c, slot.cOut, aWork, { P: params.P, k: params.k, q: 0, S: 0 }).cEnd;
   }
-  const means: number[] = [];
-  for (let i = 0; i < 24; i++) {
-    const step = stepIndoor(c, cOut24[i], aWork, { P: params.P, k: params.k, q: 0, S: 0 });
-    means.push(step.cMean);
+  return homeSlots.map((slot) => {
+    const step = stepIndoor(c, slot.cOut, aWork, { P: params.P, k: params.k, q: 0, S: 0 });
     c = step.cEnd;
-  }
-  return means;
+    return { ...slot, cWork: step.cMean };
+  });
 }
 
 function slotConcentration(
   location: ReturnType<typeof buildDaySchedule>[number][number]["location"],
-  cHome: number,
-  cWork: number,
-  cOut: number,
-  n95Applied: boolean,
-  params: ModelParamSet,
+  ctx: {
+    cHome: number;
+    cWork: number;
+    cOut: number;
+    n95Applied: boolean;
+    params: ModelParamSet;
+  },
 ): number {
+  const { cHome, cWork, cOut, n95Applied, params } = ctx;
   let c: number;
   switch (location) {
     case "home":
@@ -122,36 +126,49 @@ function slotConcentration(
 }
 
 function weightedDayExposure(
-  cOut24: readonly number[],
-  cHome24: readonly number[],
-  cWork24: readonly number[],
-  clockHours24: readonly number[],
+  hours: readonly DayHourConcentrations[],
   scenario: Scenario,
-  commuteKm: number,
-  isCommuteDay: boolean,
-  params: ModelParamSet,
+  opts: { commuteKm: number; isCommuteDay: boolean; params: ModelParamSet },
 ): number {
-  const schedule = buildDaySchedule(scenario, commuteKm, isCommuteDay);
+  const schedule = buildDaySchedule(scenario, opts.commuteKm, opts.isCommuteDay);
   let num = 0;
   let den = 0;
-  for (let i = 0; i < 24; i++) {
-    const ch = clockHours24[i];
-    const slots = schedule[ch] ?? schedule[i];
+  for (const hour of hours) {
+    const slots = schedule[hour.clockHour];
+    if (!slots) continue;
     for (const s of slots) {
-      const c = slotConcentration(
-        s.location,
-        cHome24[i],
-        cWork24[i],
-        cOut24[i],
-        scenario.n95Outdoors && s.n95Eligible,
-        params,
-      );
+      const c = slotConcentration(s.location, {
+        cHome: hour.cHome,
+        cWork: hour.cWork,
+        cOut: hour.cOut,
+        n95Applied: scenario.n95Outdoors && s.n95Eligible,
+        params: opts.params,
+      });
       num += c * s.v * s.f;
       den += s.v * s.f;
     }
   }
   if (den <= 0) throw new RangeError("total breathing weight must be > 0");
   return num / den;
+}
+
+function buildHourGrid(
+  hourlyPm25: readonly number[],
+  timestamps: readonly string[] | undefined,
+): { cOut24: number[]; daySlots: DaySlotInput[]; firstSlot: DaySlotInput } {
+  const cOut24: number[] = [];
+  while (cOut24.length < 24) {
+    for (const v of hourlyPm25) {
+      if (cOut24.length < 24) cOut24.push(v);
+    }
+  }
+  const daySlots: DaySlotInput[] = cOut24.map((cOut, i) => {
+    const ts = timestamps?.[i];
+    return { cOut, clockHour: ts ? parseClockHour(ts, i) : i };
+  });
+  const firstSlot = daySlots[0];
+  if (!firstSlot) throw new RangeError("hourlyPm25 must be non-empty");
+  return { cOut24, daySlots, firstSlot };
 }
 
 /** Computes 24h breathing-weighted exposure (ug/m3) over a 24-hour outdoor PM2.5 series. */
@@ -170,52 +187,38 @@ export function computeExposure(
     if (!Number.isFinite(v) || v < 0) throw new RangeError(`invalid outdoor PM2.5: ${v}`);
   }
   const params = options.params ?? BASE_PARAMS;
-  const cOut24 = Array.from({ length: 24 }, (_, i) => hourlyPm25[i % hourlyPm25.length]);
-  const clockHours24 = Array.from({ length: 24 }, (_, i) =>
-    options.timestamps?.[i] ? parseClockHour(options.timestamps[i], i) : i,
-  );
-
-  const cHome24 = simulate24hIndoor(cOut24, clockHours24, scenario, options.roomAreaM2, params);
-  const cWork24 = simulateWorkIndoor(cOut24, params);
+  const { cOut24, daySlots, firstSlot } = buildHourGrid(hourlyPm25, options.timestamps);
+  const homeData = simulate24hIndoor(daySlots, firstSlot, {
+    scenario,
+    roomAreaM2: options.roomAreaM2,
+    params,
+  });
+  const hourData = simulateWorkIndoor(homeData, firstSlot.cOut, params);
+  const cHome24 = homeData.map((h) => h.cHome);
 
   const commuteDays = Math.min(7, Math.max(0, scenario.commuteDaysPerWeek));
   let exposureUgM3 = 0;
   if (commuteDays > 0 && scenario.commuteMode !== "wfh" && options.commuteKm > 0) {
-    const commuteDayExp = weightedDayExposure(
-      cOut24,
-      cHome24,
-      cWork24,
-      clockHours24,
-      scenario,
-      options.commuteKm,
-      true,
+    const commuteDayExp = weightedDayExposure(hourData, scenario, {
+      commuteKm: options.commuteKm,
+      isCommuteDay: true,
       params,
-    );
+    });
     const homeDayExp =
       commuteDays < 7
-        ? weightedDayExposure(
-            cOut24,
-            cHome24,
-            cWork24,
-            clockHours24,
-            scenario,
-            options.commuteKm,
-            false,
+        ? weightedDayExposure(hourData, scenario, {
+            commuteKm: options.commuteKm,
+            isCommuteDay: false,
             params,
-          )
+          })
         : 0;
     exposureUgM3 = (commuteDays * commuteDayExp + (7 - commuteDays) * homeDayExp) / 7;
   } else {
-    exposureUgM3 = weightedDayExposure(
-      cOut24,
-      cHome24,
-      cWork24,
-      clockHours24,
-      scenario,
-      options.commuteKm,
-      false,
+    exposureUgM3 = weightedDayExposure(hourData, scenario, {
+      commuteKm: options.commuteKm,
+      isCommuteDay: false,
       params,
-    );
+    });
   }
 
   return {

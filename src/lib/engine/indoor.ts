@@ -1,4 +1,4 @@
-export interface HomeParams {
+interface HomeParams {
   /** penetration factor (0..1) */ P: number;
   /** deposition rate, 1/h */ k: number;
   /** effective purifier air changes per hour */ q: number;

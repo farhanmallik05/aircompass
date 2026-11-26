@@ -6,7 +6,7 @@ export { logServerError };
 
 const MAX_BODY_BYTES = 8192;
 
-export type JsonBodyResult =
+type JsonBodyResult =
   { ok: true; data: unknown } | { ok: false; status: 400 | 413 | 415; error: string };
 
 async function readStreamWithLimit(
@@ -47,8 +47,14 @@ export async function readBoundedJson(
   }
 
   const lenHeader = request.headers.get("content-length");
-  if (lenHeader && Number(lenHeader) > maxBytes) {
-    return { ok: false, status: 413, error: "Request body exceeds 8 KB limit" };
+  if (lenHeader !== null) {
+    const trimmedLen = lenHeader.trim();
+    if (!/^\d+$/.test(trimmedLen)) {
+      return { ok: false, status: 400, error: "Invalid Content-Length header" };
+    }
+    if (Number(trimmedLen) > maxBytes) {
+      return { ok: false, status: 413, error: "Request body exceeds 8 KB limit" };
+    }
   }
 
   let text: string;
@@ -72,14 +78,10 @@ export async function readBoundedJson(
   }
 }
 
-export function jsonError(status: number, message: string): Response {
-  return Response.json(
-    { error: message },
-    {
-      status,
-      headers: { "Cache-Control": "no-store" },
-    },
-  );
+export function jsonError(status: number, message: string, extraHeaders?: HeadersInit): Response {
+  const headers = new Headers(extraHeaders);
+  headers.set("Cache-Control", "no-store");
+  return Response.json({ error: message }, { status, headers });
 }
 
 /** Applies rate limiting, bounded JSON parsing, and Zod validation for POST routes. */
@@ -91,7 +93,12 @@ export async function validateJsonPost<T>(
 ): Promise<{ ok: true; data: T; ip: string } | { ok: false; response: Response }> {
   const ip = clientIpFromHeaders(request.headers);
   if (!takeIpToken(scope, ip)) {
-    return { ok: false, response: jsonError(429, "Rate limit exceeded; please retry shortly.") };
+    return {
+      ok: false,
+      response: jsonError(429, "Rate limit exceeded; please retry shortly.", {
+        "Retry-After": "60",
+      }),
+    };
   }
 
   const body = await readBoundedJson(request, MAX_BODY_BYTES);

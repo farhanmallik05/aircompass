@@ -112,47 +112,31 @@ describe("engine properties and ordering invariants", () => {
       commute: { mode: "bus", km: 12, daysPerWeek: 5 },
     };
     const busBase = baselineScenario(busProfile);
-    const hepa = evaluateActionImpact(
-      ACTION_BY_ID.buy_hepa_purifier,
-      busProfile,
-      ctx,
-      busBase,
+    const hepa = evaluateActionImpact(ACTION_BY_ID.buy_hepa_purifier, busProfile, ctx, {
+      baseScenario: busBase,
       windows,
-    );
-    const diy = evaluateActionImpact(
-      ACTION_BY_ID.diy_box_fan_filter,
-      busProfile,
-      ctx,
-      busBase,
+    });
+    const diy = evaluateActionImpact(ACTION_BY_ID.diy_box_fan_filter, busProfile, ctx, {
+      baseScenario: busBase,
       windows,
-    );
-    const n95 = evaluateActionImpact(
-      ACTION_BY_ID.n95_for_open_transport,
-      busProfile,
-      ctx,
-      busBase,
+    });
+    const n95 = evaluateActionImpact(ACTION_BY_ID.n95_for_open_transport, busProfile, ctx, {
+      baseScenario: busBase,
       windows,
-    );
-    const exIn = evaluateActionImpact(
-      ACTION_BY_ID.exercise_indoors_when_poor,
-      busProfile,
-      ctx,
-      busBase,
+    });
+    const exIn = evaluateActionImpact(ACTION_BY_ID.exercise_indoors_when_poor, busProfile, ctx, {
+      baseScenario: busBase,
       windows,
-    );
-    const winAir = evaluateActionImpact(
-      ACTION_BY_ID.air_house_in_best_window,
-      busProfile,
-      ctx,
-      busBase,
+    });
+    const winAir = evaluateActionImpact(ACTION_BY_ID.air_house_in_best_window, busProfile, ctx, {
+      baseScenario: busBase,
       windows,
-    );
+    });
     const exShift = evaluateActionImpact(
       ACTION_BY_ID.shift_exercise_to_best_window,
       busProfile,
       ctx,
-      busBase,
-      windows,
+      { baseScenario: busBase, windows },
     );
 
     expect(hepa.exposureDeltaUgM3).toBeGreaterThan(diy.exposureDeltaUgM3);
@@ -171,13 +155,16 @@ describe("engine properties and ordering invariants", () => {
       ACTION_BY_ID.commute_to_public_transport,
       SAMPLE_CAR_PROFILE,
       ctx,
-      carBase,
-      windows,
+      { baseScenario: carBase, windows },
     );
     expect(carToBus.exposureDeltaUgM3).toBeLessThan(0);
     expect(carToBus.co2eKgPerYear).toBeCloseTo(576, 1);
 
-    const candidates = selectCandidates(SAMPLE_CAR_PROFILE, ctx, 5, carBase, windows);
+    const candidates = selectCandidates(SAMPLE_CAR_PROFILE, ctx, {
+      level: 5,
+      baseScenario: carBase,
+      windows,
+    });
     const busCandidate = candidates.find((c) => c.id === "commute_to_public_transport");
     expect(busCandidate?.tradeoff).toBe(true);
     expect(busCandidate?.mitigation).toBe("n95_for_open_transport");

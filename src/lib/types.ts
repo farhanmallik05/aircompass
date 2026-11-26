@@ -164,7 +164,7 @@ export interface Plan {
   tradeoffs: string[];
 }
 
-export type PlanOutcome = "ai" | "repaired" | "fallback";
+type PlanOutcome = "ai" | "repaired" | "fallback";
 
 export interface WindowRange {
   start: number;
@@ -228,9 +228,4 @@ export interface GeoPlace {
   country: string; // ISO alpha-2
   lat: number;
   lon: number;
-}
-
-export interface AirQualityProvider {
-  getContext(place: Profile["place"]): Promise<AirContext>;
-  searchPlaces(query: string): Promise<GeoPlace[]>;
 }

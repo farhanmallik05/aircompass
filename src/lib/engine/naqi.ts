@@ -22,7 +22,7 @@ const PM10: readonly Row[] = [
   [431, 510, 401, 500], // 510 is a convention as above
 ];
 
-export type NaqiCategory = "Good" | "Satisfactory" | "Moderate" | "Poor" | "Very Poor" | "Severe";
+type NaqiCategory = "Good" | "Satisfactory" | "Moderate" | "Poor" | "Very Poor" | "Severe";
 
 function subIndex(table: readonly Row[], c: number): number {
   if (!Number.isFinite(c) || c < 0) {

@@ -24,9 +24,9 @@ export function evaluateActionImpact(
   def: ActionDef,
   profile: Profile,
   context: AirContext,
-  baseScenario: Scenario,
-  windows: WindowSummary,
+  opts: { baseScenario: Scenario; windows: WindowSummary },
 ): Impact {
+  const { baseScenario, windows } = opts;
   const series = next24Series(context);
   const co2e = def.co2e?.(profile);
 

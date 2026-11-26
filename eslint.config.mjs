@@ -42,6 +42,8 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-non-null-assertion": "error",
       complexity: ["error", 12],
       "max-depth": ["error", 4],
+      "max-params": ["error", 4],
+      "max-lines": ["error", { max: 300, skipBlankLines: true, skipComments: true }],
       "max-lines-per-function": ["error", { max: 80, skipBlankLines: true, skipComments: true }],
     },
   },

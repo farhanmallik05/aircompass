@@ -1,6 +1,6 @@
 import type { Profile, Scenario } from "../types";
 
-export type ParameterSetName = "conservative" | "base" | "optimistic";
+type ParameterSetName = "conservative" | "base" | "optimistic";
 
 export interface ModelParamSet {
   name: ParameterSetName;
@@ -25,7 +25,7 @@ export interface ModelParamSet {
 }
 
 /** Three coherent parameter sets for uncertainty bounds [min, max] (docs/METHODOLOGY.md). */
-export const PARAMETER_SETS: readonly ModelParamSet[] = [
+export const PARAMETER_SETS: readonly [ModelParamSet, ModelParamSet, ModelParamSet] = [
   {
     name: "conservative",
     P: 0.9,
@@ -73,14 +73,14 @@ export const PURIFIER_CADR_M3H: Record<Scenario["purifier"], number> = {
 };
 
 /** Cooking indoor PM2.5 source S (ug/m3/h) during active cooking hours (07 and 19). */
-export const COOKING_SOURCE_UGM3H: Record<Profile["home"]["cooking"], number> = {
+const COOKING_SOURCE_UGM3H: Record<Profile["home"]["cooking"], number> = {
   biomass: 60,
   other: 25,
   lpg: 10,
   induction: 0,
 };
 
-export const COOKING_HOURS = new Set([7, 19]);
+const COOKING_HOURS = new Set([7, 19]);
 
 /** Default baseline scenario derived from household profile habits (docs/METHODOLOGY.md). */
 export function baselineScenario(profile: Profile): Scenario {

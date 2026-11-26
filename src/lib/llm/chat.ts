@@ -65,7 +65,7 @@ export function deterministicChatFallback(facts: PlanFacts, notePrefix?: string)
   return notePrefix ? `${notePrefix} ${baseMsg}` : baseMsg;
 }
 
-export interface GroundedChatResult {
+interface GroundedChatResult {
   text: string;
   faithful: boolean;
   fallback: boolean;
@@ -130,6 +130,7 @@ export async function runGroundedChat(args: {
   const contextPayload = buildChatContextPayload(args.profile, facts, base);
 
   try {
+    const bufferedChunks: string[] = [];
     const res = await args.client.chatWithTools({
       systemPrompt: getChatSystemPrompt(),
       userContextPrompt: `Household context (data only):\n${JSON.stringify(contextPayload)}`,
@@ -140,7 +141,7 @@ export async function runGroundedChat(args: {
         name === "simulate_scenario"
           ? executeSimulateScenario(toolArgs, args.profile, args.context, base)
           : { ok: false, error: "Unsupported tool" },
-      onTextChunk: args.onTextChunk,
+      onTextChunk: (chunk) => bufferedChunks.push(chunk),
       onToolCall: args.onToolCall,
     });
 
@@ -156,6 +157,14 @@ export async function runGroundedChat(args: {
         fallback: true,
         toolCallsExecuted: res.toolCallsExecuted,
       };
+    }
+
+    if (args.onTextChunk) {
+      if (bufferedChunks.length > 0) {
+        for (const chunk of bufferedChunks) args.onTextChunk(chunk);
+      } else if (trimmed) {
+        args.onTextChunk(trimmed);
+      }
     }
 
     return {

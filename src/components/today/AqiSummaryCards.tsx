@@ -181,7 +181,7 @@ export function AqiSummaryCards({
             <LevelIcon level={levelNow} className="h-4 w-4" />
             {dict.today.nowChip}: {aqiNow} ({dict.levels[LEVEL_DICT_KEY[levelNow]].name})
           </span>
-          <span className="text-xs opacity-90">
+          <span className="text-xs font-medium">
             {dict.today.providerAqiLabel}: {providerInstantAqi}
           </span>
         </div>

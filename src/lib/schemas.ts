@@ -3,7 +3,7 @@ import { PROMPT_CANARY } from "./llm/guard";
 import { sanitizeUserText } from "./security/sanitize";
 import { ACTION_IDS, COMMUTE_MODES, GROUPS } from "./types";
 
-export const PlaceSchema = z.strictObject({
+const PlaceSchema = z.strictObject({
   name: z.string().trim().min(1).max(120),
   lat: z.number().finite().min(-90).max(90),
   lon: z.number().finite().min(-180).max(180),
@@ -14,7 +14,7 @@ export const PlaceSchema = z.strictObject({
     .regex(/^[A-Z]{2}$/),
 });
 
-export const ProfileSchema = z.strictObject({
+const ProfileSchema = z.strictObject({
   lang: z.enum(["en", "hi"]),
   place: PlaceSchema,
   household: z.strictObject({
@@ -46,7 +46,7 @@ export const ProfileSchema = z.strictObject({
     .optional(),
 });
 
-export const HourPointSchema = z.strictObject({
+const HourPointSchema = z.strictObject({
   t: z.string().min(4).max(40),
   pm25: z.number().finite().min(0).max(2000),
   pm10: z.number().finite().min(0).max(3000),
@@ -56,7 +56,7 @@ export const HourPointSchema = z.strictObject({
   windKmh: z.number().finite().min(0).max(250).optional(),
 });
 
-export const AirContextSchema = z.strictObject({
+const AirContextSchema = z.strictObject({
   place: PlaceSchema,
   source: z.enum(["live", "demo"]),
   dataNote: z.enum(["cams_europe_11km", "cams_global_25_45km", "recorded", "illustrative"]),
@@ -91,7 +91,7 @@ export const PlanRequestSchema = z.strictObject({
   context: AirContextSchema,
 });
 
-export const ChatTurnSchema = z.strictObject({
+const ChatTurnSchema = z.strictObject({
   role: z.enum(["user", "assistant"]),
   text: z
     .string()

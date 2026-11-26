@@ -69,7 +69,8 @@ const overall = (p25, p10) => {
 };
 const P = 0.8,
   K = 0.3;
-const step = (c0, cout, a, q = 0, S = 0) => {
+const step = (c0, cout, a, opts = {}) => {
+  const { q = 0, S = 0 } = opts;
   const l = a + K + q,
     css = (P * a * cout + S) / l,
     d = Math.exp(-l);
@@ -156,7 +157,7 @@ const golden = {
     { cStart: 100, cOut: 200, a: 0.7, q: r6(qH), S: 0 },
     { cStart: 20, cOut: 20, a: 0.7, q: 0, S: 10 },
   ].map((i) => {
-    const r = step(i.cStart, i.cOut, i.a, i.q, i.S);
+    const r = step(i.cStart, i.cOut, i.a, { q: i.q, S: i.S });
     return { ...i, cSS: r6(r.cSS), cEnd: r6(r.cEnd), cMean: r6(r.cMean) };
   }),
   purifier_q_15m2_room: { hepa_cadr250: r6(qH), diy_cadr200: r6(qD), derate: 0.5, ceiling_m: 2.7 },

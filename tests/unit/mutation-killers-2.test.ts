@@ -80,7 +80,11 @@ describe("select.ts budgetAllows (lines 18-19)", () => {
   it("budget='zero' allows ONLY cost=0, not cost=1 or cost=2", () => {
     const p: Profile = { ...baseProfile, budget: "zero" };
     const ctx = makeCtx(100);
-    const cands = selectCandidates(p, ctx, 2 as Level, baselineScenario(p), WIN);
+    const cands = selectCandidates(p, ctx, {
+      level: 2 as Level,
+      baseScenario: baselineScenario(p),
+      windows: WIN,
+    });
     expect(cands.every((c) => c.cost === 0)).toBe(true);
     // Confirm no cost=1 items (e.g., n95 mask cost=1)
     expect(cands.some((c) => c.cost >= 1)).toBe(false);
@@ -93,7 +97,11 @@ describe("select.ts budgetAllows (lines 18-19)", () => {
       home: { ...baseProfile.home, purifier: "none" },
     };
     const ctx = makeCtx(150);
-    const cands = selectCandidates(p, ctx, 3 as Level, baselineScenario(p), WIN);
+    const cands = selectCandidates(p, ctx, {
+      level: 3 as Level,
+      baseScenario: baselineScenario(p),
+      windows: WIN,
+    });
     expect(cands.some((c) => c.id === "buy_hepa_purifier")).toBe(true);
   });
 
@@ -104,7 +112,11 @@ describe("select.ts budgetAllows (lines 18-19)", () => {
       home: { ...baseProfile.home, purifier: "none" },
     };
     const ctx = makeCtx(150);
-    const cands = selectCandidates(p, ctx, 3 as Level, baselineScenario(p), WIN);
+    const cands = selectCandidates(p, ctx, {
+      level: 3 as Level,
+      baseScenario: baselineScenario(p),
+      windows: WIN,
+    });
     expect(cands.every((c) => c.cost <= 1)).toBe(true);
     expect(cands.some((c) => c.cost === 1)).toBe(true); // diy_box_fan has cost=1
     expect(cands.some((c) => c.id === "buy_hepa_purifier")).toBe(false);
@@ -117,7 +129,11 @@ describe("select.ts scoreCandidate internals", () => {
     // commute_to_public_transport has co2e; walking has 0 co2e
     const ctx = makeCtx(100);
     const p: Profile = { ...baseProfile, commute: { mode: "car", km: 20, daysPerWeek: 5 } };
-    const cands = selectCandidates(p, ctx, 3 as Level, baselineScenario(p), WIN);
+    const cands = selectCandidates(p, ctx, {
+      level: 3 as Level,
+      baseScenario: baselineScenario(p),
+      windows: WIN,
+    });
     const transport = cands.find((c) => c.id === "commute_to_public_transport");
     const mopping = cands.find((c) => c.id === "damp_mop_dont_sweep");
     if (transport && mopping) {
@@ -134,7 +150,11 @@ describe("select.ts scoreCandidate internals", () => {
       habits: { morningOutdoorExercise: false, schoolRun: false },
     };
     const ctx = makeCtx(150);
-    const cands3 = selectCandidates(p3, ctx, 3 as Level, baselineScenario(p3), WIN);
+    const cands3 = selectCandidates(p3, ctx, {
+      level: 3 as Level,
+      baseScenario: baselineScenario(p3),
+      windows: WIN,
+    });
     // All scores should be in [−0.2, 1.0]
     for (const c of cands3) {
       expect(c.score).toBeGreaterThanOrEqual(-0.2);
@@ -151,7 +171,11 @@ describe("select.ts scoreCandidate internals", () => {
       home: { ...baseProfile.home, purifier: "none" },
     };
     const ctx = makeCtx(50);
-    const cands = selectCandidates(p, ctx, 2 as Level, baselineScenario(p), WIN);
+    const cands = selectCandidates(p, ctx, {
+      level: 2 as Level,
+      baseScenario: baselineScenario(p),
+      windows: WIN,
+    });
     const mop = cands.find((c) => c.id === "damp_mop_dont_sweep");
     const diy = cands.find((c) => c.id === "diy_box_fan_filter");
     if (mop && diy) {
@@ -164,7 +188,11 @@ describe("select.ts scoreCandidate internals", () => {
     // Test: an action that improves air (delta > 0) should NOT get penalty even if co2e < 300
     const p: Profile = { ...baseProfile, commute: { mode: "car", km: 1, daysPerWeek: 1 } };
     const ctx = makeCtx(50);
-    const cands = selectCandidates(p, ctx, 2 as Level, baselineScenario(p), WIN);
+    const cands = selectCandidates(p, ctx, {
+      level: 2 as Level,
+      baseScenario: baselineScenario(p),
+      windows: WIN,
+    });
     // All 'guidance' kind actions have delta=0 (not < 0), so no penalty → score >= 0
     const guidanceCands = cands.filter((c) => c.impact.kind === "guidance");
     for (const c of guidanceCands) {
@@ -178,7 +206,11 @@ describe("select.ts section filter (line 48)", () => {
   it("sections array covers exactly ['routine','indoor','swap'] — mutation to ['Stryker was here'] caught", () => {
     const ctx = makeCtx(150);
     const p: Profile = { ...baseProfile, budget: "medium" };
-    const cands = selectCandidates(p, ctx, 3 as Level, baselineScenario(p), WIN);
+    const cands = selectCandidates(p, ctx, {
+      level: 3 as Level,
+      baseScenario: baselineScenario(p),
+      windows: WIN,
+    });
     const sections = new Set(cands.map((c) => c.section));
     // All three sections must be represented
     expect(sections.has("routine")).toBe(true);
@@ -197,7 +229,11 @@ describe("select.ts tradeoff threshold (line 54)", () => {
       commute: { mode: "car", km: 10, daysPerWeek: 5 },
       habits: { morningOutdoorExercise: false, schoolRun: false },
     };
-    const cands = selectCandidates(p, ctx, 4 as Level, baselineScenario(p), WIN);
+    const cands = selectCandidates(p, ctx, {
+      level: 4 as Level,
+      baseScenario: baselineScenario(p),
+      windows: WIN,
+    });
     // Any action with tradeoff=true must have exposureDeltaUgM3 < -0.05 (strict less than)
     const tradeoffs = cands.filter((c) => c.tradeoff);
     for (const c of tradeoffs) {
@@ -217,7 +253,11 @@ describe("select.ts pick logic (lines 71-85)", () => {
   it("section filter: c.section === sec (not !==): only matching sections are pre-picked", () => {
     const ctx = makeCtx(100);
     const p: Profile = { ...baseProfile, budget: "medium" };
-    const cands = selectCandidates(p, ctx, 3 as Level, baselineScenario(p), WIN);
+    const cands = selectCandidates(p, ctx, {
+      level: 3 as Level,
+      baseScenario: baselineScenario(p),
+      windows: WIN,
+    });
     // Result must have entries from all three sections (routine, indoor, swap)
     const routine = cands.filter((c) => c.section === "routine");
     const indoor = cands.filter((c) => c.section === "indoor");
@@ -230,17 +270,25 @@ describe("select.ts pick logic (lines 71-85)", () => {
   it("picked.size < 14 (not <= 14 or >= 14): caps result at max 14", () => {
     const ctx = makeCtx(200);
     const p: Profile = { ...baseProfile, budget: "medium" };
-    const cands = selectCandidates(p, ctx, 3 as Level, baselineScenario(p), WIN);
+    const cands = selectCandidates(p, ctx, {
+      level: 3 as Level,
+      baseScenario: baselineScenario(p),
+      windows: WIN,
+    });
     expect(cands.length).toBeLessThanOrEqual(14);
   });
 
   it("sort: b.score - a.score descending (not b.score + a.score)", () => {
     const ctx = makeCtx(200);
     const p: Profile = { ...baseProfile, budget: "medium" };
-    const cands = selectCandidates(p, ctx, 3 as Level, baselineScenario(p), WIN);
+    const cands = selectCandidates(p, ctx, {
+      level: 3 as Level,
+      baseScenario: baselineScenario(p),
+      windows: WIN,
+    });
     // Verify descending score order
     for (let i = 0; i < cands.length - 1; i++) {
-      expect(cands[i].score).toBeGreaterThanOrEqual(cands[i + 1].score);
+      expect(cands[i]?.score).toBeGreaterThanOrEqual(cands[i + 1]?.score ?? 0);
     }
   });
 
@@ -248,7 +296,11 @@ describe("select.ts pick logic (lines 71-85)", () => {
     // Two sections always produce at least 2 from each; ties within scores are broken by id
     const ctx = makeCtx(100);
     const p: Profile = { ...baseProfile, budget: "zero" };
-    const cands = selectCandidates(p, ctx, 2 as Level, baselineScenario(p), WIN);
+    const cands = selectCandidates(p, ctx, {
+      level: 2 as Level,
+      baseScenario: baselineScenario(p),
+      windows: WIN,
+    });
     // Groups by score and checks within-group id ordering
     const scoreGroups = new Map<number, string[]>();
     for (const c of cands) {
@@ -258,7 +310,7 @@ describe("select.ts pick logic (lines 71-85)", () => {
     }
     for (const [, ids] of scoreGroups) {
       for (let i = 0; i < ids.length - 1; i++) {
-        expect(ids[i].localeCompare(ids[i + 1])).toBeLessThanOrEqual(0);
+        expect((ids[i] ?? "").localeCompare(ids[i + 1] ?? "")).toBeLessThanOrEqual(0);
       }
     }
   });
@@ -305,10 +357,10 @@ describe("schedule.ts speed guard (line 82)", () => {
     // metro speed=30 → 10km / 30 = 0.333h commute time
     const sc = makeSc({ commuteMode: "metro" });
     const cells = buildDaySchedule(sc, 10, true);
-    const metroSlot = cells[8].find((s) => s.location === "metro_cabin");
+    const metroSlot = (cells[8] ?? []).find((s) => s.location === "metro_cabin");
     expect(metroSlot).toBeTruthy();
     // Trip is 0.333h → fraction should be ~0.333
-    expect(metroSlot!.f).toBeCloseTo(10 / 30, 2);
+    expect(metroSlot?.f).toBeCloseTo(10 / 30, 2);
   });
 
   it("speed >= 0 would include wfh with speed=0 → prevent by using > 0", () => {
@@ -345,9 +397,9 @@ describe("schedule.ts clamped boundary (line 92)", () => {
     // 10km car at 20km/h = 0.5h → significant slot at h=8
     const sc = makeSc({ commuteMode: "car" });
     const cells = buildDaySchedule(sc, 10, true);
-    const carSlot = cells[8].find((s) => s.location === "car_cabin");
+    const carSlot = (cells[8] ?? []).find((s) => s.location === "car_cabin");
     expect(carSlot).toBeDefined();
-    expect(carSlot!.f).toBeCloseTo(0.5, 5);
+    expect(carSlot?.f).toBeCloseTo(0.5, 5);
   });
 });
 
@@ -357,30 +409,30 @@ describe("schedule.ts commute branch hours (lines 107-115)", () => {
     const sc = makeSc({ commuteMode: "car" });
     const cells = buildDaySchedule(sc, 10, true); // 10km / 20km/h = 0.5h
     // h=8: outbound commute
-    expect(cells[8].some((s) => s.location === "car_cabin")).toBe(true);
+    expect((cells[8] ?? []).some((s) => s.location === "car_cabin")).toBe(true);
     // h=17: return commute (not h=18 as start)
-    expect(cells[17].some((s) => s.location === "car_cabin")).toBe(true);
+    expect((cells[17] ?? []).some((s) => s.location === "car_cabin")).toBe(true);
     // h=9: trip is 0.5h so no spillover (tripHours < 1 → h=9 and h=18 have no extra commute)
-    const h9Car = cells[9].filter((s) => s.location === "car_cabin");
+    const h9Car = (cells[9] ?? []).filter((s) => s.location === "car_cabin");
     expect(h9Car).toHaveLength(0);
   });
 
   it("tripHours > 1 for spill-over: 25km at 20km/h = 1.25h → spills to h=9 and h=18", () => {
     const sc = makeSc({ commuteMode: "car" });
     const cells = buildDaySchedule(sc, 25, true); // 25/20 = 1.25h > 1 → spill
-    expect(cells[9].some((s) => s.location === "car_cabin")).toBe(true); // spillover at h=9
-    expect(cells[18].some((s) => s.location === "car_cabin")).toBe(true); // return spillover at h=18
+    expect((cells[9] ?? []).some((s) => s.location === "car_cabin")).toBe(true); // spillover at h=9
+    expect((cells[18] ?? []).some((s) => s.location === "car_cabin")).toBe(true); // return spillover at h=18
     // tripHours capped at 2 → fraction at h=9 is 0.25
-    const spill9 = cells[9].find((s) => s.location === "car_cabin");
-    expect(spill9!.f).toBeCloseTo(0.25, 2);
+    const spill9 = (cells[9] ?? []).find((s) => s.location === "car_cabin");
+    expect(spill9?.f).toBeCloseTo(0.25, 2);
   });
 
   it("Math.min(1, tripHours) caps slot at 1 hour (not Math.max)", () => {
     // 50km / 20km/h = 2.5h → capped at 2 (by Math.min(2, rawTripHours)), then h=8 slot = Math.min(1, 2) = 1
     const sc = makeSc({ commuteMode: "car" });
     const cells = buildDaySchedule(sc, 50, true);
-    const slot8 = cells[8].find((s) => s.location === "car_cabin");
-    expect(slot8!.f).toBeCloseTo(1.0, 5); // exactly 1 hour at h=8
+    const slot8 = (cells[8] ?? []).find((s) => s.location === "car_cabin");
+    expect(slot8?.f).toBeCloseTo(1.0, 5); // exactly 1 hour at h=8
   });
 });
 
@@ -390,7 +442,7 @@ describe("schedule.ts remainder slot (lines 121-125)", () => {
     // 10km car at 20km/h: used=0.5 at h=8 → rem=0.5 for home slot
     const sc = makeSc({ commuteMode: "car" });
     const cells = buildDaySchedule(sc, 10, true);
-    const h8 = cells[8];
+    const h8 = cells[8] ?? [];
     const totalF = h8.reduce((acc, s) => acc + s.f, 0);
     expect(totalF).toBeCloseTo(1.0, 10); // must sum to 1
     const homeSlot = h8.find((s) => s.location !== "car_cabin");
@@ -401,28 +453,28 @@ describe("schedule.ts remainder slot (lines 121-125)", () => {
     const sc = makeSc({ commuteMode: "wfh" });
     const cells = buildDaySchedule(sc, 0, false);
     // h=22: sleep boundary (>= 22 → sleep)
-    expect(cells[22].every((s) => s.location === "home")).toBe(true);
+    expect((cells[22] ?? []).every((s) => s.location === "home")).toBe(true);
     // h=5: sleep (5 < 6 → sleep)
-    expect(cells[5].every((s) => s.location === "home")).toBe(true);
+    expect((cells[5] ?? []).every((s) => s.location === "home")).toBe(true);
     // h=6: NOT sleep (6 is NOT < 6 and NOT >= 22) → home/indoorRest
-    expect(cells[6].every((s) => s.location === "home")).toBe(true);
+    expect((cells[6] ?? []).every((s) => s.location === "home")).toBe(true);
     // h=21: NOT sleep (21 < 22) → home
-    expect(cells[21].every((s) => s.location === "home")).toBe(true);
+    expect((cells[21] ?? []).every((s) => s.location === "home")).toBe(true);
   });
 
   it("work slot condition: activeCommute && h >= 9 && h < 17 (not h > 9 or h <= 17)", () => {
     const sc = makeSc({ commuteMode: "car" });
     const cells = buildDaySchedule(sc, 10, true);
     // h=9: work_indoor (9 >= 9 ✓ and 9 < 17 ✓)
-    expect(cells[9].some((s) => s.location === "work_indoor")).toBe(true);
+    expect((cells[9] ?? []).some((s) => s.location === "work_indoor")).toBe(true);
     // h=16: work_indoor (16 >= 9 ✓ and 16 < 17 ✓)
-    expect(cells[16].some((s) => s.location === "work_indoor")).toBe(true);
+    expect((cells[16] ?? []).some((s) => s.location === "work_indoor")).toBe(true);
     // h=17: NOT work_indoor (17 is NOT < 17) → return commute
-    const h17 = cells[17];
+    const h17 = cells[17] ?? [];
     const hasWork = h17.some((s) => s.location === "work_indoor");
     expect(hasWork).toBe(false);
     // h=8: NOT work_indoor (8 < 9) → commute
-    const h8 = cells[8];
+    const h8 = cells[8] ?? [];
     const hasWorkH8 = h8.some((s) => s.location === "work_indoor");
     expect(hasWorkH8).toBe(false);
   });

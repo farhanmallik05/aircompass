@@ -55,7 +55,7 @@ export function clearProviderCache(): void {
   contextCache.clear();
 }
 
-export function roundCoordKey(lat: number, lon: number): string {
+function roundCoordKey(lat: number, lon: number): string {
   return `${lat.toFixed(1)},${lon.toFixed(1)}`;
 }
 

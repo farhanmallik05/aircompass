@@ -43,7 +43,11 @@ export function buildPlanFacts(
   const naqi = profile.place.country === "IN" ? trailingNaqi(context.hours, nowIdx) : null;
 
   const base = baselineScenario(profile);
-  const candidates = selectCandidates(profile, context, levelToday, base, windows);
+  const candidates = selectCandidates(profile, context, {
+    level: levelToday,
+    baseScenario: base,
+    windows,
+  });
   const combined = buildCombinedScenario(
     defsForCandidates(candidates.slice(0, 7)),
     profile,
@@ -97,7 +101,7 @@ function extractJsonText(rawText: string): string {
   const trimmed = rawText.trim();
   if (trimmed.startsWith("{")) return trimmed;
   const fenced = /```(?:json)?\s*([\s\S]*?)\s*```/i.exec(trimmed);
-  if (fenced) return fenced[1].trim();
+  if (fenced?.[1] !== undefined) return fenced[1].trim();
   const firstBrace = trimmed.indexOf("{");
   const lastBrace = trimmed.lastIndexOf("}");
   if (firstBrace >= 0 && lastBrace > firstBrace) {
@@ -108,11 +112,14 @@ function extractJsonText(rawText: string): string {
 
 function collectPlanViolations(
   out: z.infer<typeof PlanOutSchema>,
-  candidates: readonly CandidateAction[],
-  candidateMap: ReadonlyMap<string, CandidateAction>,
-  tokens: Record<string, string>,
-  lang: Lang,
+  opts: {
+    candidates: readonly CandidateAction[];
+    candidateMap: ReadonlyMap<string, CandidateAction>;
+    tokens: Record<string, string>;
+    lang: Lang;
+  },
 ): string[] {
+  const { candidates, candidateMap, tokens, lang } = opts;
   const violations: string[] = [];
   const seenIds = new Set<string>();
 
@@ -174,7 +181,7 @@ export function validateAndRenderPlanOut(
 
   const out = zRes.data;
   const candidateMap = new Map(candidates.map((c) => [c.id, c]));
-  const violations = collectPlanViolations(out, candidates, candidateMap, tokens, lang);
+  const violations = collectPlanViolations(out, { candidates, candidateMap, tokens, lang });
   if (violations.length > 0) {
     return { ok: false, violations: [...new Set(violations)] };
   }

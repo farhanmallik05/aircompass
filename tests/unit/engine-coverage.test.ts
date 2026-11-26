@@ -223,42 +223,47 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
       4.5,
       true,
     );
-    expect(walkDay[8][0]).toEqual({ f: 1, location: "outdoor_walk", v: 2, n95Eligible: true });
-    expect(walkDay[17][0]).toEqual({ f: 1, location: "outdoor_walk", v: 2, n95Eligible: true });
+    expect(walkDay[8]?.[0]).toEqual({ f: 1, location: "outdoor_walk", v: 2, n95Eligible: true });
+    expect(walkDay[17]?.[0]).toEqual({ f: 1, location: "outdoor_walk", v: 2, n95Eligible: true });
 
     const longCycle = buildDaySchedule(
       { ...base, commuteMode: "cycle", exerciseHour: 8 },
       21,
       true,
     ); // 1.5h trip -> spills to h9, h18
-    expect(longCycle[8].some((s) => s.location === "outdoor_exercise" && s.f === 0.5)).toBe(true);
-    expect(longCycle[8].some((s) => s.location === "outdoor_cycle" && s.f === 0.5)).toBe(true);
-    expect(longCycle[9].some((s) => s.location === "outdoor_cycle" && s.f === 0.5)).toBe(true);
-    expect(longCycle[17][0]).toEqual({ f: 1, location: "outdoor_cycle", v: 3, n95Eligible: true });
-    expect(longCycle[18].some((s) => s.location === "outdoor_cycle" && s.f === 0.5)).toBe(true);
+    expect(longCycle[8]?.some((s) => s.location === "outdoor_exercise" && s.f === 0.5)).toBe(true);
+    expect(longCycle[8]?.some((s) => s.location === "outdoor_cycle" && s.f === 0.5)).toBe(true);
+    expect(longCycle[9]?.some((s) => s.location === "outdoor_cycle" && s.f === 0.5)).toBe(true);
+    expect(longCycle[17]?.[0]).toEqual({
+      f: 1,
+      location: "outdoor_cycle",
+      v: 3,
+      n95Eligible: true,
+    });
+    expect(longCycle[18]?.some((s) => s.location === "outdoor_cycle" && s.f === 0.5)).toBe(true);
 
     const metroDay = buildDaySchedule(
       { ...base, commuteMode: "metro", exerciseHour: null },
       15,
       true,
     );
-    expect(metroDay[8][0]).toEqual({ f: 0.5, location: "metro_cabin", v: 1, n95Eligible: false });
-    expect(metroDay[12][0]).toEqual({ f: 1, location: "work_indoor", v: 1, n95Eligible: false });
-    expect(metroDay[23][0]).toEqual({ f: 1, location: "home", v: 0.8, n95Eligible: false });
+    expect(metroDay[8]?.[0]).toEqual({ f: 0.5, location: "metro_cabin", v: 1, n95Eligible: false });
+    expect(metroDay[12]?.[0]).toEqual({ f: 1, location: "work_indoor", v: 1, n95Eligible: false });
+    expect(metroDay[23]?.[0]).toEqual({ f: 1, location: "home", v: 0.8, n95Eligible: false });
 
     const twoWheel = buildDaySchedule(
       { ...base, commuteMode: "two_wheeler", exerciseHour: null },
       9,
       true,
     );
-    expect(twoWheel[8][0]).toEqual({
+    expect(twoWheel[8]?.[0]).toEqual({
       f: 0.5,
       location: "outdoor_open_transit",
       v: 1,
       n95Eligible: true,
     });
     const autoDay = buildDaySchedule({ ...base, commuteMode: "auto", exerciseHour: null }, 9, true);
-    expect(autoDay[8][0]).toEqual({
+    expect(autoDay[8]?.[0]).toEqual({
       f: 0.5,
       location: "outdoor_open_transit",
       v: 1,
@@ -271,15 +276,15 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
       15,
       false,
     );
-    expect(nonCommute[8][0]).toEqual({ f: 1, location: "home", v: 1, n95Eligible: false });
+    expect(nonCommute[8]?.[0]).toEqual({ f: 1, location: "home", v: 1, n95Eligible: false });
     const zeroKm = buildDaySchedule({ ...base, commuteMode: "car", exerciseHour: null }, 0, true);
-    expect(zeroKm[8][0]).toEqual({ f: 1, location: "home", v: 1, n95Eligible: false });
+    expect(zeroKm[8]?.[0]).toEqual({ f: 1, location: "home", v: 1, n95Eligible: false });
     const indoorEx = buildDaySchedule(
       { ...base, commuteMode: "wfh", exerciseHour: 8, exerciseIndoors: true },
       0,
       true,
     );
-    expect(indoorEx[8][0]).toEqual({
+    expect(indoorEx[8]?.[0]).toEqual({
       f: 0.5,
       location: "indoor_exercise",
       v: 2.5,
@@ -729,13 +734,10 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
       commute: { mode: "wfh", km: 0, daysPerWeek: 0 },
       habits: { morningOutdoorExercise: false, schoolRun: false },
     };
-    const tinyHepa = evaluateActionImpact(
-      ACTION_BY_ID.buy_hepa_purifier,
-      tinyRoom,
-      ctx48,
-      baselineScenario(tinyRoom),
-      DEFAULT_WINDOWS,
-    );
+    const tinyHepa = evaluateActionImpact(ACTION_BY_ID.buy_hepa_purifier, tinyRoom, ctx48, {
+      baseScenario: baselineScenario(tinyRoom),
+      windows: DEFAULT_WINDOWS,
+    });
     expect(tinyHepa.exposureDeltaPct).toBe(80);
     expect(tinyHepa.exposureRangeUgM3[0]).toBeLessThan(tinyHepa.exposureRangeUgM3[1]);
     expect(tinyHepa.kind).toBe("quantified");
@@ -748,19 +750,21 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
       ACTION_BY_ID.buy_hepa_purifier,
       { ...baseClean, home: { ...baseClean.home, cooking: "induction" } },
       zeroDayCtx,
-      baselineScenario({ ...baseClean, home: { ...baseClean.home, cooking: "induction" } }),
-      DEFAULT_WINDOWS,
+      {
+        baseScenario: baselineScenario({
+          ...baseClean,
+          home: { ...baseClean.home, cooking: "induction" },
+        }),
+        windows: DEFAULT_WINDOWS,
+      },
     );
     expect(zeroImpact.exposureDeltaPct).toBe(0);
     expect(zeroImpact.exposureDeltaUgM3).toBe(0);
 
-    const guidanceImp = evaluateActionImpact(
-      ACTION_BY_ID.damp_mop_dont_sweep,
-      baseClean,
-      ctx48,
-      baselineScenario(baseClean),
-      DEFAULT_WINDOWS,
-    );
+    const guidanceImp = evaluateActionImpact(ACTION_BY_ID.damp_mop_dont_sweep, baseClean, ctx48, {
+      baseScenario: baselineScenario(baseClean),
+      windows: DEFAULT_WINDOWS,
+    });
     expect(guidanceImp.kind).toBe("guidance");
     expect(guidanceImp.exposureDeltaUgM3).toBe(0);
 
@@ -783,13 +787,11 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
       commute: { mode: "car", km: 2, daysPerWeek: 3 }, // co2e < 300 -> triggers -0.2 penalty
       budget: "low",
     };
-    const lowCands = selectCandidates(
-      shortCar,
-      ctx48,
-      5,
-      baselineScenario(shortCar),
-      DEFAULT_WINDOWS,
-    );
+    const lowCands = selectCandidates(shortCar, ctx48, {
+      level: 5,
+      baseScenario: baselineScenario(shortCar),
+      windows: DEFAULT_WINDOWS,
+    });
     expect(lowCands.some((c) => c.cost === 1)).toBe(true);
     expect(lowCands.every((c) => c.cost <= 1)).toBe(true);
     expect(lowCands.every((c) => c.score >= -0.2 && c.score <= 1)).toBe(true);
@@ -801,26 +803,22 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
       commute: { mode: "car", km: 12, daysPerWeek: 5 },
       budget: "low",
     };
-    const longCands = selectCandidates(
-      longCar,
-      ctx48,
-      5,
-      baselineScenario(longCar),
-      DEFAULT_WINDOWS,
-    );
+    const longCands = selectCandidates(longCar, ctx48, {
+      level: 5,
+      baseScenario: baselineScenario(longCar),
+      windows: DEFAULT_WINDOWS,
+    });
     const shortSwapScore =
       lowCands.find((c) => c.id === "commute_to_public_transport")?.score ?? -1;
     const longSwapScore =
       longCands.find((c) => c.id === "commute_to_public_transport")?.score ?? -1;
     expect(longSwapScore).toBeGreaterThan(shortSwapScore + 0.15);
 
-    const zeroCands = selectCandidates(
-      { ...shortCar, budget: "zero" },
-      ctx48,
-      5,
-      baselineScenario({ ...shortCar, budget: "zero" }),
-      DEFAULT_WINDOWS,
-    );
+    const zeroCands = selectCandidates({ ...shortCar, budget: "zero" }, ctx48, {
+      level: 5,
+      baseScenario: baselineScenario({ ...shortCar, budget: "zero" }),
+      windows: DEFAULT_WINDOWS,
+    });
     expect(zeroCands.every((c) => c.cost === 0)).toBe(true);
 
     expect(
@@ -1331,38 +1329,29 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
     const ctx24 = makeCtx(Array.from({ length: 24 }, (_, i) => (i === 23 ? 280 : 120)));
     expect(next24Series({ ...ctx24, nowIndex: 99 }).pm25).toEqual([280]);
 
-    const idling = evaluateActionImpact(
-      ACTION_BY_ID.no_idling,
-      baseClean,
-      ctx24,
-      baselineScenario(baseClean),
-      DEFAULT_WINDOWS,
-    );
+    const idling = evaluateActionImpact(ACTION_BY_ID.no_idling, baseClean, ctx24, {
+      baseScenario: baselineScenario(baseClean),
+      windows: DEFAULT_WINDOWS,
+    });
     expect(idling.exposureRangeUgM3).toEqual([0, 0]);
     expect(idling.co2eKgPerYear).toBeCloseTo(38.5, 1);
     expect(idling.co2eRangeKgPerYear).toEqual([28.9, 48.1]);
 
     // Uncapped positive delta (below 80% cap) with distinct conservative/base/optimistic range
-    const hepa = evaluateActionImpact(
-      ACTION_BY_ID.buy_hepa_purifier,
-      baseClean,
-      ctx24,
-      baselineScenario(baseClean),
-      DEFAULT_WINDOWS,
-    );
+    const hepa = evaluateActionImpact(ACTION_BY_ID.buy_hepa_purifier, baseClean, ctx24, {
+      baseScenario: baselineScenario(baseClean),
+      windows: DEFAULT_WINDOWS,
+    });
     expect(hepa.exposureDeltaPct).toBeGreaterThan(20);
     expect(hepa.exposureDeltaPct).toBeLessThan(80);
     expect(hepa.exposureRangeUgM3[0]).toBeLessThan(hepa.exposureDeltaUgM3);
     expect(hepa.exposureDeltaUgM3).toBeLessThan(hepa.exposureRangeUgM3[1]);
 
     // Zero rawDelta when before > 0 (exerciseIndoors edit with exerciseHour === null)
-    const noopEx = evaluateActionImpact(
-      ACTION_BY_ID.exercise_indoors_when_poor,
-      baseClean,
-      ctx24,
-      baselineScenario(baseClean),
-      DEFAULT_WINDOWS,
-    );
+    const noopEx = evaluateActionImpact(ACTION_BY_ID.exercise_indoors_when_poor, baseClean, ctx24, {
+      baseScenario: baselineScenario(baseClean),
+      windows: DEFAULT_WINDOWS,
+    });
     expect(noopEx).toMatchObject({
       exposureDeltaUgM3: 0,
       exposureDeltaPct: 0,
@@ -1370,13 +1359,10 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
     });
 
     // Negative rawDelta (car -> bus on polluted day) stays negative without clamping
-    const bus = evaluateActionImpact(
-      ACTION_BY_ID.commute_to_public_transport,
-      baseClean,
-      ctx24,
-      baselineScenario(baseClean),
-      DEFAULT_WINDOWS,
-    );
+    const bus = evaluateActionImpact(ACTION_BY_ID.commute_to_public_transport, baseClean, ctx24, {
+      baseScenario: baselineScenario(baseClean),
+      windows: DEFAULT_WINDOWS,
+    });
     expect(bus.exposureDeltaUgM3).toBeLessThan(0);
     expect(bus.exposureDeltaPct).toBeLessThan(0);
   });
@@ -1399,27 +1385,21 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
     };
 
     // Sparse profile has < 14 actions so cost=2 (induction_cooking) competes directly with cost=1 and cost=0
-    const medSparse = selectCandidates(
-      sparse,
-      uniform250,
-      5,
-      baselineScenario(sparse),
-      DEFAULT_WINDOWS,
-    );
-    const lowSparse = selectCandidates(
-      { ...sparse, budget: "low" },
-      uniform250,
-      5,
-      baselineScenario(sparse),
-      DEFAULT_WINDOWS,
-    );
-    const zeroSparse = selectCandidates(
-      { ...sparse, budget: "zero" },
-      uniform250,
-      5,
-      baselineScenario(sparse),
-      DEFAULT_WINDOWS,
-    );
+    const medSparse = selectCandidates(sparse, uniform250, {
+      level: 5,
+      baseScenario: baselineScenario(sparse),
+      windows: DEFAULT_WINDOWS,
+    });
+    const lowSparse = selectCandidates({ ...sparse, budget: "low" }, uniform250, {
+      level: 5,
+      baseScenario: baselineScenario(sparse),
+      windows: DEFAULT_WINDOWS,
+    });
+    const zeroSparse = selectCandidates({ ...sparse, budget: "zero" }, uniform250, {
+      level: 5,
+      baseScenario: baselineScenario(sparse),
+      windows: DEFAULT_WINDOWS,
+    });
     expect(medSparse.some((c) => c.id === "induction_cooking")).toBe(true);
     expect(lowSparse.some((c) => c.id === "induction_cooking")).toBe(false);
     expect(lowSparse.some((c) => c.cost === 1)).toBe(true);
@@ -1430,6 +1410,9 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
     for (let i = 1; i < zeroSparse.length; i++) {
       const prev = zeroSparse[i - 1];
       const curr = zeroSparse[i];
+      expect(prev).toBeDefined();
+      expect(curr).toBeDefined();
+      if (!prev || !curr) continue;
       expect(
         prev.score > curr.score ||
           (prev.score === curr.score && prev.id.localeCompare(curr.id) <= 0),
@@ -1442,7 +1425,7 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
       "avoid_indoor_smoke_sources",
       "community_no_burning",
     ]);
-    expect(tiedPair[0].score).toBe(tiedPair[1].score);
+    expect(tiedPair[0]?.score).toBe(tiedPair[1]?.score);
 
     // Exact scoreCandidate & co2e === 300 boundary (6.25 km * 2 * 5 * 48 * 0.10 = 300.0 -> NO -0.2 penalty)
     const multiGroupBase: Profile = {
@@ -1457,35 +1440,29 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
       commute: { mode: "car", km: 6.25, daysPerWeek: 5 },
       budget: "medium",
     };
-    const at300 = selectCandidates(
-      multiGroupBase,
-      uniform250,
-      5,
-      baselineScenario(multiGroupBase),
-      DEFAULT_WINDOWS,
-    );
+    const at300 = selectCandidates(multiGroupBase, uniform250, {
+      level: 5,
+      baseScenario: baselineScenario(multiGroupBase),
+      windows: DEFAULT_WINDOWS,
+    });
     const below300P: Profile = {
       ...multiGroupBase,
       commute: { mode: "car", km: 6.2, daysPerWeek: 5 },
     };
-    const below300 = selectCandidates(
-      below300P,
-      uniform250,
-      5,
-      baselineScenario(below300P),
-      DEFAULT_WINDOWS,
-    );
+    const below300 = selectCandidates(below300P, uniform250, {
+      level: 5,
+      baseScenario: baselineScenario(below300P),
+      windows: DEFAULT_WINDOWS,
+    });
     const above500P: Profile = {
       ...multiGroupBase,
       commute: { mode: "car", km: 12, daysPerWeek: 5 },
     };
-    const above500 = selectCandidates(
-      above500P,
-      uniform250,
-      5,
-      baselineScenario(above500P),
-      DEFAULT_WINDOWS,
-    );
+    const above500 = selectCandidates(above500P, uniform250, {
+      level: 5,
+      baseScenario: baselineScenario(above500P),
+      windows: DEFAULT_WINDOWS,
+    });
 
     const busAt300 = at300.find((c) => c.id === "commute_to_public_transport");
     const busBelow300 = below300.find((c) => c.id === "commute_to_public_transport");
@@ -1514,13 +1491,11 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
       commute: { mode: "car", km: 2, daysPerWeek: 3 },
       habits: { morningOutdoorExercise: true, schoolRun: true },
     };
-    const richCands = selectCandidates(
-      richP,
-      uniform250,
-      5,
-      baselineScenario(richP),
-      DEFAULT_WINDOWS,
-    );
+    const richCands = selectCandidates(richP, uniform250, {
+      level: 5,
+      baseScenario: baselineScenario(richP),
+      windows: DEFAULT_WINDOWS,
+    });
     expect(richCands).toHaveLength(14);
     expect(richCands.filter((c) => c.section === "routine").length).toBeGreaterThanOrEqual(2);
     expect(richCands.filter((c) => c.section === "indoor").length).toBeGreaterThanOrEqual(2);
@@ -1533,5 +1508,7 @@ describe("engine behavior & boundary coverage (T03-T09)", () => {
     expect(clampNowIndex([1, 2], -2)).toBe(0);
     expect(parseClockHour("2026-11-20T00:00", 5)).toBe(0);
     expect(parseClockHour("2026-11-20T24:00", 5)).toBe(5);
+    expect(() => guidanceForLevel(99 as Level, "en")).toThrow(RangeError);
+    expect(findWindowsFromHours([100, 120], [10]).best.start).toBe(10);
   });
 });

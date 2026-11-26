@@ -62,7 +62,7 @@ export function MythsSection({ dict }: { dict: Dictionary }) {
             <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
               {dict.myths[m.id].fact}
             </p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{m.source}</p>
+            <p className="mt-1 text-xs text-slate-700 dark:text-slate-300">{m.source}</p>
           </article>
         ))}
       </div>

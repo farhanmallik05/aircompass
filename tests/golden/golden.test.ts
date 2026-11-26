@@ -62,6 +62,8 @@ describe("golden vectors", () => {
       3,
     );
     const cooking = golden.indoor_step[3];
+    expect(cooking).toBeDefined();
+    if (!cooking) return;
     expect(
       steadyState(cooking.cOut, cooking.a, { ...HOME, q: cooking.q, S: cooking.S }),
     ).toBeCloseTo(cooking.cSS, 3);

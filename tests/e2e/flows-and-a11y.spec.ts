@@ -9,10 +9,18 @@ test.describe("AirCompass user flows & WCAG 2.2 AA accessibility", () => {
   }) => {
     await page.goto("/");
     await expect(page.locator("html")).toHaveAttribute("data-hydrated", "true");
+    await expect(page).toHaveTitle("Today's Air & Household Plan — AirCompass");
     await expect(page.getByTestId("data-source-badge")).toBeVisible();
+
+    await page.getByRole("button", { name: "Show as table" }).click();
+    const hourlyTable = page.getByRole("table");
+    await expect(hourlyTable.locator("caption")).toHaveCount(1);
+    await expect(hourlyTable.locator('th[scope="col"]')).toHaveCount(4);
+    await expect(hourlyTable.locator('th[scope="row"]').first()).toBeVisible();
 
     await page.getByTestId("sample-family-btn").click();
     await page.getByRole("link", { name: "Plan", exact: true }).click();
+    await expect(page).toHaveTitle(/— AirCompass$/);
     await expect(page.getByRole("heading", { name: "Your Tailored Air Plan" })).toBeVisible();
     const badge = page.getByTestId("plan-outcome-badge");
     await expect(badge).toBeVisible();
@@ -83,9 +91,25 @@ test.describe("AirCompass user flows & WCAG 2.2 AA accessibility", () => {
     await expect(skipLink).toBeFocused();
     await page.keyboard.press("Enter");
 
-    // Keyboard open setup -> trigger error -> verify alert focus -> fix -> submit
+    // Keyboard open setup -> Enter inside #place-search runs place search without closing form -> trigger error -> fix -> submit
     await page.getByTestId("toggle-setup-btn").focus();
     await page.keyboard.press("Enter");
+    await page.route("**/api/context?q=**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          places: [{ name: "Delhi", admin1: "Delhi", country: "IN", lat: 28.61, lon: 77.21 }],
+        }),
+      });
+    });
+    const placeSearch = page.locator("#place-search");
+    await placeSearch.fill("Delhi");
+    await placeSearch.press("Enter");
+    await expect(
+      page.getByRole("status").filter({ hasText: "1 matching places shown" }),
+    ).toBeVisible();
+    await expect(placeSearch).toBeVisible();
     await page.locator("#room-area").fill("2");
     await page.getByRole("button", { name: "Build my household plan" }).focus();
     await page.keyboard.press("Enter");

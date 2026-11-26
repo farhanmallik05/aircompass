@@ -44,7 +44,7 @@ function resolvePlace(input: {
 export async function GET(request: Request): Promise<Response> {
   const ip = clientIpFromHeaders(request.headers);
   if (!takeIpToken("context", ip)) {
-    return jsonError(429, "Rate limit exceeded; please retry shortly.");
+    return jsonError(429, "Rate limit exceeded; please retry shortly.", { "Retry-After": "60" });
   }
 
   const parsed = ContextQuerySchema.safeParse(parseContextQuery(new URL(request.url).searchParams));

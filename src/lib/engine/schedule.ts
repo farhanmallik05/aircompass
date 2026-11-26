@@ -16,7 +16,7 @@ export const COMMUTE_SPEED_KMH: Record<CommuteMode, number> = {
  * Breathing factors (dimensionless relative to sedentary indoor = 1.0)
  * grounded in US EPA Exposure Factors Handbook Ch. 6 short-term inhalation rates.
  */
-export const BREATHING_FACTORS = {
+const BREATHING_FACTORS = {
   sleep: 0.8,
   indoorRest: 1.0,
   walk: 2.0,
@@ -26,7 +26,7 @@ export const BREATHING_FACTORS = {
   transitSeated: 1.0,
 } as const;
 
-export type SlotLocation =
+type SlotLocation =
   | "home"
   | "work_indoor"
   | "outdoor_walk"
@@ -37,7 +37,7 @@ export type SlotLocation =
   | "car_cabin"
   | "metro_cabin";
 
-export interface SubSlot {
+interface SubSlot {
   /** Fraction of the hour in (0, 1]; all sub-slots in an hour sum to 1.0. */
   f: number;
   location: SlotLocation;

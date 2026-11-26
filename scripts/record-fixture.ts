@@ -47,15 +47,16 @@ function extractArchiveHours(
 ): HourPoint[] {
   const hours: HourPoint[] = [];
   for (let i = 0; i < air.hourly.time.length; i++) {
+    const t = air.hourly.time[i];
     const pm25 = air.hourly.pm2_5[i];
-    if (pm25 === null || pm25 === undefined || !Number.isFinite(pm25)) continue;
+    if (!t || pm25 === null || pm25 === undefined || !Number.isFinite(pm25)) continue;
     const pm10 = air.hourly.pm10[i] ?? pm25 * 1.4;
     const usAqi = air.hourly.us_aqi[i] ?? aqiFromPm25(pm25);
     const tempC = optionalMetric(wx.hourly.temperature_2m[i]);
     const rh = optionalMetric(wx.hourly.relative_humidity_2m[i]);
     const windKmh = optionalMetric(wx.hourly.wind_speed_10m[i]);
     hours.push({
-      t: air.hourly.time[i],
+      t,
       pm25: Math.round(pm25 * 10) / 10,
       pm10: Math.round(pm10 * 10) / 10,
       usAqi: Math.min(500, Math.round(usAqi)),
@@ -74,9 +75,10 @@ function pickHighestSmogWindow(hours: readonly HourPoint[]): {
   let bestStart = 0;
   let bestMean = -1;
   for (let s = 0; s <= hours.length - 72; s++) {
-    if (!hours[s].t.endsWith("T00:00")) continue;
+    const startPt = hours[s];
+    if (!startPt || !startPt.t.endsWith("T00:00")) continue;
     let sum = 0;
-    for (let k = 0; k < 72; k++) sum += hours[s + k].pm25;
+    for (let k = 0; k < 72; k++) sum += hours[s + k]?.pm25 ?? 0;
     const m = sum / 72;
     if (m > bestMean) {
       bestMean = m;
@@ -105,7 +107,7 @@ async function main() {
 
     const { slice, bestMean } = pickHighestSmogWindow(hours);
     const nowIndex = 24;
-    const recordedDate = slice[nowIndex].t.slice(0, 10);
+    const recordedDate = slice[nowIndex]?.t.slice(0, 10) ?? "2026-11-19";
     const payload = {
       dataNote: "recorded",
       recordedDate,

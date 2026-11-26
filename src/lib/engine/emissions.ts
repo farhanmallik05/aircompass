@@ -3,13 +3,13 @@ import type { CommuteMode } from "../types";
 
 const WEEKS_PER_YEAR = factors.workingWeeksPerYear;
 
-export function emissionFactor(mode: CommuteMode): number {
+function emissionFactor(mode: CommuteMode): number {
   return factors.modes[mode].kgPerPassengerKm;
 }
 
-export function emissionFactorRange(mode: CommuteMode): [number, number] {
-  const [lo, hi] = factors.modes[mode].rangeKgPerPassengerKm;
-  return [lo, hi];
+function emissionFactorRange(mode: CommuteMode): [number, number] {
+  const range = factors.modes[mode].rangeKgPerPassengerKm;
+  return [Math.min(...range), Math.max(...range)];
 }
 
 /** Round-trip annual CO2e saved (kg/yr) when shifting from `fromMode` to `toMode`. */
@@ -52,7 +52,8 @@ export function co2eSavedRangeKgPerYear(
 
 /** Annual CO2e saved from stopping 5 min/day engine idling (0.6-1.0 L/h petrol, 250 days/yr). */
 export function idlingCo2eSaved(): { kg: number; range: [number, number] } {
-  const [lMin, lMax] = factors.idling.litersPerHour;
+  const lMin = Math.min(...factors.idling.litersPerHour);
+  const lMax = Math.max(...factors.idling.litersPerHour);
   const hoursPerYear = (factors.idling.minutesPerDay / 60) * factors.idling.daysPerYear;
   const co2PerL = factors.idling.kgCo2PerLiterPetrol;
   const min = Math.round(lMin * hoursPerYear * co2PerL * 10) / 10;
@@ -68,7 +69,8 @@ export function tripChainingCo2eSaved(
   mode: CommuteMode,
 ): { kg: number; range: [number, number] } {
   const annualBase = co2eSavedKgPerYear(kmOneWay, daysPerWeek, mode, "wfh");
-  const [fMin, fMax] = factors.tripChaining.rangeFraction;
+  const fMin = Math.min(...factors.tripChaining.rangeFraction);
+  const fMax = Math.max(...factors.tripChaining.rangeFraction);
   const mid = Math.round(annualBase * factors.tripChaining.reductionFraction * 10) / 10;
   const min = Math.round(annualBase * fMin * 10) / 10;
   const max = Math.round(annualBase * fMax * 10) / 10;

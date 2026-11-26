@@ -183,6 +183,30 @@ describe("gemini.ts SDK adapter and model failover", () => {
     expect(toolEvents).toEqual(["simulate_scenario", "simulate_scenario"]);
     expect(streamedChunks).toEqual(["Exposure drops ", "to 45.2 ug/m3."]);
 
+    // Custom model without thinkingConfig, sparse functionCall defaults, and empty response text
+    process.env.GEMINI_MODEL = "custom-model";
+    process.env.GEMINI_MODEL_FALLBACK = "custom-model";
+    generateContentMock.mockResolvedValueOnce({ functionCalls: [{}] });
+    generateContentMock.mockResolvedValueOnce({});
+    const customRes = await client.chatWithTools({
+      systemPrompt: "sys",
+      userContextPrompt: "ctx",
+      history: [],
+      message: "Check",
+      toolDeclaration: SIMULATE_SCENARIO_DECLARATION,
+      executeTool: async () => ({ ok: true }),
+    });
+    expect(customRes.toolCallsExecuted).toBe(1);
+    expect(customRes.text).toBe("");
+
+    generateContentMock.mockResolvedValueOnce({});
+    const emptyPlan = await client.generatePlanJson({
+      systemPrompt: "sys",
+      userPrompt: "usr",
+      schema: { type: "object" },
+    });
+    expect(emptyPlan.rawText).toBe("");
+
     // Non-Error rejection falls back to wrapped Error message cleanly
     generateContentMock.mockRejectedValue("raw failure");
     await expect(
