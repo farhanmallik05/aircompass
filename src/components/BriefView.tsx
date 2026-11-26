@@ -82,8 +82,8 @@ export function BriefView() {
 
   const shareText = [
     `AirCompass — ${activeProfile.place.name}`,
-    `Level: ${guidance.band} (US AQI ${aqi})`,
-    `Best window: ${windows.best.startLabel}-${windows.best.endLabel} | Avoid: ${windows.avoid.startLabel}-${windows.avoid.endLabel}`,
+    `${dict.today.todayLevelChip}: ${guidance.band} (US AQI ${aqi})`,
+    `${dict.today.goOutWindow}: ${windows.best.startLabel}-${windows.best.endLabel} | ${dict.today.avoidWindow}: ${windows.avoid.startLabel}-${windows.avoid.endLabel}`,
     ...(planResponse?.plan.cards.slice(0, 4).map((c, i) => `${i + 1}. ${c.title}`) ?? []),
   ].join("\n");
 

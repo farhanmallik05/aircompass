@@ -1,8 +1,6 @@
 import guidanceData from "../../../data/guidance.json";
 import type { HourPoint, Lang, Level } from "../types";
 
-export type { Level };
-
 /** US EPA AQI PM2.5 breakpoints, 2024 revision (40 CFR 58 App. G). [concLo, concHi, aqiLo, aqiHi]. */
 const EPA_PM25 = [
   [0, 9.0, 0, 50],

@@ -643,7 +643,9 @@
     "www.a.example",
     "](x)",
     "javascript:void",
+    "vbscript:alert",
     "data:text/html",
+    "data:image/svg+xml",
     "&amp;",
     "&#x41;"
    ]

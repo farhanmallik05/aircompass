@@ -4,7 +4,7 @@
 
 [![Tests](https://img.shields.io/badge/tests-161%20passing-brightgreen)](#verification-evidence)
 [![Statements](https://img.shields.io/badge/statements-99.85%25-brightgreen)](#verification-evidence)
-[![Branches](https://img.shields.io/badge/branches-96.92%25-brightgreen)](#verification-evidence)
+[![Branches](https://img.shields.io/badge/branches-96.95%25-brightgreen)](#verification-evidence)
 [![Functions](https://img.shields.io/badge/functions-100%25-brightgreen)](#verification-evidence)
 [![Mutation](https://img.shields.io/badge/mutation-91.68%25-blue)](#verification-evidence)
 [![WCAG](https://img.shields.io/badge/WCAG-2.2AA-blue)](#accessibility)
@@ -37,7 +37,7 @@ npm run mutate                       # Stryker mutation score (measured: 91.68%)
 | Requirement | Implementation | Files |
 |---|---|---|
 | **GenAI-powered** | Gemini Flash (`@google/genai`) generates structured JSON plan selection/wording + grounded streaming chat with `simulate_scenario` tool calling | `src/lib/llm/gemini.ts`, `planner.ts`, `chat.ts` |
-| **Families & communities** | Multi-member household setup (adults, children, seniors, respiratory/cardiac/pregnant sensitivities); printable Community & RWA Brief | `src/lib/engine/catalog.ts`, `src/components/SetupForm.tsx`, `BriefView.tsx` |
+| **Families & communities** | Multi-member household setup (adults, children, seniors, respiratory/cardiac/pregnant sensitivities); printable Community & RWA Brief | `src/lib/engine/catalog.ts`, `src/lib/engine/catalog/`, `src/components/SetupForm.tsx`, `BriefView.tsx` |
 | **Navigate severe winter smog** | CPCB India NAQI with ≥ 16 h validity gate; Severe-category anchors (flagged assumptions); labelled recorded Greater Noida severe-day fixture | `src/lib/engine/naqi.ts`, `src/lib/providers/demo.ts` |
 | **Urban air pollution** | Hourly PM2.5 / PM10 / AQI from Open-Meteo + CAMS global/regional forecast (0.1° cache, 24 h window), plus optional local monitor calibration | `src/lib/providers/openMeteo.ts`, `calibrate.ts` |
 | **Daily routines** | 24-hour sub-slot breathing-weighted schedule; commute mode & speed modelling; exercise-window shifting | `src/lib/engine/schedule.ts`, `src/lib/engine/exposure.ts` |
@@ -79,7 +79,7 @@ Browser ──► Next.js 16 App Router (src/app/)
               │                     emissions, window, myths)
               ├── llm/           ← gemini.ts, planner.ts, chat.ts, guard.ts, tokens.ts, fallback.ts
               ├── providers/     ← openMeteo.ts, geocode.ts, demo.ts, calibrate.ts
-              └── security/      ← headers.ts, rateLimit.ts, sanitize.ts
+              └── security/      ← headers.ts, log.ts, rateLimit.ts, sanitize.ts
 ```
 
 **Security:** Per-request cryptographic nonce CSP (`src/proxy.ts`) with strict `script-src` (no `unsafe-inline`/`unsafe-eval` scripts); HSTS, `X-Frame-Options: DENY`, `Cross-Origin-Resource-Policy: same-origin`, and strict `/api/*` headers (`next.config.ts`); Zod isolated server-side so client bundles never trigger JIT `eval`; `GEMINI_API_KEY` server-only; bounded hashed-IP rate limiting + daily LLM cap; schema-validated localStorage-only household profiles (one-click `"Delete my data"`).
@@ -93,19 +93,19 @@ All metrics below were measured locally on this repository (`npm run verify`, `n
 | Metric | Measured value | Command |
 |---|---|---|
 | Unit + integration tests | **161 / 161 pass** (13 files) | `npm run test:coverage` |
-| Statement / Line coverage | **99.85 %** (3394 / 3399 across `src/lib/**` + `src/app/api/**`) | `npm run test:coverage` |
-| Branch coverage | **96.92 %** (1105 / 1140) | `npm run test:coverage` |
-| Function coverage | **100 %** (231 / 231) | `npm run test:coverage` |
+| Statement / Line coverage | **99.85 %** (3416 / 3421 across `src/lib/**` + `src/app/api/**`) | `npm run test:coverage` |
+| Branch coverage | **96.95 %** (1114 / 1149) | `npm run test:coverage` |
+| Function coverage | **100 %** (232 / 232) | `npm run test:coverage` |
 | Mutation score (Stryker) | **91.68 %** overall / **91.99 %** covered (engine **91.40 %**, guard **94.57 %** total / **95.31 %** covered) | `npm run mutate` |
 | AI persona evals | **12 / 12 pass** (`I1–I12`, demo fixtures) | `npm run eval` |
-| E2E Playwright flows | **10 / 10 pass** (3 consecutive runs, 0 flakes) | `npm run test:e2e` |
+| E2E Playwright flows | **10 / 10 pass** (3 consecutive runs, 0 flakes; verified on live Vercel) | `npm run test:e2e` |
 | CSP & security header gate | **6 / 6 pass** (production build & live Vercel) | `npm run csp:smoke` |
 | WCAG 2.2 AA Axe audit | **0 violations** (4 routes × 2 langs × 2 themes + populated states + 320 px reflow) | `npm run test:e2e` |
 | Golden oracle integrity | `golden.json matches oracle` | `npm run oracle:check` |
 | Production dependency audit | **0 vulnerabilities** (`--omit=dev --audit-level=high`) | `npm audit --omit=dev --audit-level=high` |
-| Engine p50 / p95 latency | **1.70 ms / 2.82 ms** (200 runs) | `npm run measure` |
-| Gzipped `.next/static` JS | **231.6 KB** (no chart library, self-hosted fonts) | `npm run measure` |
-| Tracked repository size | **2.76 MB** (`< 10 MB` limit) | `node scripts/check-repo-size.mjs` |
+| Engine p50 / p95 latency | **1.56 ms / 2.53 ms** (200 runs) | `npm run measure` |
+| Gzipped `.next/static` JS | **231.7 KB** (no chart library, self-hosted fonts) | `npm run measure` |
+| Tracked repository size | **2.78 MB** (`< 10 MB` limit) | `node scripts/check-repo-size.mjs` |
 | Secrets in built bundle | **0** | `npm run test:coverage` |
 
 ---

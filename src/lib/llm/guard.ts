@@ -27,7 +27,8 @@ const EN_AT_TIME = new RegExp(
   `\\b(?:at|between|from|until|till|by|around|after|before)\\s+${ONE_TO_TWELVE}\\b`,
 );
 const UNIT_OR_SIGN = /[%٪﹪％]|µg|μg|\bug\/m|°|\bdegrees? (?:c|f|celsius|fahrenheit)\b/;
-const MARKUP = /<\/?[a-z!][^>]*>|https?:\/\/|www\.|\]\(|javascript:|data:text|&#?\w+;/i;
+const MARKUP =
+  /<\/?[a-z!][^>]*>|https?:\/\/|www\.|\]\(|(?:java|vb)script:|data:(?:text|image|application)\/|&#?\w+;/i;
 const MEDICAL_EN =
   /\b(?:cures?|cured|curing|diagnos\w*|prescri\w*|dosage|doses?|mg|mcg|ml|antibiotics?|steroids?|guarantee[ds]?|risk-free|(?:completely|totally|100) ?(?:%|percent)? safe)\b/;
 const MEDICAL_HI = ["इलाज", "खुराक", "गारंटी", "निदान", "नुस्खा"];

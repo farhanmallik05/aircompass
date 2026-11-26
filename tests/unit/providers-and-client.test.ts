@@ -143,9 +143,27 @@ describe("providers: calibrate, geocode, and demo regional helper", () => {
       });
     };
     const fetchSpy = vi.fn(mockOkFetch);
-    await fetchOpenMeteoContext(SAMPLE_FAMILY_PROFILE.place, fetchSpy, 1000);
-    await fetchOpenMeteoContext(SAMPLE_FAMILY_PROFILE.place, fetchSpy, 2000);
+    await fetchOpenMeteoContext(SAMPLE_FAMILY_PROFILE.place, fetchSpy, 1000, 2);
+    await fetchOpenMeteoContext(SAMPLE_FAMILY_PROFILE.place, fetchSpy, 2000, 2);
     expect(fetchSpy).toHaveBeenCalledTimes(2); // Second call served from cache
+
+    // Refresh expired entry and verify bounded cache evicts stale then oldest entries
+    await fetchOpenMeteoContext(SAMPLE_FAMILY_PROFILE.place, fetchSpy, 3_602_000, 2);
+    await fetchOpenMeteoContext(
+      { name: "Pune", lat: 18.52, lon: 73.85, country: "IN" },
+      fetchSpy,
+      3_602_001,
+      2,
+    );
+    await fetchOpenMeteoContext(
+      { name: "Mumbai", lat: 19.07, lon: 72.87, country: "IN" },
+      fetchSpy,
+      3_602_002,
+      2,
+    );
+    // Expired-first path + capacity=2 evicted Greater Noida, keeping Pune and Mumbai
+    await fetchOpenMeteoContext(SAMPLE_FAMILY_PROFILE.place, fetchSpy, 7_300_000, 2);
+    expect(fetchSpy).toHaveBeenCalledTimes(10);
 
     clearProviderCache();
     const mismatchWxFetch: typeof fetch = async (url) => {

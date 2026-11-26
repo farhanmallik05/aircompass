@@ -7,6 +7,7 @@ const AIR_HOST = "https://air-quality-api.open-meteo.com/v1/air-quality";
 const WEATHER_HOST = "https://api.open-meteo.com/v1/forecast";
 const CACHE_TTL_MS = 3_600_000;
 const REQUEST_TIMEOUT_MS = 5_000;
+const MAX_CACHE_ENTRIES = 500;
 
 const EUROPE_COUNTRIES = new Set([
   "AT",
@@ -53,6 +54,26 @@ const contextCache = new Map<string, CacheEntry>();
 
 export function clearProviderCache(): void {
   contextCache.clear();
+}
+
+function cacheContextEntry(
+  key: string,
+  value: AirContext,
+  nowMs: number,
+  maxEntries = MAX_CACHE_ENTRIES,
+): void {
+  if (contextCache.has(key)) contextCache.delete(key);
+  if (contextCache.size >= maxEntries) {
+    for (const [k, entry] of contextCache) {
+      if (entry.expiresAt <= nowMs) contextCache.delete(k);
+      if (contextCache.size < maxEntries) break;
+    }
+  }
+  for (const k of contextCache.keys()) {
+    if (contextCache.size < maxEntries) break;
+    contextCache.delete(k);
+  }
+  contextCache.set(key, { expiresAt: nowMs + CACHE_TTL_MS, value });
 }
 
 function roundCoordKey(lat: number, lon: number): string {
@@ -193,6 +214,7 @@ export async function fetchOpenMeteoContext(
   place: Profile["place"],
   fetchImpl: typeof fetch = fetch,
   nowMs = Date.now(),
+  maxCacheEntries = MAX_CACHE_ENTRIES,
 ): Promise<AirContext> {
   const key = `${roundCoordKey(place.lat, place.lon)}:${place.country.toUpperCase()}`;
   const cached = contextCache.get(key);
@@ -243,7 +265,7 @@ export async function fetchOpenMeteoContext(
     nowIndex,
   };
 
-  contextCache.set(key, { expiresAt: nowMs + CACHE_TTL_MS, value: ctx });
+  cacheContextEntry(key, ctx, nowMs, maxCacheEntries);
   return ctx;
 }
 

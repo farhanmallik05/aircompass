@@ -23,7 +23,7 @@ export interface ActionDef {
   assumptions: string[];
 }
 
-export type RawActionBody = Omit<ActionDef, "id" | "method" | "assumptions">;
+type RawActionBody = Omit<ActionDef, "id" | "method" | "assumptions">;
 
 export function avoidHoursOf(w: WindowSummary): Set<number> {
   return new Set([w.avoid.start, (w.avoid.start + 1) % 24, (w.avoid.start + 2) % 24]);

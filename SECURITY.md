@@ -15,7 +15,7 @@
    - `src/lib/security/rateLimit.ts` extracts client identity preferring trusted reverse-proxy headers (`x-vercel-forwarded-for`, `x-real-ip`) before `x-forwarded-for`, enforces a SHA-256 hashed-IP token bucket bounded at `MAX_BUCKETS = 10_000` (with stale/oldest eviction against header-spoofing memory exhaustion), emits `Retry-After: 60` on HTTP `429` responses, and enforces both `DAILY_IP_LLM_CAP` (`default: 20` per IP) and global `DAILY_LLM_CAP` (`default: 200`), degrading cleanly to the deterministic engine plan when exceeded.
    - **Plain limitation:** In-memory rate limits and daily counters run **per serverless instance (best-effort)** rather than across globally shared Redis state.
 6. **SSRF & Privacy:**
-   - Upstream HTTP calls allow only fixed Open-Meteo origins (`air-quality-api.open-meteo.com`, `api.open-meteo.com`, `geocoding-api.open-meteo.com`) with 5s timeouts. Upstream failures preserve `requestedPlace` and show a transparent fallback notice (`upstreamFallback: true`) instead of silently relabeling Greater Noida demo data.
+   - Upstream HTTP calls allow only fixed Open-Meteo origins (`air-quality-api.open-meteo.com`, `api.open-meteo.com`, `geocoding-api.open-meteo.com`) with 5s timeouts, bounded `contextCache` eviction (`MAX_CACHE_ENTRIES = 500`, expired-first then FIFO), and transparent fallback attribution (`upstreamFallback: true`) instead of silently relabeling Greater Noida demo data.
    - Zero server-side profile storage or cookies; household profiles stay in browser `localStorage` validated at runtime (`src/lib/client/storage.ts`) with a one-click `"Delete my data"` action.
 
 ## STRIDE-Lite Threat Table
