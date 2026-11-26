@@ -1,34 +1,27 @@
 import { createGeminiClientFromEnv } from "@/lib/llm/gemini";
 import { generatePlanWithFallback } from "@/lib/llm/planner";
 import { PlanRequestSchema } from "@/lib/schemas";
-import { jsonError, readBoundedJson } from "@/lib/security/headers";
-import {
-  clientIpFromHeaders,
-  takeIpToken,
-  tryConsumeDailyLlmQuota,
-} from "@/lib/security/rateLimit";
+import { validateJsonPost } from "@/lib/security/headers";
+import { tryConsumeDailyLlmQuota } from "@/lib/security/rateLimit";
 
+/** Generates a tailored household action plan from engine facts and optional Gemini wording. */
 export async function POST(request: Request): Promise<Response> {
-  const ip = clientIpFromHeaders(request.headers);
-  if (!takeIpToken("plan", ip)) {
-    return jsonError(429, "Rate limit exceeded; please retry shortly.");
-  }
-
-  const body = await readBoundedJson(request, 8192);
-  if (!body.ok) {
-    return jsonError(body.status, body.error);
-  }
-
-  const parsed = PlanRequestSchema.safeParse(body.data);
-  if (!parsed.success) {
-    return jsonError(400, "Invalid plan request payload.");
-  }
+  const validated = await validateJsonPost(
+    request,
+    "plan",
+    PlanRequestSchema,
+    "Invalid plan request payload.",
+  );
+  if (!validated.ok) return validated.response;
 
   const client = createGeminiClientFromEnv();
   const quotaAllowed = client ? tryConsumeDailyLlmQuota() : true;
-  const result = await generatePlanWithFallback(parsed.data.profile, parsed.data.context, client, {
-    quotaAllowed,
-  });
+  const result = await generatePlanWithFallback(
+    validated.data.profile,
+    validated.data.context,
+    client,
+    { quotaAllowed },
+  );
 
   return Response.json(result, {
     headers: { "Cache-Control": "no-store" },

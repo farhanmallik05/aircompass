@@ -1,3 +1,6 @@
+import type { ZodType } from "zod";
+import { clientIpFromHeaders, takeIpToken } from "./rateLimit";
+
 const MAX_BODY_BYTES = 8192;
 
 export type JsonBodyResult =
@@ -38,4 +41,29 @@ export function jsonError(status: number, message: string): Response {
       headers: { "Cache-Control": "no-store" },
     },
   );
+}
+
+/** Applies rate limiting, bounded JSON parsing, and Zod validation for POST routes. */
+export async function validateJsonPost<T>(
+  request: Request,
+  scope: string,
+  schema: ZodType<T>,
+  invalidMessage: string,
+): Promise<{ ok: true; data: T } | { ok: false; response: Response }> {
+  const ip = clientIpFromHeaders(request.headers);
+  if (!takeIpToken(scope, ip)) {
+    return { ok: false, response: jsonError(429, "Rate limit exceeded; please retry shortly.") };
+  }
+
+  const body = await readBoundedJson(request, MAX_BODY_BYTES);
+  if (!body.ok) {
+    return { ok: false, response: jsonError(body.status, body.error) };
+  }
+
+  const parsed = schema.safeParse(body.data);
+  if (!parsed.success) {
+    return { ok: false, response: jsonError(400, invalidMessage) };
+  }
+
+  return { ok: true, data: parsed.data };
 }

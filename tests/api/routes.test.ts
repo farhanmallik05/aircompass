@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import golden from "../fixtures/golden.json";
 import { clearProviderCache, fetchOpenMeteoContext } from "@/lib/providers/openMeteo";
 import { getDemoContext, SAMPLE_FAMILY_PROFILE } from "@/lib/providers/demo";
+import * as geminiMod from "@/lib/llm/gemini";
 import { generatePlanWithFallback } from "@/lib/llm/planner";
 import { runGroundedChat } from "@/lib/llm/chat";
 import type { LlmClient } from "@/lib/llm/client";
@@ -347,5 +348,111 @@ describe("API contracts & provider resilience (mocked boundary)", () => {
       }),
     );
     expect(bigHeader).toMatchObject({ ok: false, status: 413 });
+
+    // Place search (?q=...) and live Open-Meteo success + calibration via /api/context
+    const origFetch2 = globalThis.fetch;
+    globalThis.fetch = (async (url: string | URL) => {
+      const u = String(url);
+      if (u.includes("geocoding-api")) {
+        return Response.json({
+          results: [{ name: "Noida", latitude: 28.57, longitude: 77.32, country_code: "IN" }],
+        });
+      }
+      if (u.includes("air-quality")) {
+        return Response.json({
+          hourly: {
+            time: ["2026-11-25T00:00", "2026-11-25T01:00"],
+            pm2_5: [120, 140],
+            pm10: [180, 200],
+            us_aqi: [185, 195],
+          },
+          current: { time: "2026-11-25T01:00" },
+        });
+      }
+      return Response.json({
+        hourly: {
+          time: ["2026-11-25T00:00", "2026-11-25T01:00"],
+          temperature_2m: [14, 15],
+          relative_humidity_2m: [80, 75],
+          wind_speed_10m: [4, 5],
+        },
+      });
+    }) as typeof fetch;
+    try {
+      const searchRes = await contextGet(new Request("http://localhost/api/context?q=Noida"));
+      expect(searchRes.status).toBe(200);
+      const searchBody = (await searchRes.json()) as { places: Array<{ name: string }> };
+      expect(searchBody.places[0]?.name).toBe("Noida");
+
+      clearProviderCache();
+      const liveOk = await contextGet(
+        new Request(
+          "http://localhost/api/context?lat=28.57&lon=77.32&name=Noida&mode=live&observedPm25=210",
+        ),
+      );
+      expect(liveOk.status).toBe(200);
+      const liveBody = (await liveOk.json()) as { context: AirContext };
+      expect(liveBody.context.source).toBe("live");
+      expect(liveBody.context.calibrationFactor).toBeDefined();
+    } finally {
+      globalThis.fetch = origFetch2;
+    }
+
+    // /api/chat SSE streaming with mocked Gemini client (tool + chunk + done events) + error branch
+    const mockStreamClient: LlmClient = {
+      generatePlanJson: async () => ({
+        rawText: makeValidMockPlanJson([
+          "diy_box_fan_filter",
+          "exercise_indoors_when_poor",
+          "air_house_in_best_window",
+          "commute_to_public_transport",
+          "share_community_brief",
+        ]),
+        model: "mock",
+      }),
+      chatWithTools: async (req) => {
+        const out = await req.executeTool("simulate_scenario", { purifier: "hepa" });
+        req.onToolCall?.("simulate_scenario", { purifier: "hepa" }, out);
+        req.onTextChunk?.("Using a HEPA purifier ");
+        const after = Number(out.afterUgM3 ?? 0);
+        return {
+          text: `Using a HEPA purifier cuts exposure to ${after} ug/m3.`,
+          toolCallsExecuted: 1,
+          toolNumbers: [after],
+          model: "mock",
+        };
+      },
+    };
+    const spy = vi.spyOn(geminiMod, "createGeminiClientFromEnv").mockReturnValue(mockStreamClient);
+    try {
+      const sseRes = await chatPost(
+        new Request("http://localhost/api/chat", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            profile: SAMPLE_FAMILY_PROFILE,
+            context: getDemoContext(),
+            history: [],
+            message: "What if we add HEPA?",
+          }),
+        }),
+      );
+      expect(sseRes.status).toBe(200);
+      const streamText = await sseRes.text();
+      expect(streamText).toContain("event: tool");
+      expect(streamText).toContain("event: chunk");
+      expect(streamText).toContain("event: done");
+
+      const planAiRes = await planPost(
+        new Request("http://localhost/api/plan", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ profile: SAMPLE_FAMILY_PROFILE, context: getDemoContext() }),
+        }),
+      );
+      expect(planAiRes.status).toBe(200);
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

@@ -186,6 +186,41 @@ describe("client: i18n, myths catalog, and validated localStorage wrapper", () =
     expect(isValidStoredProfile(null)).toBe(false);
     expect(isValidCachedPlanPayload({ fingerprint: "x", response: {} })).toBe(false);
 
+    // Invalid lang / mode / calibration values fall back safely
+    window.localStorage.setItem("aircompass.lang.v1", "fr");
+    expect(loadStoredLang()).toBe("en");
+    window.localStorage.setItem("aircompass.mode.v1", "invalid");
+    expect(loadDataMode()).toBe("demo");
+    window.localStorage.setItem("aircompass.calibration.v1", "-10");
+    expect(loadCalibration()).toBeNull();
+    window.localStorage.setItem("aircompass.plan.v1", "{bad json");
+    expect(loadCachedPlan(fp)).toBeNull();
+
+    // Storage quota error on setItem does not throw
+    const throwingStorage = {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error("QuotaExceededError");
+      },
+      removeItem: () => {
+        throw new Error("SecurityError");
+      },
+    };
+    vi.stubGlobal("window", { localStorage: throwingStorage });
+    expect(() => saveStoredProfile(SAMPLE_FAMILY_PROFILE)).not.toThrow();
+    expect(() =>
+      saveCachedPlan(fp, {
+        outcome: "fallback",
+        plan,
+        facts,
+        baselineScenario,
+        combinedScenario,
+        tokens: {},
+      }),
+    ).not.toThrow();
+    expect(() => clearAllAirCompassData()).not.toThrow();
+
+    vi.stubGlobal("window", { localStorage: makeMemoryStorage() });
     clearAllAirCompassData();
     expect(loadStoredProfile()).toBeNull();
     expect(loadDataMode()).toBe("demo");
