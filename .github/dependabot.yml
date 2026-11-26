@@ -11,6 +11,10 @@ updates:
           - "react-dom"
           - "@types/react"
           - "@types/react-dom"
+      tailwind-ecosystem:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
     ignore:
       # Blocked by eslint-plugin-jsx-a11y@6.10.2 (peer eslint <= ^9)
       - dependency-name: "eslint"

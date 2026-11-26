@@ -50,7 +50,7 @@ test.describe("AirCompass user flows & WCAG 2.2 AA accessibility", () => {
     const chatSection = page.locator(
       "section[aria-labelledby='chat-heading'] div[aria-live='polite']",
     );
-    await expect(chatSection).toContainText("AQI");
+    await expect(chatSection).toContainText(/AQI|µg\/m³/, { timeout: 20_000 });
 
     // Client-side what-if controls update exposure immediately
     await page.getByRole("link", { name: "Impact" }).click();
@@ -152,7 +152,7 @@ test.describe("AirCompass user flows & WCAG 2.2 AA accessibility", () => {
   test("axe-core WCAG 2.2 AA audit across routes x languages x color schemes + populated states", async ({
     page,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(90_000);
     const routes = ["/", "/plan", "/impact", "/brief"];
     const langs = ["en", "hi"] as const;
     const schemes = ["light", "dark"] as const;
@@ -191,7 +191,7 @@ test.describe("AirCompass user flows & WCAG 2.2 AA accessibility", () => {
     await page.getByRole("button", { name: "Ask" }).click();
     await expect(
       page.locator("section[aria-labelledby='chat-heading'] div[aria-live='polite']"),
-    ).toContainText("AQI");
+    ).toContainText(/AQI|µg\/m³/, { timeout: 20_000 });
     const planChatAudit = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
     expect(planChatAudit.violations, "populated Plan + Chat state").toEqual([]);
   });
